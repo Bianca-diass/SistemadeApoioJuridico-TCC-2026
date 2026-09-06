@@ -2,243 +2,376 @@
    CADASTRO PROCESSO - ADVOGADO
 ========================================== */
 
-
-/* CONTEÚDO */
-
-.conteudo{
-
-    width:100%;
-
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 
-/* TOPO CENTRALIZADO */
+/* ==========================================
+   CONTEÚDO
+========================================== */
 
-.topoPagina{
-
-    text-align:center;
-
-    margin-bottom:25px;
-
+.conteudo {
+    width: 100%;
+    min-height: 100vh;
+    padding: 35px;
+    background: #F4F6FB;
 }
 
 
-.topoPagina h1{
+/* ==========================================
+   SETA DE VOLTAR
+========================================== */
 
-    color:#1E3A8A;
+.btnVoltar {
+    position: relative;
 
-    font-size:28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    margin:0;
+    width: 42px;
+    height: 42px;
 
+    margin-bottom: 15px;
+
+    background: #294970;
+    color: transparent;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    font-size: 0;
+
+    transition: 0.3s;
 }
 
 
-.topoPagina p{
+/* ==========================================
+   SETA FINA - LINHA
+========================================== */
 
-    color:#6B7280;
+.btnVoltar::before {
+    content: "";
 
-    font-size:14px;
+    position: absolute;
 
-    margin-top:8px;
+    width: 17px;
+    height: 1.5px;
 
+    background: #ffffff;
+
+    left: 13px;
+    top: 20px;
+
+    border-radius: 2px;
 }
 
 
-/* FORMULÁRIO CENTRALIZADO */
+/* ==========================================
+   SETA FINA - PONTA
+========================================== */
 
-.cardFormulario{
+.btnVoltar::after {
+    content: "";
 
-    background:#fff;
+    position: absolute;
 
-    padding:25px;
+    width: 8px;
+    height: 8px;
 
-    border-radius:12px;
+    border-left: 1.5px solid #ffffff;
+    border-bottom: 1.5px solid #ffffff;
 
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    left: 12px;
+    top: 16px;
 
-    width:100%;
-
-    max-width:750px;
-
-    margin:0 auto;
-
+    transform: rotate(45deg);
 }
 
 
-/* CAMPOS */
+/* ==========================================
+   HOVER DA SETA
+========================================== */
 
-.grupo{
+.btnVoltar:hover {
+    background: #1F3858;
 
-    display:flex;
-
-    flex-direction:column;
-
-    margin-bottom:15px;
-
+    transform: translateX(-3px);
 }
 
 
-.grupo label{
+/* ==========================================
+   CASO TENHA ÍCONE DENTRO DA SETA
+========================================== */
 
-    font-size:14px;
-
-    font-weight:600;
-
-    color:#374151;
-
-    margin-bottom:6px;
-
+.btnVoltar i,
+.btnVoltar span {
+    display: none;
 }
 
+
+/* ==========================================
+   TOPO CENTRALIZADO
+========================================== */
+
+.topoPagina {
+    text-align: center;
+
+    margin-bottom: 25px;
+}
+
+
+.topoPagina h1 {
+    color: #1E3A8A;
+
+    font-size: 28px;
+
+    margin: 0;
+}
+
+
+.topoPagina p {
+    color: #6B7280;
+
+    font-size: 14px;
+
+    margin-top: 8px;
+}
+
+
+/* ==========================================
+   FORMULÁRIO CENTRALIZADO
+========================================== */
+
+.cardFormulario {
+    background: #fff;
+
+    padding: 25px;
+
+    border-radius: 12px;
+
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+
+    width: 100%;
+
+    max-width: 750px;
+
+    margin: 0 auto;
+}
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.grupo {
+    display: flex;
+
+    flex-direction: column;
+
+    margin-bottom: 15px;
+}
+
+
+.grupo label {
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+    margin-bottom: 6px;
+}
+
+
+/* ==========================================
+   INPUTS
+========================================== */
 
 .grupo input,
 .grupo select,
-.grupo textarea{
+.grupo textarea {
+    width: 100%;
 
-    padding:10px;
+    padding: 10px;
 
-    border:1px solid #D1D5DB;
+    border: 1px solid #D1D5DB;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    font-size:14px;
+    font-size: 14px;
 
-    outline:none;
+    outline: none;
 
+    font-family: inherit;
 }
 
 
 .grupo input:focus,
 .grupo select:focus,
-.grupo textarea:focus{
+.grupo textarea:focus {
+    border-color: #2563EB;
 
-    border-color:#2563EB;
-
-    box-shadow:0 0 0 3px rgba(37,99,235,.15);
-
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
 }
 
 
-.grupo textarea{
+/* ==========================================
+   TEXTAREA
+========================================== */
 
-    min-height:90px;
+.grupo textarea {
+    min-height: 90px;
 
-    resize:vertical;
-
+    resize: vertical;
 }
 
 
-/* DUAS COLUNAS */
+/* ==========================================
+   DUAS COLUNAS
+========================================== */
 
-.duasColunas{
+.duasColunas {
+    display: grid;
 
-    display:grid;
+    grid-template-columns: repeat(2, 1fr);
 
-    grid-template-columns:repeat(2,1fr);
-
-    gap:15px;
-
+    gap: 15px;
 }
 
 
-/* BOTÕES */
+/* ==========================================
+   BOTÕES
+========================================== */
 
-.botoes{
+.botoes {
+    display: flex;
 
-    display:flex;
+    justify-content: center;
 
-    justify-content:center;
+    gap: 15px;
 
-    gap:15px;
-
-    margin-top:20px;
-
+    margin-top: 20px;
 }
 
 
-.salvar{
+/* ==========================================
+   BOTÃO SALVAR
+========================================== */
 
-    background:#16A34A;
+.salvar {
+    background: #16A34A;
 
-    color:white;
+    color: white;
 
-    border:none;
+    border: none;
 
-    padding:10px 25px;
+    padding: 10px 25px;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    font-size:14px;
+    font-size: 14px;
 
+    transition: 0.3s;
 }
 
 
-.salvar:hover{
-
-    background:#15803D;
-
+.salvar:hover {
+    background: #15803D;
 }
 
 
-.cancelar{
+/* ==========================================
+   BOTÃO LIMPAR
+========================================== */
 
-    background:#DC2626;
+.cancelar {
+    background: #DC2626;
 
-    color:white;
+    color: white;
 
-    border:none;
+    border: none;
 
-    padding:10px 25px;
+    padding: 10px 25px;
 
-    border-radius:8px;
+    border-radius: 8px;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    font-size:14px;
+    font-size: 14px;
 
+    transition: 0.3s;
 }
 
 
-.cancelar:hover{
-
-    background:#B91C1C;
-
+.cancelar:hover {
+    background: #B91C1C;
 }
 
 
-/* RESPONSIVO */
+/* ==========================================
+   RESPONSIVO
+========================================== */
 
-@media(max-width:768px){
+@media (max-width: 768px) {
 
-    .duasColunas{
-
-        grid-template-columns:1fr;
-
+    .conteudo {
+        padding: 20px;
     }
 
 
-    .cardFormulario{
-
-        padding:18px;
-
+    .duasColunas {
+        grid-template-columns: 1fr;
     }
 
 
-    .botoes{
+    .cardFormulario {
+        padding: 18px;
+    }
 
-        flex-direction:column;
 
+    .botoes {
+        flex-direction: column;
     }
 
 
     .salvar,
-    .cancelar{
+    .cancelar {
+        width: 100%;
+    }
 
-        width:100%;
 
+    .btnVoltar {
+        margin-bottom: 12px;
+    }
+
+}
+
+
+/* ==========================================
+   CELULAR PEQUENO
+========================================== */
+
+@media (max-width: 480px) {
+
+    .conteudo {
+        padding: 15px;
+    }
+
+
+    .topoPagina h1 {
+        font-size: 24px;
+    }
+
+
+    .topoPagina p {
+        font-size: 13px;
     }
 
 }

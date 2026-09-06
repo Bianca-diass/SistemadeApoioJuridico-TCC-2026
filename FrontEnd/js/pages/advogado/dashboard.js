@@ -1,54 +1,435 @@
-// js/pages/advogado/dashboard.js
+// ==========================================================
+// js/pages/advogado/dashboard-adv.js
+//
+// Dashboard do Advogado com atualização automática
+// (Últimos Processos e Próximos Compromissos "em tempo real")
+//
+// Como este projeto usa uma API REST (Express + JWT) e não
+// leitura direta do Firestore no navegador, a forma correta
+// de manter os dados "em tempo real" aqui é fazer POLLING:
+// buscar os dados de novo no backend em intervalos curtos,
+// sem precisar recarregar a página.
+// ==========================================================
 
-import { authController } from "../../controllers/authController.js";
+import { getToken } from "../../services/authService.js";
+import { listarProcessos } from "../../services/processoService.js";
+import { listarCompromissos } from "../../services/agendaService.js";
 
-const btnClientes = document.getElementById("btnClientes");
-const btnProcessos = document.getElementById("btnProcessos");
-const btnAgenda = document.getElementById("btnAgenda");
-const btnRelatorios = document.getElementById("btnRelatorios");
-const btnConfiguracoes = document.getElementById("btnConfiguracoes");
-const btnSair = document.getElementById("btnSair");
-const nomeUsuario = document.getElementById("nomeUsuario");
 
-function protegerRota() {
-  if (!authController.logado) {
-    window.location.href = "login.html";
-  }
+// ==========================================================
+// CONFIGURAÇÃO
+// ==========================================================
+
+// Intervalo entre as atualizações automáticas (em milissegundos)
+const INTERVALO_ATUALIZACAO = 8000; // 8 segundos
+
+// Quantos itens mostrar em cada painel do dashboard
+const LIMITE_PROCESSOS = 5;
+const LIMITE_COMPROMISSOS = 5;
+
+
+// ==========================================================
+// ELEMENTOS
+// ==========================================================
+
+const listaProcessosEl =
+    document.getElementById("listaProcessos");
+
+const listaAgendaEl =
+    document.getElementById("listaAgenda");
+
+const totalProcessosEl =
+    document.getElementById("totalProcessos");
+
+const totalAgendaEl =
+    document.getElementById("totalAgenda");
+
+const statusProcessosEl =
+    document.getElementById("statusProcessos");
+
+const statusAgendaEl =
+    document.getElementById("statusAgenda");
+
+
+// ==========================================================
+// PROTEÇÃO DE ROTA
+// ==========================================================
+
+if (!getToken()) {
+
+    window.location.href = "login-adv.html";
+
 }
 
-protegerRota();
 
-authController.onChange((logado) => {
-  if (!logado) {
-    window.location.href = "login.html";
-  }
-});
+// ==========================================================
+// CONTROLE DE ESTADO
+// ==========================================================
 
-if (authController.usuario && nomeUsuario) {
-  nomeUsuario.textContent = authController.usuario.email;
+let carregandoProcessos = false;
+let carregandoAgenda = false;
+
+let idIntervaloProcessos = null;
+let idIntervaloAgenda = null;
+
+
+// ==========================================================
+// FUNÇÕES AUXILIARES
+// ==========================================================
+
+// Mostra o horário da última atualização em um "status"
+function marcarAtualizado(elementoStatus) {
+
+    if (!elementoStatus) return;
+
+    const agora = new Date();
+
+    const hora = agora.toLocaleTimeString(
+        "pt-BR",
+        { hour: "2-digit", minute: "2-digit", second: "2-digit" }
+    );
+
+    elementoStatus.textContent = `Atualizado às ${hora}`;
+    elementoStatus.classList.remove("erro", "pausado");
+
 }
 
-btnClientes?.addEventListener("click", () => {
-  window.location.href = "clientes.html";
+function marcarErro(elementoStatus, mensagem) {
+
+    if (!elementoStatus) return;
+
+    elementoStatus.textContent = mensagem || "Erro ao atualizar";
+    elementoStatus.classList.add("erro");
+    elementoStatus.classList.remove("pausado");
+
+}
+
+function marcarPausado(elementoStatus) {
+
+    if (!elementoStatus) return;
+
+    elementoStatus.textContent = "Atualização pausada (aba em segundo plano)";
+    elementoStatus.classList.add("pausado");
+    elementoStatus.classList.remove("erro");
+
+}
+
+// Tenta converter datas em vários formatos (Timestamp do Firestore,
+// string "yyyy-mm-dd" ou objeto Date) para um objeto Date válido
+function converterParaData(valor) {
+
+    if (!valor) return null;
+
+    // Timestamp do Firestore vindo em JSON: { _seconds, _nanoseconds }
+    if (typeof valor === "object" && "_seconds" in valor) {
+
+        return new Date(valor._seconds * 1000);
+
+    }
+
+    const data = new Date(valor);
+
+    return isNaN(data.getTime()) ? null : data;
+
+}
+
+
+// ==========================================================
+// ÚLTIMOS PROCESSOS
+// ==========================================================
+
+async function carregarProcessos({ mostrarCarregando = false } = {}) {
+
+    if (carregandoProcessos) return;
+
+    carregandoProcessos = true;
+
+    try {
+
+        if (mostrarCarregando && listaProcessosEl) {
+
+            listaProcessosEl.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:24px;">
+                        Carregando processos...
+                    </td>
+                </tr>
+            `;
+
+        }
+
+        const dados = await listarProcessos();
+
+        const processos = Array.isArray(dados) ? dados : [];
+
+        if (totalProcessosEl) {
+
+            totalProcessosEl.textContent = processos.length;
+
+        }
+
+        renderizarUltimosProcessos(processos);
+
+        marcarAtualizado(statusProcessosEl);
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar processos:", erro);
+
+        marcarErro(statusProcessosEl, "Não foi possível atualizar os processos.");
+
+        if (listaProcessosEl && listaProcessosEl.children.length === 0) {
+
+            listaProcessosEl.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:24px; color:#c0392b;">
+                        Erro ao carregar os processos.
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    } finally {
+
+        carregandoProcessos = false;
+
+    }
+
+}
+
+function renderizarUltimosProcessos(processos) {
+
+    if (!listaProcessosEl) return;
+
+    if (processos.length === 0) {
+
+        listaProcessosEl.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center; padding:24px;">
+                    Nenhum processo cadastrado.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    // Ordena pelo mais recente primeiro (criadoEm) e pega só os últimos N
+    const ordenados = [...processos].sort((a, b) => {
+
+        const dataA = converterParaData(a.criadoEm) || new Date(0);
+        const dataB = converterParaData(b.criadoEm) || new Date(0);
+
+        return dataB - dataA;
+
+    });
+
+    const ultimos = ordenados.slice(0, LIMITE_PROCESSOS);
+
+    listaProcessosEl.innerHTML = ultimos.map((processo) => `
+        <tr>
+            <td title="${processo.numeroProcesso || "-"}">${processo.numeroProcesso || "-"}</td>
+            <td class="colTexto" title="${processo.cliente || "-"}">${processo.cliente || "-"}</td>
+            <td>${processo.tribunal || processo.comarca || "-"}</td>
+            <td>${processo.status || "-"}</td>
+            <td>${processo.tipoManifestacao || "Nenhuma"}</td>
+            <td>${processo.ultimaMovimentacao || "-"}</td>
+            <td>${processo.intimacao === true ? "Sim" : "Não"}</td>
+            <td>${processo.prazo || "-"}</td>
+        </tr>
+    `).join("");
+
+}
+
+
+// ==========================================================
+// PRÓXIMOS COMPROMISSOS
+// ==========================================================
+
+async function carregarProximosCompromissos({ mostrarCarregando = false } = {}) {
+
+    if (carregandoAgenda) return;
+
+    carregandoAgenda = true;
+
+    try {
+
+        if (mostrarCarregando && listaAgendaEl) {
+
+            listaAgendaEl.innerHTML = `
+                <li>Carregando compromissos...</li>
+            `;
+
+        }
+
+        const dados = await listarCompromissos();
+
+        const compromissos = Array.isArray(dados) ? dados : [];
+
+        if (totalAgendaEl) {
+
+            totalAgendaEl.textContent = compromissos.length;
+
+        }
+
+        renderizarProximosCompromissos(compromissos);
+
+        marcarAtualizado(statusAgendaEl);
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar compromissos:", erro);
+
+        marcarErro(statusAgendaEl, "Não foi possível atualizar a agenda.");
+
+        if (listaAgendaEl && listaAgendaEl.children.length === 0) {
+
+            listaAgendaEl.innerHTML = `
+                <li style="color:#c0392b;">
+                    Erro ao carregar os compromissos.
+                </li>
+            `;
+
+        }
+
+    } finally {
+
+        carregandoAgenda = false;
+
+    }
+
+}
+
+function renderizarProximosCompromissos(compromissos) {
+
+    if (!listaAgendaEl) return;
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Só mostra compromissos de hoje em diante e ainda não concluídos
+    const futuros = compromissos.filter((compromisso) => {
+
+        if (compromisso.status === "Concluído" || compromisso.concluido === true) {
+
+            return false;
+
+        }
+
+        const dataCompromisso = converterParaData(compromisso.data);
+
+        if (!dataCompromisso) return true; // sem data definida, mostra mesmo assim
+
+        return dataCompromisso >= hoje;
+
+    });
+
+    if (futuros.length === 0) {
+
+        listaAgendaEl.innerHTML = `
+            <li>Nenhum compromisso futuro cadastrado.</li>
+        `;
+
+        return;
+
+    }
+
+    // Ordena por data + horário (mais próximo primeiro)
+    const ordenados = [...futuros].sort((a, b) => {
+
+        const dataA = new Date(`${a.data || ""}T${a.horario || "00:00"}`);
+        const dataB = new Date(`${b.data || ""}T${b.horario || "00:00"}`);
+
+        return dataA - dataB;
+
+    });
+
+    const proximos = ordenados.slice(0, LIMITE_COMPROMISSOS);
+
+    listaAgendaEl.innerHTML = proximos.map((compromisso) => {
+
+        const dataFormatada = compromisso.data
+            ? new Date(`${compromisso.data}T00:00:00`).toLocaleDateString("pt-BR")
+            : "Sem data";
+
+        return `
+            <li>
+                <strong>${compromisso.titulo || "Sem título"}</strong>
+                — ${dataFormatada} às ${compromisso.horario || "--:--"}
+                ${compromisso.cliente ? ` (Cliente: ${compromisso.cliente})` : ""}
+            </li>
+        `;
+
+    }).join("");
+
+}
+
+
+// ==========================================================
+// ATUALIZAÇÃO AUTOMÁTICA (POLLING)
+// ==========================================================
+
+function atualizarTudo({ mostrarCarregando = false } = {}) {
+
+    carregarProcessos({ mostrarCarregando });
+    carregarProximosCompromissos({ mostrarCarregando });
+
+}
+
+function iniciarAtualizacaoAutomatica() {
+
+    pararAtualizacaoAutomatica();
+
+    idIntervaloProcessos = setInterval(
+        () => carregarProcessos(),
+        INTERVALO_ATUALIZACAO
+    );
+
+    idIntervaloAgenda = setInterval(
+        () => carregarProximosCompromissos(),
+        INTERVALO_ATUALIZACAO
+    );
+
+}
+
+function pararAtualizacaoAutomatica() {
+
+    if (idIntervaloProcessos) clearInterval(idIntervaloProcessos);
+    if (idIntervaloAgenda) clearInterval(idIntervaloAgenda);
+
+    idIntervaloProcessos = null;
+    idIntervaloAgenda = null;
+
+}
+
+// Pausa o polling quando a aba está em segundo plano
+// (economiza requisições) e retoma + atualiza na hora
+// em que o usuário volta para a aba.
+document.addEventListener("visibilitychange", () => {
+
+    if (document.hidden) {
+
+        pararAtualizacaoAutomatica();
+        marcarPausado(statusProcessosEl);
+        marcarPausado(statusAgendaEl);
+
+    } else {
+
+        atualizarTudo();
+        iniciarAtualizacaoAutomatica();
+
+    }
+
 });
 
-btnProcessos?.addEventListener("click", () => {
-  window.location.href = "processos.html";
-});
+window.addEventListener("beforeunload", pararAtualizacaoAutomatica);
 
-btnAgenda?.addEventListener("click", () => {
-  window.location.href = "agenda.html";
-});
 
-btnRelatorios?.addEventListener("click", () => {
-  window.location.href = "relatorios.html";
-});
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
 
-btnConfiguracoes?.addEventListener("click", () => {
-  window.location.href = "configuracoes.html";
-});
-
-btnSair?.addEventListener("click", async () => {
-  await authController.logout();
-  window.location.href = "login.html";
-});
+atualizarTudo({ mostrarCarregando: true });
+iniciarAtualizacaoAutomatica();

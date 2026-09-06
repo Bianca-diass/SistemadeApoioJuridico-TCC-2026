@@ -9,7 +9,9 @@
     <title>Cadastrar Processo</title>
 
     <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/style-advogado/cadastro-processo-adv.css">
+
+    <link rel="stylesheet"
+        href="../../css/style-advogado/cadastro-processo-adv.css">
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -20,245 +22,282 @@
 
 <div class="container">
 
-<main class="conteudo">
+    <main class="conteudo">
 
-<header class="topoPagina">
+        <!-- SETA DE VOLTAR -->
 
-    <h1>Cadastrar Processo</h1>
+        <a href="processos-adv.html"
+           class="btnVoltar"
+           title="Voltar">
+        </a>
 
-    <p>Cadastre um novo processo jurídico.</p>
 
-</header>
+        <!-- CABEÇALHO -->
 
+        <header class="topoPagina">
 
-<form id="formProcesso" class="cardFormulario">
+            <h1>Cadastrar Processo</h1>
 
+            <p>
+                Cadastre um novo processo jurídico.
+            </p>
 
-    <!-- NÚMERO DO PROCESSO -->
+        </header>
 
-    <div class="grupo">
 
-        <label>Número do Processo</label>
+        <!-- FORMULÁRIO -->
 
-        <input
-            type="text"
-            id="numero"
-            placeholder="0000000-00.0000.0.00.0000"
-            required>
+        <form id="formProcesso"
+              class="cardFormulario">
 
-    </div>
 
+            <!-- NÚMERO DO PROCESSO -->
 
-    <!-- CLIENTE -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="numero">
+                    Número do Processo
+                </label>
 
-        <label>Cliente</label>
+                <input
+                    type="text"
+                    id="numero"
+                    placeholder="0000000-00.0000.0.00.0000"
+                    required>
 
-        <input
-            type="text"
-            id="cliente"
-            placeholder="Nome do cliente"
-            required>
+            </div>
 
-    </div>
 
+            <!-- CLIENTE -->
 
-    <!-- VARA -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="cliente">
+                    Cliente
+                </label>
 
-        <label>Vara</label>
+                <input
+                    type="text"
+                    id="cliente"
+                    placeholder="Nome do cliente"
+                    required>
 
-        <input
-            type="text"
-            id="vara"
-            placeholder="Ex: Vara Cível">
+            </div>
 
-    </div>
 
+            <!-- VARA -->
 
-    <!-- TRIBUNAL -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="vara">
+                    Vara
+                </label>
 
-        <label>Tribunal</label>
+                <input
+                    type="text"
+                    id="vara"
+                    placeholder="Ex: Vara Cível">
 
-        <input
-            type="text"
-            id="tribunal"
-            placeholder="Ex: TJMS">
+            </div>
 
-    </div>
 
+            <!-- TRIBUNAL -->
 
-    <!-- MANIFESTAÇÃO -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="tribunal">
+                    Tribunal
+                </label>
 
-        <label>Manifestação</label>
+                <input
+                    type="text"
+                    id="tribunal"
+                    placeholder="Ex: TJMS">
 
-        <select id="tipoManifestacao">
+            </div>
 
-            <option value="">
-                Selecione uma manifestação
-            </option>
 
-            <option value="Contestação">
-                Contestação
-            </option>
+            <!-- MANIFESTAÇÃO -->
 
-            <option value="Impugnação à contestação">
-                Impugnação à contestação
-            </option>
+            <div class="grupo">
 
-            <option value="Réplica">
-                Réplica
-            </option>
+                <label for="tipoManifestacao">
+                    Manifestação
+                </label>
 
-            <option value="Tréplica">
-                Tréplica
-            </option>
+                <select id="tipoManifestacao">
 
-            <option value="Petição">
-                Petição
-            </option>
+                    <option value="">
+                        Selecione uma manifestação
+                    </option>
 
-            <option value="Manifestação">
-                Manifestação
-            </option>
+                    <option value="Contestação">
+                        Contestação
+                    </option>
 
-        </select>
+                    <option value="Impugnação à contestação">
+                        Impugnação à contestação
+                    </option>
 
-    </div>
+                    <option value="Réplica">
+                        Réplica
+                    </option>
 
+                    <option value="Tréplica">
+                        Tréplica
+                    </option>
 
-    <!-- ÚLTIMA MOVIMENTAÇÃO -->
+                    <option value="Petição">
+                        Petição
+                    </option>
 
-    <div class="grupo">
+                    <option value="Manifestação">
+                        Manifestação
+                    </option>
 
-        <label>Última movimentação</label>
+                </select>
 
-        <input
-            type="text"
-            id="ultimaMovimentacao"
-            placeholder="Ex: Contestação protocolada">
+            </div>
 
-    </div>
 
+            <!-- ÚLTIMA MOVIMENTAÇÃO -->
 
-    <!-- INTIMAÇÃO -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="ultimaMovimentacao">
+                    Última movimentação
+                </label>
 
-        <label>Intimação</label>
+                <input
+                    type="text"
+                    id="ultimaMovimentacao"
+                    placeholder="Ex: Contestação protocolada">
 
-        <select id="intimacao">
+            </div>
 
-            <option value="false">
-                Sem intimação
-            </option>
 
-            <option value="true">
-                Nova intimação
-            </option>
+            <!-- INTIMAÇÃO -->
 
-        </select>
+            <div class="grupo">
 
-    </div>
+                <label for="intimacao">
+                    Intimação
+                </label>
 
+                <select id="intimacao">
 
-    <!-- STATUS -->
+                    <option value="false">
+                        Sem intimação
+                    </option>
 
-    <div class="grupo">
+                    <option value="true">
+                        Nova intimação
+                    </option>
 
-        <label>Status</label>
+                </select>
 
-        <select id="status">
+            </div>
 
-            <option value="Em andamento">
-                Em andamento
-            </option>
 
-            <option value="Aguardando audiência">
-                Aguardando audiência
-            </option>
+            <!-- STATUS -->
 
-            <option value="Em recurso">
-                Em recurso
-            </option>
+            <div class="grupo">
 
-            <option value="Concluído">
-                Concluído
-            </option>
+                <label for="status">
+                    Status
+                </label>
 
-            <option value="Arquivado">
-                Arquivado
-            </option>
+                <select id="status">
 
-        </select>
+                    <option value="Em andamento">
+                        Em andamento
+                    </option>
 
-    </div>
+                    <option value="Aguardando audiência">
+                        Aguardando audiência
+                    </option>
 
+                    <option value="Em recurso">
+                        Em recurso
+                    </option>
 
-    <!-- PRAZO -->
+                    <option value="Concluído">
+                        Concluído
+                    </option>
 
-    <div class="grupo">
+                    <option value="Arquivado">
+                        Arquivado
+                    </option>
 
-        <label>Prazo</label>
+                </select>
 
-        <input
-            type="date"
-            id="prazo">
+            </div>
 
-    </div>
 
+            <!-- PRAZO -->
 
-    <!-- DESCRIÇÃO -->
+            <div class="grupo">
 
-    <div class="grupo">
+                <label for="prazo">
+                    Prazo
+                </label>
 
-        <label>Descrição</label>
+                <input
+                    type="date"
+                    id="prazo">
 
-        <textarea
-            id="descricao"
-            rows="5"
-            placeholder="Descrição do processo..."></textarea>
+            </div>
 
-    </div>
 
+            <!-- DESCRIÇÃO -->
 
-    <!-- BOTÕES -->
+            <div class="grupo">
 
-    <div class="botoes">
+                <label for="descricao">
+                    Descrição
+                </label>
 
-        <button
-            type="submit"
-            class="salvar">
+                <textarea
+                    id="descricao"
+                    rows="5"
+                    placeholder="Descrição do processo..."></textarea>
 
-            <i class="fa-solid fa-floppy-disk"></i>
+            </div>
 
-            Salvar Processo
 
-        </button>
+            <!-- BOTÕES -->
 
+            <div class="botoes">
 
-        <button
-            type="reset"
-            class="cancelar">
+                <button
+                    type="submit"
+                    class="salvar">
 
-            Limpar
+                    <i class="fa-solid fa-floppy-disk"></i>
 
-        </button>
+                    Salvar Processo
 
-    </div>
+                </button>
 
-</form>
 
-</main>
+                <button
+                    type="reset"
+                    class="cancelar">
+
+                    Limpar
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
 
 </div>
 
+
+<!-- JAVASCRIPT -->
 
 <script
     type="module"

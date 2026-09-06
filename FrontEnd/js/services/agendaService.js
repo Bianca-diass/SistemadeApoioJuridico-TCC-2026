@@ -2,80 +2,162 @@
 
 const API = "http://localhost:3000/agenda";
 
+
 function authHeaders() {
+
+    const token = getToken();
+
+    if (!token) {
+        throw new Error("Token inválido ou expirado.");
+    }
+
     return {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getToken()}`
+        "Authorization": `Bearer ${token}`
     };
 }
 
 
-// ADICIONAR COMPROMISSO
+// ==========================================
+// ADICIONAR
+// ==========================================
+
 export async function adicionarCompromisso(compromisso) {
+
     const resposta = await fetch(API, {
+
         method: "POST",
+
         headers: authHeaders(),
+
         body: JSON.stringify(compromisso)
+
     });
+
 
     const dados = await resposta.json();
 
+
     if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao adicionar compromisso");
+
+        throw new Error(
+            dados.erro ||
+            dados.message ||
+            "Erro ao adicionar compromisso."
+        );
+
     }
+
 
     return dados;
 }
 
 
-// LISTAR COMPROMISSOS
-export async function listarCompromissos(callback) {
+// ==========================================
+// LISTAR
+// ==========================================
+
+export async function listarCompromissos() {
+
     const resposta = await fetch(API, {
+
+        method: "GET",
+
         headers: authHeaders()
+
     });
 
-    const compromissos = await resposta.json();
-
-    callback(compromissos);
-
-    return () => {};
-}
-
-
-// EDITAR COMPROMISSO
-export async function editarCompromisso({ id, titulo, descricao, data }) {
-    const resposta = await fetch(`${API}/${id}`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({
-            titulo,
-            descricao,
-            data
-        })
-    });
 
     const dados = await resposta.json();
 
+
     if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao editar compromisso");
+
+        throw new Error(
+            dados.erro ||
+            dados.message ||
+            "Erro ao carregar compromissos."
+        );
+
     }
+
 
     return dados;
 }
 
 
-// EXCLUIR COMPROMISSO
-export async function excluirCompromisso(id) {
-    const resposta = await fetch(`${API}/${id}`, {
-        method: "DELETE",
-        headers: authHeaders()
-    });
+// ==========================================
+// EDITAR
+// ==========================================
+
+export async function editarCompromisso(
+    id,
+    compromisso
+) {
+
+    const resposta = await fetch(
+        `${API}/${id}`,
+        {
+
+            method: "PUT",
+
+            headers: authHeaders(),
+
+            body: JSON.stringify(compromisso)
+
+        }
+    );
+
 
     const dados = await resposta.json();
 
+
     if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao excluir compromisso");
+
+        throw new Error(
+            dados.erro ||
+            dados.message ||
+            "Erro ao editar compromisso."
+        );
+
     }
+
+
+    return dados;
+}
+
+
+// ==========================================
+// EXCLUIR
+// ==========================================
+
+export async function excluirCompromisso(id) {
+
+    const resposta = await fetch(
+        `${API}/${id}`,
+        {
+
+            method: "DELETE",
+
+            headers: authHeaders()
+
+        }
+    );
+
+
+    const dados = await resposta.json();
+
+
+    if (!resposta.ok) {
+
+        throw new Error(
+            dados.erro ||
+            dados.message ||
+            "Erro ao excluir compromisso."
+        );
+
+    }
+
 
     return dados;
 }

@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { criarNotificacao } = require("../services/notificacaoService");
 
 
 // ========================================
@@ -15,6 +16,7 @@ const cadastrarProcesso = async (req, res) => {
             cliente,
             advogado,
             vara,
+            tribunal,
             comarca,
             status,
             tipoManifestacao,
@@ -42,6 +44,9 @@ const cadastrarProcesso = async (req, res) => {
 
             vara:
                 vara || "",
+
+            tribunal:
+                tribunal || "",
 
             comarca:
                 comarca || "",
@@ -78,6 +83,26 @@ const cadastrarProcesso = async (req, res) => {
             await db
                 .collection("processos")
                 .add(processo);
+
+
+        // ================================================
+        // NOTIFICAÇÃO AUTOMÁTICA (RF007)
+        // ================================================
+
+        await criarNotificacao({
+
+            tipo: "processo",
+
+            titulo: "Novo processo cadastrado",
+
+            mensagem:
+                `O processo ${processo.numeroProcesso || "sem número"} ` +
+                `(cliente: ${processo.cliente || "não informado"}) ` +
+                `foi cadastrado no sistema.`,
+
+            processoId: doc.id
+
+        });
 
 
         res.status(201).json({
@@ -257,10 +282,53 @@ const atualizarProcesso = async (req, res) => {
             req.params;
 
 
+        // Busca os dados atuais para saber o que mudou
+        // e poder montar uma mensagem de notificação melhor
+        const docAntesRef =
+            db.collection("processos").doc(id);
+
+        const docAntes =
+            await docAntesRef.get();
+
+        const dadosAntes =
+            docAntes.exists ? docAntes.data() : {};
+
+
         await db
             .collection("processos")
             .doc(id)
             .update(req.body);
+
+
+        // ================================================
+        // NOTIFICAÇÃO AUTOMÁTICA (RF007)
+        // ================================================
+
+        const numeroProcesso =
+            req.body.numeroProcesso ||
+            dadosAntes.numeroProcesso ||
+            "sem número";
+
+        const statusMudou =
+            req.body.status &&
+            req.body.status !== dadosAntes.status;
+
+        await criarNotificacao({
+
+            tipo: "processo",
+
+            titulo: statusMudou
+                ? "Status do processo atualizado"
+                : "Processo atualizado",
+
+            mensagem: statusMudou
+                ? `O processo ${numeroProcesso} mudou de status: ` +
+                  `"${dadosAntes.status || "-"}" → "${req.body.status}".`
+                : `O processo ${numeroProcesso} foi atualizado.`,
+
+            processoId: id
+
+        });
 
 
         res.status(200).json({

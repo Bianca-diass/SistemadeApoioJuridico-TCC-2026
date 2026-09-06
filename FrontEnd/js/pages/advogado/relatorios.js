@@ -1,231 +1,465 @@
-import { listarClientes } from "./services/clienteService.js";
-import { listarProcessos } from "./services/processoService.js";
-import { listarCompromissos } from "./services/agendaService.js";
-import { listarNotificacoes } from "./services/notificacaoService.js";
+// ==========================================================
+// js/pages/advogado/relatorios.js
+//
+// Relatórios do Advogado com atualização automática.
+//
+// - Processos, Clientes e Compromissos vêm da API REST
+//   (Express + JWT), então são atualizados por POLLING
+//   (nova busca automática em intervalos curtos).
+//
+// - Notificações (usadas na seção "Prazos Concluídos") vêm
+//   direto do Firestore com onSnapshot, então são
+//   TEMPO REAL DE VERDADE: qualquer mudança no banco aparece
+//   na hora, sem esperar nenhum intervalo.
+// ==========================================================
+
+import { getToken } from "../../services/authService.js";
+import { listarClientes } from "../../services/clienteService.js";
+import { listarProcessos } from "../../services/processoService.js";
+import { listarCompromissos } from "../../services/agendaService.js";
+import { listarNotificacoes } from "../../services/notificacaoService.js";
 
 
+// ==========================================================
+// CONFIGURAÇÃO
+// ==========================================================
 
-let dadosRelatorio = {
-
-clientes:[],
-processos:[],
-agenda:[],
-notificacoes:[]
-
-};
+const INTERVALO_ATUALIZACAO = 8000; // 8 segundos
+const LIMITE_LINHAS = 5;
 
 
+// ==========================================================
+// ELEMENTOS
+// ==========================================================
+
+const processosTotal = document.getElementById("processosTotal");
+const clientesTotal = document.getElementById("clientesTotal");
+const prazosTotal = document.getElementById("prazosTotal");
+const agendaTotal = document.getElementById("agendaTotal");
+
+const listaProcessos = document.getElementById("listaProcessos");
+const listaClientes = document.getElementById("listaClientes");
+const listaPrazos = document.getElementById("listaPrazos");
+const listaAgenda = document.getElementById("listaAgenda");
+
+const statusProcessosEl = document.getElementById("statusProcessosRel");
+const statusClientesEl = document.getElementById("statusClientesRel");
+const statusPrazosEl = document.getElementById("statusPrazosRel");
+const statusAgendaEl = document.getElementById("statusAgendaRel");
 
 
-// CLIENTES
+// ==========================================================
+// PROTEÇÃO DE ROTA
+// ==========================================================
 
-async function carregarClientes(){
-
-const clientes = await listarClientes();
-
-dadosRelatorio.clientes = clientes;
-
-
-clientesTotal.textContent = clientes.length;
+if (!getToken()) {
+    window.location.href = "login-adv.html";
+}
 
 
-listaClientes.innerHTML="";
+// ==========================================================
+// AUXILIARES DE STATUS
+// ==========================================================
 
+function marcarAtualizado(elemento) {
 
-clientes.slice(0,5).forEach(cliente=>{
+    if (!elemento) return;
 
-listaClientes.innerHTML +=
-`
-<li>${cliente.nome}</li>
-`;
+    const agora = new Date();
 
-});
+    const hora = agora.toLocaleTimeString(
+        "pt-BR",
+        { hour: "2-digit", minute: "2-digit", second: "2-digit" }
+    );
+
+    elemento.textContent = `Atualizado às ${hora}`;
+    elemento.classList.remove("erro", "pausado");
+
+}
+
+function marcarErro(elemento, mensagem) {
+
+    if (!elemento) return;
+
+    elemento.textContent = mensagem || "Erro ao atualizar";
+    elemento.classList.add("erro");
+    elemento.classList.remove("pausado");
+
+}
+
+function marcarPausado(elemento) {
+
+    if (!elemento) return;
+
+    elemento.textContent = "Pausado (aba em segundo plano)";
+    elemento.classList.add("pausado");
+    elemento.classList.remove("erro");
 
 }
 
 
+// ==========================================================
+// CLIENTES  (REST - polling)
+// ==========================================================
 
+let carregandoClientes = false;
 
+async function carregarClientes() {
 
-// PROCESSOS
+    if (carregandoClientes) return;
 
-async function carregarProcessos(){
+    carregandoClientes = true;
 
-const processos = await listarProcessos();
+    try {
 
-dadosRelatorio.processos = processos;
+        await listarClientes((clientes) => {
 
+            clientes = Array.isArray(clientes) ? clientes : [];
 
-processosTotal.textContent = processos.length;
+            clientesTotal.textContent = clientes.length;
 
+            const ultimos = [...clientes].slice(-LIMITE_LINHAS).reverse();
 
-listaProcessos.innerHTML="";
+            if (ultimos.length === 0) {
 
+                listaClientes.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="vazio">
+                            Nenhum cliente cadastrado.
+                        </td>
+                    </tr>
+                `;
 
-processos.slice(0,5).forEach(processo=>{
+            } else {
 
+                listaClientes.innerHTML = ultimos.map((cliente) => `
+                    <tr>
+                        <td title="${cliente.nome || "-"}">${cliente.nome || "-"}</td>
+                        <td>${cliente.cpf || "-"}</td>
+                        <td>${cliente.telefone || cliente.contato || "-"}</td>
+                    </tr>
+                `).join("");
 
-listaProcessos.innerHTML +=
-`
-<li>
-${processo.numero || processo.titulo}
-- ${processo.status}
-</li>
-`;
+            }
 
+            marcarAtualizado(statusClientesEl);
 
-});
+        });
 
+    } catch (erro) {
 
-}
+        console.error("Erro ao carregar clientes:", erro);
 
+        marcarErro(statusClientesEl, "Não foi possível atualizar os clientes.");
 
+        if (listaClientes.children.length === 0) {
 
+            listaClientes.innerHTML = `
+                <tr>
+                    <td colspan="3" class="vazio">
+                        Não foi possível carregar os clientes.
+                    </td>
+                </tr>
+            `;
 
-// AGENDA
+        }
 
-async function carregarAgenda(){
+    } finally {
 
-const agenda = await listarCompromissos();
+        carregandoClientes = false;
 
-
-dadosRelatorio.agenda = agenda;
-
-
-agendaTotal.textContent = agenda.length;
-
-
-listaAgenda.innerHTML="";
-
-
-agenda.slice(0,5).forEach(item=>{
-
-
-listaAgenda.innerHTML +=
-`
-<li>
-${item.titulo} - ${item.data}
-</li>
-`;
-
-});
-
-
-}
-
-
-
-
-
-// NOTIFICAÇÕES
-
-
-async function carregarNotificacoes(){
-
-
-const notificacoes = await listarNotificacoes();
-
-
-dadosRelatorio.notificacoes = notificacoes;
-
-
-notificacoesTotal.textContent = notificacoes.length;
-
-
-listaNotificacoes.innerHTML="";
-
-
-
-notificacoes.slice(0,5).forEach(item=>{
-
-
-listaNotificacoes.innerHTML +=
-`
-<li>${item.titulo}</li>
-`;
-
-
-});
-
+    }
 
 }
 
 
+// ==========================================================
+// PROCESSOS  (REST - polling)
+// ==========================================================
+
+let carregandoProcessos = false;
+
+async function carregarProcessos() {
+
+    if (carregandoProcessos) return;
+
+    carregandoProcessos = true;
+
+    try {
+
+        const processos = await listarProcessos();
+
+        const lista = Array.isArray(processos) ? processos : [];
+
+        processosTotal.textContent = lista.length;
+
+        const ultimos = [...lista].slice(-LIMITE_LINHAS).reverse();
+
+        if (ultimos.length === 0) {
+
+            listaProcessos.innerHTML = `
+                <tr>
+                    <td colspan="3" class="vazio">
+                        Nenhum processo cadastrado.
+                    </td>
+                </tr>
+            `;
+
+        } else {
+
+            listaProcessos.innerHTML = ultimos.map((processo) => `
+                <tr>
+                    <td title="${processo.numeroProcesso || "-"}">${processo.numeroProcesso || "-"}</td>
+                    <td title="${processo.cliente || "-"}">${processo.cliente || "-"}</td>
+                    <td>${processo.status || "-"}</td>
+                </tr>
+            `).join("");
+
+        }
+
+        marcarAtualizado(statusProcessosEl);
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar processos:", erro);
+
+        marcarErro(statusProcessosEl, "Não foi possível atualizar os processos.");
+
+        if (listaProcessos.children.length === 0) {
+
+            listaProcessos.innerHTML = `
+                <tr>
+                    <td colspan="3" class="vazio">
+                        Não foi possível carregar os processos.
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    } finally {
+
+        carregandoProcessos = false;
+
+    }
+
+}
 
 
-// GERAR PDF
+// ==========================================================
+// COMPROMISSOS  (REST - polling)
+// ==========================================================
+
+let carregandoAgenda = false;
+
+async function carregarAgenda() {
+
+    if (carregandoAgenda) return;
+
+    carregandoAgenda = true;
+
+    try {
+
+        const compromissos = await listarCompromissos();
+
+        const lista = Array.isArray(compromissos) ? compromissos : [];
+
+        agendaTotal.textContent = lista.length;
+
+        const ultimos = [...lista].slice(-LIMITE_LINHAS).reverse();
+
+        if (ultimos.length === 0) {
+
+            listaAgenda.innerHTML = `
+                <tr>
+                    <td colspan="3" class="vazio">
+                        Nenhum compromisso cadastrado.
+                    </td>
+                </tr>
+            `;
+
+        } else {
+
+            listaAgenda.innerHTML = ultimos.map((item) => `
+                <tr>
+                    <td title="${item.titulo || "-"}">${item.titulo || "-"}</td>
+                    <td>${item.data || "-"}</td>
+                    <td>${item.horario || "-"}</td>
+                </tr>
+            `).join("");
+
+        }
+
+        marcarAtualizado(statusAgendaEl);
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar compromissos:", erro);
+
+        marcarErro(statusAgendaEl, "Não foi possível atualizar os compromissos.");
+
+        if (listaAgenda.children.length === 0) {
+
+            listaAgenda.innerHTML = `
+                <tr>
+                    <td colspan="3" class="vazio">
+                        Não foi possível carregar os compromissos.
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    } finally {
+
+        carregandoAgenda = false;
+
+    }
+
+}
 
 
-document
-.getElementById("gerarPDF")
-.addEventListener("click",()=>{
+// ==========================================================
+// PRAZOS CONCLUÍDOS  (Firestore - TEMPO REAL / onSnapshot)
+// ==========================================================
+//
+// listarNotificacoes já é feito com onSnapshot, então o
+// callback dispara sozinho toda vez que algo muda no
+// Firestore — não precisa de setInterval aqui.
+
+let cancelarNotificacoes = null;
+
+function iniciarPrazosTempoReal() {
+
+    try {
+
+        cancelarNotificacoes = listarNotificacoes((notificacoes) => {
+
+            const lista = Array.isArray(notificacoes) ? notificacoes : [];
+
+            const concluidos = lista.filter((item) => {
+
+                const status = String(item.status || "").toLowerCase();
+
+                return status === "concluído" || status === "concluido";
+
+            });
+
+            prazosTotal.textContent = concluidos.length;
+
+            const ultimos = concluidos.slice(0, LIMITE_LINHAS);
+
+            if (ultimos.length === 0) {
+
+                listaPrazos.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="vazio">
+                            Nenhum prazo concluído.
+                        </td>
+                    </tr>
+                `;
+
+            } else {
+
+                listaPrazos.innerHTML = ultimos.map((prazo) => `
+                    <tr>
+                        <td title="${prazo.titulo || prazo.descricao || "-"}">
+                            ${prazo.titulo || prazo.descricao || "-"}
+                        </td>
+                        <td>${prazo.processo || prazo.numeroProcesso || "-"}</td>
+                        <td>${prazo.data || "-"}</td>
+                    </tr>
+                `).join("");
+
+            }
+
+            marcarAtualizado(statusPrazosEl);
+
+        });
+
+    } catch (erro) {
+
+        console.error("Erro ao observar prazos em tempo real:", erro);
+
+        marcarErro(statusPrazosEl, "Não foi possível observar os prazos.");
+
+    }
+
+}
 
 
-const { jsPDF } = window.jspdf;
+// ==========================================================
+// ATUALIZAÇÃO AUTOMÁTICA (POLLING PARA REST)
+// ==========================================================
 
+let idIntervalo = null;
 
-const pdf = new jsPDF();
+function atualizarDadosRest() {
 
+    carregarClientes();
+    carregarProcessos();
+    carregarAgenda();
 
-pdf.setFontSize(18);
+}
 
-pdf.text(
-"Relatório do Sistema Jurídico",
-20,
-20
-);
+function iniciarPolling() {
 
+    pararPolling();
 
+    idIntervalo = setInterval(
+        atualizarDadosRest,
+        INTERVALO_ATUALIZACAO
+    );
 
-pdf.setFontSize(12);
+}
 
+function pararPolling() {
 
-pdf.text(
-`Clientes cadastrados: ${dadosRelatorio.clientes.length}`,
-20,
-40
-);
+    if (idIntervalo) clearInterval(idIntervalo);
 
+    idIntervalo = null;
 
+}
 
-pdf.text(
-`Processos cadastrados: ${dadosRelatorio.processos.length}`,
-20,
-50
-);
+// Pausa o polling quando a aba fica em segundo plano
+// (o listener de Firestore continua funcionando normalmente).
+document.addEventListener("visibilitychange", () => {
 
+    if (document.hidden) {
 
+        pararPolling();
 
-pdf.text(
-`Compromissos: ${dadosRelatorio.agenda.length}`,
-20,
-60
-);
+        marcarPausado(statusProcessosEl);
+        marcarPausado(statusClientesEl);
+        marcarPausado(statusAgendaEl);
 
+    } else {
 
+        atualizarDadosRest();
+        iniciarPolling();
 
-pdf.text(
-`Notificações: ${dadosRelatorio.notificacoes.length}`,
-20,
-70
-);
+    }
 
+});
 
+// Encerra o polling e o listener do Firestore ao sair da página
+window.addEventListener("beforeunload", () => {
 
-pdf.save("relatorio-juridico.pdf");
+    pararPolling();
 
+    if (typeof cancelarNotificacoes === "function") {
+
+        cancelarNotificacoes();
+
+    }
 
 });
 
 
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
 
-
-
-
-carregarClientes();
-
-carregarProcessos();
-
-carregarAgenda();
-
-carregarNotificacoes();
+atualizarDadosRest();
+iniciarPolling();
+iniciarPrazosTempoReal();

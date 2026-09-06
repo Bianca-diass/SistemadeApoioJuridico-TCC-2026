@@ -18,7 +18,6 @@
 
 </head>
 
-
 <body>
 
 
@@ -162,7 +161,7 @@
                 <div>
 
                     <h2 id="totalProcessos">
-                        3
+                        0
                     </h2>
 
                     <span>
@@ -184,7 +183,7 @@
                 <div>
 
                     <h2 id="totalAgenda">
-                        5
+                        0
                     </h2>
 
                     <span>
@@ -206,11 +205,11 @@
                 <div>
 
                     <h2 id="totalNotificacoes">
-                        5
+                        0
                     </h2>
 
                     <span>
-                        Notificações
+                        Não lidas
                     </span>
 
                 </div>
@@ -235,6 +234,10 @@
                 Últimos Processos
 
             </h2>
+
+            <span id="statusProcessos" class="statusAtualizacao">
+                Atualizando...
+            </span>
 
 
             <table>
@@ -265,11 +268,6 @@
 
 
                 <tbody id="listaProcessos">
-
-
-                    <!-- ==========================================
-                         PROCESSO 1
-                    =========================================== -->
 
                     <tr>
 
@@ -308,11 +306,6 @@
                     </tr>
 
 
-
-                    <!-- ==========================================
-                         PROCESSO 2
-                    =========================================== -->
-
                     <tr>
 
                         <td>
@@ -350,11 +343,6 @@
                     </tr>
 
 
-
-                    <!-- ==========================================
-                         PROCESSO 3
-                    =========================================== -->
-
                     <tr>
 
                         <td>
@@ -391,7 +379,6 @@
 
                     </tr>
 
-
                 </tbody>
 
             </table>
@@ -414,72 +401,17 @@
 
             </h2>
 
+            <span id="statusAgenda" class="statusAtualizacao">
+                Atualizando...
+            </span>
+
+
+            <!--
+                A lista será preenchida
+                automaticamente pelo dashboard-adv.js
+            -->
 
             <ul id="listaAgenda">
-
-
-                <li>
-
-                    📅
-
-                    <strong>
-                        15/08/2026 - 14h30
-                    </strong>
-
-                    |
-
-                    Audiência Trabalhista -
-                    Fórum de Dourados/MS.
-
-                </li>
-
-
-                <li>
-
-                    📄
-
-                    <strong>
-                        18/08/2026 - 09h00
-                    </strong>
-
-                    |
-
-                    Reunião com cliente para
-                    análise do processo.
-
-                </li>
-
-
-                <li>
-
-                    ⚖️
-
-                    <strong>
-                        20/08/2026 - 10h00
-                    </strong>
-
-                    |
-
-                    Prazo final para envio
-                    de documentos.
-
-                </li>
-
-
-                <li>
-
-                    🤝
-
-                    <strong>
-                        25/08/2026 - 15h00
-                    </strong>
-
-                    |
-
-                    Sessão de conciliação.
-
-                </li>
-
 
             </ul>
 
@@ -499,66 +431,16 @@
 
                 Notificações
 
+                <span id="statusNotificacoes" class="statusAtualizacao">
+                    Conectando...
+                </span>
+
             </h2>
 
 
             <ul id="listaNotificacoes">
 
-
-                <li>
-
-                    📌
-
-                    Novo processo cadastrado
-                    no sistema.
-
-                </li>
-
-
-                <li>
-
-                    📅
-
-                    Audiência marcada para o dia
-
-                    <strong>
-                        15/08/2026
-                    </strong>
-
-                    às 14h30.
-
-                </li>
-
-
-                <li>
-
-                    ⏰
-
-                    Prazo processual próximo
-                    do vencimento.
-
-                </li>
-
-
-                <li>
-
-                    📄
-
-                    Cliente enviou novos
-                    documentos.
-
-                </li>
-
-
-                <li>
-
-                    ✅
-
-                    Atualização realizada
-                    no processo.
-
-                </li>
-
+                <li>Carregando notificações...</li>
 
             </ul>
 
@@ -574,10 +456,10 @@
          JAVASCRIPT
     =========================================== -->
 
-   <script
-    type="module"
-    src="../../js/pages/advogado/dashboard-adv.js">
-</script>
+    <script
+        type="module"
+        src="../../js/pages/advogado/dashboard-adv.js">
+    </script>
 
 
 </body>

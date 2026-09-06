@@ -43,7 +43,72 @@
 
 
 /* ==========================================
-   PAINÉIS (Perfil, Segurança, Idioma, Sair)
+   SETA DE VOLTAR
+   ========================================== */
+
+.btnVoltar {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 15px;
+
+    background: #294970;
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    transition: 0.3s;
+}
+
+/* Linha fina da seta */
+.btnVoltar::before {
+    content: "";
+
+    position: absolute;
+
+    width: 17px;
+    height: 1.5px;
+
+    background: #ffffff;
+
+    left: 13px;
+    top: 20px;
+
+    border-radius: 2px;
+}
+
+/* Ponta fina da seta */
+.btnVoltar::after {
+    content: "";
+
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    border-left: 1.5px solid #ffffff;
+    border-bottom: 1.5px solid #ffffff;
+
+    transform: rotate(45deg);
+
+    left: 12px;
+    top: 16px;
+}
+
+.btnVoltar:hover {
+    background: #1f3858;
+    transform: translateX(-3px);
+}
+
+
+/* ==========================================
+   PAINÉIS
    ========================================== */
 
 .painel {
@@ -51,6 +116,7 @@
     border-radius: 18px;
     padding: 30px;
     margin-bottom: 25px;
+
     box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
 }
 
@@ -58,8 +124,11 @@
     display: flex;
     align-items: center;
     gap: 12px;
+
     color: #294970;
+
     margin-bottom: 25px;
+
     font-size: 22px;
 }
 
@@ -79,47 +148,60 @@
 
 
 /* ==========================================
-   CAMPOS (label + input/select)
+   CAMPOS
    ========================================== */
 
 .campo {
     display: flex;
     flex-direction: column;
+
     margin-bottom: 20px;
 }
 
-/* Espaço maior entre o último campo e o botão */
+/* Espaço maior entre último campo e botão */
 .campo:last-of-type {
     margin-bottom: 25px;
 }
 
 .campo label {
     margin-bottom: 8px;
+
     font-weight: 600;
+
     color: #444;
 }
 
 .campo input,
 .campo select {
     width: 100%;
+
     padding: 14px 16px;
+
     border: 1px solid #d9d9d9;
+
     border-radius: 12px;
+
     font-size: 15px;
+
     background: #fff;
+
     transition: .3s;
 }
 
 .campo input:focus,
 .campo select:focus {
     outline: none;
+
     border-color: #294970;
+
     box-shadow: 0 0 0 4px rgba(41, 73, 112, .15);
 }
 
 .campo input[readonly] {
     background: #f2f2f2;
+
     color: #777;
+
     cursor: not-allowed;
 }
 
@@ -130,28 +212,36 @@
 
 button {
     width: fit-content;
+
     display: flex;
     align-items: center;
+
     gap: 10px;
 
     padding: 14px 24px;
+
     margin-top: 5px;
 
     border: none;
+
     border-radius: 12px;
 
     background: #294970;
+
     color: #fff;
 
     font-size: 15px;
+
     font-weight: 600;
 
     cursor: pointer;
+
     transition: .3s;
 }
 
 button:hover {
     background: #1d3554;
+
     transform: translateY(-2px);
 }
 
@@ -164,7 +254,9 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     flex-wrap: wrap;
+
     gap: 15px;
 }
 

@@ -9,6 +9,8 @@ const processosRoutes = require("./routes/processos");
 const agendaRoutes = require("./routes/agenda");
 const documentosRoutes = require("./routes/documentos");
 
+const { iniciarJobDeLembretes } = require("./jobs/lembretesJob");
+
 const app = express();
 
 
@@ -24,9 +26,6 @@ app.use(express.json());
 // ==========================================================
 // ROTAS DA API
 // ==========================================================
-
-// IMPORTANTE:
-// As rotas da API ficam ANTES do FrontEnd.
 
 app.use("/auth", authRoutes);
 
@@ -129,6 +128,15 @@ app.listen(
         console.log(
             `🚀 Servidor rodando na porta ${PORT}`
         );
+
+
+        // ==========================================================
+        // RF007 - Notificações automáticas
+        // ==========================================================
+        // Inicia o job que verifica prazos e audiências se
+        // aproximando e cria notificações automáticas no Firestore.
+
+        iniciarJobDeLembretes();
 
     }
 );

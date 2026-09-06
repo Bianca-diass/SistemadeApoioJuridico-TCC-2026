@@ -19,6 +19,10 @@
 
     <main class="conteudo">
 
+        <!-- SETA DE VOLTAR -->
+        <a href="javascript:history.back()" class="btnVoltar">←</a>
+
+        <!-- TÍTULO -->
         <h1>Relatórios</h1>
 
         <p class="descricao">
@@ -26,7 +30,9 @@
         </p>
 
 
-        <!-- RESUMO -->
+        <!-- ==========================================
+             RESUMO
+        =========================================== -->
 
         <div class="resumo">
 
@@ -53,43 +59,25 @@
         </div>
 
 
-        <!-- PROCESSOS -->
+        <!-- ==========================================
+             ÚLTIMOS PROCESSOS
+        =========================================== -->
 
         <div class="tabela">
 
-            <h2>Últimos Processos</h2>
+            <h2>Últimos Processos <span id="statusProcessosRel" class="statusAtualizacao">Atualizando...</span></h2>
 
             <table>
 
                 <thead>
-
                     <tr>
                         <th>Número</th>
                         <th>Cliente</th>
                         <th>Status</th>
                     </tr>
-
                 </thead>
 
-                <tbody>
-
-                    <tr>
-                        <td>0001234-56.2026.8.12.0001</td>
-                        <td>João Silva</td>
-                        <td>Ativo</td>
-                    </tr>
-
-                    <tr>
-                        <td>0002458-91.2026.8.12.0001</td>
-                        <td>Maria Souza</td>
-                        <td>Ativo</td>
-                    </tr>
-
-                    <tr>
-                        <td>0003875-44.2026.8.12.0001</td>
-                        <td>Carlos Oliveira</td>
-                        <td>Ativo</td>
-                    </tr>
+                <tbody id="listaProcessos">
 
                 </tbody>
 
@@ -98,43 +86,79 @@
         </div>
 
 
-        <!-- PRAZOS -->
+        <!-- ==========================================
+             ÚLTIMOS CLIENTES
+        =========================================== -->
 
         <div class="tabela">
 
-            <h2>Próximos Prazos</h2>
+            <h2>Últimos Clientes Cadastrados <span id="statusClientesRel" class="statusAtualizacao">Atualizando...</span></h2>
 
             <table>
 
                 <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Telefone</th>
+                    </tr>
+                </thead>
 
+                <tbody id="listaClientes">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- ==========================================
+             PRAZOS CONCLUÍDOS
+        =========================================== -->
+
+        <div class="tabela">
+
+            <h2>Prazos Concluídos <span id="statusPrazosRel" class="statusAtualizacao">Atualizando...</span></h2>
+
+            <table>
+
+                <thead>
                     <tr>
                         <th>Descrição</th>
                         <th>Processo</th>
                         <th>Data</th>
                     </tr>
-
                 </thead>
 
-                <tbody>
+                <tbody id="listaPrazos">
 
-                    <tr>
-                        <td>Prazo processual</td>
-                        <td>0001234-56</td>
-                        <td>Hoje</td>
-                    </tr>
+                </tbody>
 
-                    <tr>
-                        <td>Manifestação</td>
-                        <td>0002458-91</td>
-                        <td>Amanhã</td>
-                    </tr>
+            </table>
 
+        </div>
+
+
+        <!-- ==========================================
+             ÚLTIMOS COMPROMISSOS
+        =========================================== -->
+
+        <div class="tabela">
+
+            <h2>Últimos Compromissos <span id="statusAgendaRel" class="statusAtualizacao">Atualizando...</span></h2>
+
+            <table>
+
+                <thead>
                     <tr>
-                        <td>Entrega de documentos</td>
-                        <td>0003875-44</td>
-                        <td>18/08</td>
+                        <th>Compromisso</th>
+                        <th>Data</th>
+                        <th>Horário</th>
                     </tr>
+                </thead>
+
+                <tbody id="listaAgenda">
 
                 </tbody>
 
@@ -146,7 +170,8 @@
 
 </div>
 
-<script type="module" src="../../js/relatorios.js"></script>
+
+<script type="module" src="../../js/pages/advogado/relatorios.js"></script>
 
 </body>
 

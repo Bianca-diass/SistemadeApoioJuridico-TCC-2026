@@ -22,9 +22,16 @@
 
     <main class="conteudo">
 
-        <!-- ==============================
+        <!-- ==========================================
+             SETA DE VOLTAR
+        =========================================== -->
+
+        <a href="javascript:history.back()" class="btnVoltar">←</a>
+
+
+        <!-- ==========================================
              TOPO
-        =============================== -->
+        =========================================== -->
 
         <header class="topoAgenda">
 
@@ -36,10 +43,11 @@
                 </h1>
 
                 <p>
-                    Organize audiências, reuniões e prazos processuais.
+                    Organize reuniões e prazos processuais.
                 </p>
 
             </div>
+
 
             <a href="cadastro-agenda-adv.html" id="btnNovo">
 
@@ -52,11 +60,14 @@
         </header>
 
 
-        <!-- ==============================
+        <!-- ==========================================
              CARDS
-        =============================== -->
+        =========================================== -->
 
         <section class="cardsAgenda">
+
+
+            <!-- TOTAL DE COMPROMISSOS -->
 
             <div class="cardAgenda">
 
@@ -73,6 +84,8 @@
             </div>
 
 
+            <!-- COMPROMISSOS DE HOJE -->
+
             <div class="cardAgenda">
 
                 <i class="fas fa-clock"></i>
@@ -88,20 +101,7 @@
             </div>
 
 
-            <div class="cardAgenda">
-
-                <i class="fas fa-gavel"></i>
-
-                <div>
-
-                    <h3 id="audiencias">0</h3>
-
-                    <p>Audiências</p>
-
-                </div>
-
-            </div>
-
+            <!-- PRAZOS -->
 
             <div class="cardAgenda">
 
@@ -117,13 +117,13 @@
 
             </div>
 
+
         </section>
 
 
-       
-        <!-- ==============================
+        <!-- ==========================================
              PRÓXIMOS COMPROMISSOS
-        =============================== -->
+        =========================================== -->
 
         <section class="proximos">
 

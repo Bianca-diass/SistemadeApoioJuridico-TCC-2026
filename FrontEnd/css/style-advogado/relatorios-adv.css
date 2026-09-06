@@ -23,6 +23,41 @@
 
 
 /* ==========================================
+   SETA DE VOLTAR
+========================================== */
+
+.btnVoltar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+
+    background: #e8f0ff;
+    color: #294970;
+
+    font-size: 25px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    margin-bottom: 12px;
+
+    transition: 0.3s;
+
+    line-height: 1;
+}
+
+.btnVoltar:hover {
+    background: #c9deff;
+    transform: translateX(-3px);
+}
+
+
+/* ==========================================
    TÍTULO
 ========================================== */
 
@@ -88,6 +123,7 @@
     border: 1px solid #edf0f4;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
+    overflow-x: auto;
 }
 
 
@@ -136,6 +172,10 @@
     border-bottom: 1px solid #edf0f4;
     color: #555;
     font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
 }
 
 
@@ -145,6 +185,17 @@
 
 .tabela tbody tr:last-child td {
     border-bottom: none;
+}
+
+
+/* ==========================================
+   MENSAGEM VAZIA
+========================================== */
+
+.tabela .vazio {
+    text-align: center;
+    color: #999;
+    padding: 20px;
 }
 
 
@@ -179,4 +230,29 @@
         min-width: 600px;
     }
 
+}
+/* ==========================================
+   INDICADOR DE ATUALIZAÇÃO EM TEMPO REAL
+========================================== */
+
+.tabela h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.statusAtualizacao {
+    font-size: 12px;
+    font-weight: 400;
+    color: #999;
+}
+
+.statusAtualizacao.erro {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.statusAtualizacao.pausado {
+    color: #b7791f;
 }

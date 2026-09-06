@@ -23,6 +23,8 @@
 
     <main class="conteudo">
 
+        <a href="javascript:history.back()" class="btnVoltar">←</a>
+
         <header class="topoPagina">
 
             <div>
@@ -260,6 +262,92 @@
             </button>
 
         </div>
+
+    </div>
+
+</div>
+
+
+<!-- MODAL EDITAR DOCUMENTO -->
+
+<div id="modalEditar" class="modal-documento">
+
+    <div class="conteudo-modal cardInformacoes">
+
+        <div class="tituloCard">
+
+            <i class="fa-solid fa-pen"></i>
+
+            <h2>
+                Editar documento
+            </h2>
+
+        </div>
+
+        <form id="formEditarDocumento">
+
+            <input type="hidden" id="editarId">
+
+            <div class="campoEditar">
+                <label for="editarTitulo">Título</label>
+                <input type="text" id="editarTitulo" required>
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarTipo">Tipo</label>
+                <select id="editarTipo" required>
+                    <option value="Contrato">Contrato</option>
+                    <option value="Procuração">Procuração</option>
+                    <option value="RG">RG</option>
+                    <option value="CPF">CPF</option>
+                    <option value="Comprovante">Comprovante</option>
+                    <option value="Petição">Petição</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarCliente">Cliente</label>
+                <input type="text" id="editarCliente">
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarProcesso">Processo</label>
+                <input type="text" id="editarProcesso">
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarData">Data de envio</label>
+                <input type="date" id="editarData">
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarStatus">Status</label>
+                <select id="editarStatus">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Aprovado">Aprovado</option>
+                    <option value="Rejeitado">Rejeitado</option>
+                </select>
+            </div>
+
+            <div class="campoEditar">
+                <label for="editarDescricao">Descrição</label>
+                <textarea id="editarDescricao" rows="4"></textarea>
+            </div>
+
+            <div class="botoesCliente">
+
+                <button type="button" class="botaoVoltar" id="cancelarEdicao">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="botaoVoltar" id="salvarEdicao">
+                    Salvar
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 

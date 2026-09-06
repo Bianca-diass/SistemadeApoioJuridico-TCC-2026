@@ -2,271 +2,410 @@
    CADASTRO CLIENTE - ADVOGADO
 ========================================== */
 
-
-/* CONTEÚDO */
-
-.conteudo{
-
-    width:100%;
-
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 
-/* TOPO CENTRALIZADO */
+/* ==========================================
+   BODY
+========================================== */
 
-.topoPagina{
-
-    text-align:center;
-
-    margin-bottom:25px;
-
+body {
+    background: #F4F6FB;
+    font-family: 'Poppins', sans-serif;
 }
 
 
-.topoPagina h1{
+/* ==========================================
+   CONTEÚDO
+========================================== */
 
-    color:#1E3A8A;
+.conteudo {
+    flex: 1;
 
-    font-size:28px;
+    width: 100%;
+    min-height: 100vh;
 
-    margin:0;
+    padding: 35px;
 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 
-.topoPagina p{
+/* ==========================================
+   SETA DE VOLTAR
+   IGUAL À DE RELATÓRIOS
+========================================== */
 
-    color:#6B7280;
+.btnVoltar {
+    position: relative;
 
-    font-size:14px;
+    display: inline-flex;
 
-    margin-top:8px;
+    align-items: center;
+    justify-content: center;
 
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 15px;
+
+    background: #294970;
+
+    color: transparent;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    font-size: 0;
+
+    transition: 0.3s;
+
+    align-self: flex-start;
 }
 
 
-/* FORMULÁRIO CENTRALIZADO */
+/* ==========================================
+   LINHA DA SETA
+========================================== */
 
-.cardFormulario{
+.btnVoltar::before {
+    content: "";
 
-    background:#fff;
+    position: absolute;
 
-    padding:25px;
+    width: 17px;
+    height: 1.5px;
 
-    border-radius:12px;
+    background: #ffffff;
 
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    left: 13px;
+    top: 20px;
 
-    width:100%;
-
-    max-width:750px;
-
-    margin:0 auto;
-
+    border-radius: 2px;
 }
 
 
-/* CAMPOS */
+/* ==========================================
+   PONTA DA SETA
+========================================== */
 
-.grupo{
+.btnVoltar::after {
+    content: "";
 
-    display:flex;
+    position: absolute;
 
-    flex-direction:column;
+    width: 8px;
+    height: 8px;
 
-    margin-bottom:15px;
+    border-left: 1.5px solid #ffffff;
+    border-bottom: 1.5px solid #ffffff;
 
+    left: 12px;
+    top: 16px;
+
+    transform: rotate(45deg);
 }
 
 
-.grupo label{
+/* ==========================================
+   HOVER
+========================================== */
 
-    font-size:14px;
+.btnVoltar:hover {
+    background: #1F3858;
 
-    font-weight:600;
-
-    color:#374151;
-
-    margin-bottom:6px;
-
+    transform: translateX(-3px);
 }
 
+
+/* ==========================================
+   TOPO
+========================================== */
+
+.topoPagina {
+    margin-bottom: 30px;
+
+    text-align: center;
+}
+
+
+.topoPagina h1 {
+    font-size: 35px;
+
+    color: #243b53;
+}
+
+
+.topoPagina p {
+    color: #6b7280;
+
+    margin-top: 8px;
+
+    font-size: 17px;
+}
+
+
+/* ==========================================
+   FORMULÁRIO
+========================================== */
+
+.cardFormulario {
+    background: white;
+
+    border-radius: 20px;
+
+    padding: 35px;
+
+    width: 100%;
+
+    max-width: 700px;
+
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.grupo {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+
+.grupo label {
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #374151;
+}
+
+
+/* ==========================================
+   INPUTS E SELECTS
+========================================== */
 
 .grupo input,
 .grupo select,
-.grupo textarea{
+.grupo textarea {
+    border: 1px solid #e2e8f0;
 
-    padding:10px;
+    border-radius: 12px;
 
-    border:1px solid #D1D5DB;
+    padding: 12px 15px;
 
-    border-radius:8px;
+    font-size: 15px;
 
-    font-size:14px;
+    font-family: 'Poppins', sans-serif;
 
-    outline:none;
+    color: #243b53;
 
-    background:#fff;
+    outline: none;
 
-    font-family:'Poppins',sans-serif;
+    transition: 0.2s;
 
+    background: #fbfcfe;
 }
 
 
 .grupo input:focus,
 .grupo select:focus,
-.grupo textarea:focus{
+.grupo textarea:focus {
+    border-color: #294970;
 
-    border-color:#2563EB;
+    background: white;
 
-    box-shadow:0 0 0 3px rgba(37,99,235,.15);
-
+    box-shadow:
+        0 0 0 3px rgba(41, 73, 112, 0.12);
 }
 
 
-.grupo select{
-
-    cursor:pointer;
-
+.grupo input::placeholder {
+    color: #9CA3AF;
 }
 
 
-.grupo select:disabled{
+/* ==========================================
+   SELECT DESABILITADO
+========================================== */
 
-    background:#F3F4F6;
+.grupo select:disabled {
+    background: #f1f3f7;
 
-    color:#9CA3AF;
+    color: #9CA3AF;
 
-    cursor:not-allowed;
-
+    cursor: not-allowed;
 }
 
 
-.grupo textarea{
+/* ==========================================
+   BOTÕES
+========================================== */
 
-    min-height:90px;
+.botoes {
+    display: flex;
 
-    resize:vertical;
+    gap: 15px;
 
+    margin-top: 10px;
 }
 
 
-/* DUAS COLUNAS (usado para Estado/Cidade, por exemplo) */
+/* ==========================================
+   SALVAR
+========================================== */
 
-.duasColunas{
+.salvar {
+    display: flex;
 
-    display:grid;
+    align-items: center;
 
-    grid-template-columns:repeat(2,1fr);
+    justify-content: center;
 
-    gap:15px;
+    gap: 10px;
 
+    background: #294970;
+
+    color: white;
+
+    padding: 14px 22px;
+
+    border-radius: 12px;
+
+    border: none;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    font-family: 'Poppins', sans-serif;
+
+    transition: 0.3s;
+
+    flex: 1;
 }
 
 
-/* BOTÕES */
+.salvar:hover {
+    background: #1F3858;
 
-.botoes{
+    transform: translateY(-2px);
 
-    display:flex;
-
-    justify-content:center;
-
-    gap:15px;
-
-    margin-top:20px;
-
+    box-shadow:
+        0 8px 18px rgba(41, 73, 112, 0.25);
 }
 
 
-.salvar{
+/* ==========================================
+   LIMPAR
+========================================== */
 
-    background:#16A34A;
+.cancelar {
+    background: #f1f3f7;
 
-    color:white;
+    color: #374151;
 
-    border:none;
+    padding: 14px 22px;
 
-    padding:10px 25px;
+    border-radius: 12px;
 
-    border-radius:8px;
+    border: none;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    font-size:14px;
+    font-size: 16px;
 
-    display:flex;
+    font-weight: 600;
 
-    align-items:center;
+    font-family: 'Poppins', sans-serif;
 
-    gap:8px;
-
+    transition: 0.2s;
 }
 
 
-.salvar:hover{
-
-    background:#15803D;
-
+.cancelar:hover {
+    background: #e5e7eb;
 }
 
 
-.cancelar{
+/* ==========================================
+   RESPONSIVO
+========================================== */
 
-    background:#DC2626;
+@media (max-width: 768px) {
 
-    color:white;
-
-    border:none;
-
-    padding:10px 25px;
-
-    border-radius:8px;
-
-    cursor:pointer;
-
-    font-size:14px;
-
-}
-
-
-.cancelar:hover{
-
-    background:#B91C1C;
-
-}
-
-
-/* RESPONSIVO */
-
-@media(max-width:768px){
-
-    .duasColunas{
-
-        grid-template-columns:1fr;
-
+    .conteudo {
+        padding: 20px;
     }
 
 
-    .cardFormulario{
+    .cardFormulario {
+        padding: 22px;
 
-        padding:18px;
-
+        max-width: 100%;
     }
 
 
-    .botoes{
-
-        flex-direction:column;
-
+    .topoPagina h1 {
+        font-size: 28px;
     }
 
 
-    .salvar,
-    .cancelar{
+    .botoes {
+        flex-direction: column;
+    }
 
-        width:100%;
 
+    .btnVoltar {
+        margin-bottom: 12px;
+    }
+
+}
+
+
+/* ==========================================
+   CELULAR PEQUENO
+========================================== */
+
+@media (max-width: 480px) {
+
+    .conteudo {
+        padding: 15px;
+    }
+
+
+    .topoPagina h1 {
+        font-size: 25px;
+    }
+
+
+    .topoPagina p {
+        font-size: 14px;
+    }
+
+
+    .cardFormulario {
+        padding: 18px;
     }
 
 }

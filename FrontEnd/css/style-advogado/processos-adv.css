@@ -1,6 +1,5 @@
 /* ==========================================
    PROCESSOS - ADVOGADO
-   PADRÃO VISUAL IGUAL AO DE CLIENTES
 ========================================== */
 
 
@@ -31,7 +30,100 @@ body {
 
 .pagina-processos {
     flex: 1;
+    width: 100%;
+    min-height: 100vh;
     padding: 35px;
+}
+
+
+/* ==========================================
+   SETA DE VOLTAR
+========================================== */
+
+.btnVoltar {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 15px;
+
+    background: #294970;
+    color: transparent;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    font-size: 0;
+
+    transition: 0.3s;
+}
+
+
+/* Esconde qualquer ícone ou texto dentro do botão */
+
+.btnVoltar i,
+.btnVoltar span {
+    display: none;
+}
+
+
+/* ==========================================
+   LINHA DA SETA
+========================================== */
+
+.btnVoltar::before {
+    content: "";
+
+    position: absolute;
+
+    width: 17px;
+    height: 1.5px;
+
+    background: #ffffff;
+
+    left: 13px;
+    top: 20px;
+
+    border-radius: 2px;
+}
+
+
+/* ==========================================
+   PONTA DA SETA
+========================================== */
+
+.btnVoltar::after {
+    content: "";
+
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    border-left: 1.5px solid #ffffff;
+    border-bottom: 1.5px solid #ffffff;
+
+    left: 12px;
+    top: 16px;
+
+    transform: rotate(45deg);
+}
+
+
+/* ==========================================
+   HOVER DA SETA
+========================================== */
+
+.btnVoltar:hover {
+    background: #1F3858;
+
+    transform: translateX(-3px);
 }
 
 
@@ -112,8 +204,7 @@ body {
 
     transform: translateY(-2px);
 
-    box-shadow:
-        0 8px 18px rgba(41, 73, 112, 0.25);
+    box-shadow: 0 8px 18px rgba(41, 73, 112, 0.25);
 }
 
 
@@ -145,8 +236,7 @@ body {
 
     gap: 20px;
 
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, .08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
 
     transition: 0.3s;
 }
@@ -155,8 +245,7 @@ body {
 .card:hover {
     transform: translateY(-3px);
 
-    box-shadow:
-        0 12px 30px rgba(0, 0, 0, .10);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .10);
 }
 
 
@@ -186,7 +275,6 @@ body {
 
 .icone {
     width: 55px;
-
     height: 55px;
 
     min-width: 55px;
@@ -196,7 +284,6 @@ body {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     font-size: 24px;
@@ -209,7 +296,6 @@ body {
 
 .azul {
     background: #e8f0ff;
-
     color: #294970;
 }
 
@@ -220,7 +306,6 @@ body {
 
 .vermelho {
     background: #ffe8e8;
-
     color: #d63031;
 }
 
@@ -231,7 +316,6 @@ body {
 
 .amarelo {
     background: #fff5d6;
-
     color: #d68b00;
 }
 
@@ -242,7 +326,6 @@ body {
 
 .verde {
     background: #dcfce7;
-
     color: #15803d;
 }
 
@@ -266,8 +349,7 @@ body {
 
     margin-bottom: 25px;
 
-    box-shadow:
-        0 5px 15px rgba(0, 0, 0, .06);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .06);
 }
 
 
@@ -309,8 +391,7 @@ body {
 
     overflow: auto;
 
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, .08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
 }
 
 
@@ -349,7 +430,7 @@ body {
 
 
 /* ==========================================
-   ARREDONDAMENTO DO CABEÇALHO
+   ARREDONDAMENTO
 ========================================== */
 
 .tabela-container th:first-child {
@@ -450,7 +531,6 @@ body {
     border: none;
 
     width: 35px;
-
     height: 35px;
 
     border-radius: 10px;
@@ -466,7 +546,6 @@ body {
     display: inline-flex;
 
     align-items: center;
-
     justify-content: center;
 }
 
@@ -537,7 +616,6 @@ body {
     display: inline-flex;
 
     align-items: center;
-
     justify-content: center;
 
     padding: 6px 16px;
@@ -564,7 +642,6 @@ body {
     display: inline-flex;
 
     align-items: center;
-
     justify-content: center;
 
     padding: 6px 16px;
@@ -591,7 +668,6 @@ body {
     display: inline-flex;
 
     align-items: center;
-
     justify-content: center;
 
     padding: 6px 16px;
@@ -650,11 +726,9 @@ body {
         padding: 25px;
     }
 
-
     .cards-dashboard {
         grid-template-columns: 1fr;
     }
-
 
     .cabecalho-processos {
         flex-direction: column;
@@ -664,11 +738,9 @@ body {
         gap: 20px;
     }
 
-
     .tabela-container {
         overflow-x: auto;
     }
-
 
     .tabela-container table {
         min-width: 1100px;
@@ -687,16 +759,13 @@ body {
         padding: 20px;
     }
 
-
     .cabecalho-processos h1 {
         font-size: 30px;
     }
 
-
     .cabecalho-processos p {
         font-size: 15px;
     }
-
 
     .botao-novo {
         width: 100%;
@@ -704,11 +773,9 @@ body {
         font-size: 17px;
     }
 
-
     .cards-dashboard {
         gap: 15px;
     }
-
 
     .card {
         padding: 20px;
@@ -716,16 +783,13 @@ body {
         width: 100%;
     }
 
-
     .barra-pesquisa {
         justify-content: center;
     }
 
-
     .barra-pesquisa input {
         max-width: 100%;
     }
-
 
     .tabela-container {
         padding: 12px;
@@ -746,11 +810,9 @@ body {
         padding: 15px;
     }
 
-
     .cabecalho-processos h1 {
         font-size: 26px;
     }
-
 
     .botao-novo {
         padding: 12px 18px;
@@ -758,11 +820,9 @@ body {
         font-size: 16px;
     }
 
-
     .cards-dashboard {
         gap: 12px;
     }
-
 
     .card {
         padding: 18px;
@@ -770,10 +830,8 @@ body {
         width: 100%;
     }
 
-
     .icone {
         width: 55px;
-
         height: 55px;
 
         min-width: 55px;
@@ -781,11 +839,9 @@ body {
         font-size: 22px;
     }
 
-
     .card h2 {
         font-size: 28px;
     }
-
 
     .tabela-container {
         padding: 8px;

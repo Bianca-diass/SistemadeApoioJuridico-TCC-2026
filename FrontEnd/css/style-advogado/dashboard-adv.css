@@ -163,6 +163,8 @@ body {
     margin-bottom: 25px;
 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+
+    overflow-x: auto;
 }
 
 .painel h2 {
@@ -179,6 +181,7 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 table th {
@@ -202,6 +205,16 @@ table td {
     border-bottom: 1px solid #e5e7eb;
     color: #555;
     font-size: 14px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Colunas que precisam de mais espaço para o texto (podem quebrar linha) */
+table td.colTexto {
+    white-space: normal;
+    word-break: break-word;
 }
 
 table tbody tr:last-child td {
@@ -241,13 +254,6 @@ ul li:last-child {
 /* ==========================================
    AGENDA
 ========================================== */
-
-#listaAgenda li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    line-height: 1.6;
-}
 
 #listaAgenda strong {
     color: #294970;
@@ -352,4 +358,129 @@ ul li:last-child {
         display: block;
     }
 
+}
+/* ==========================================
+   INDICADOR DE ATUALIZAÇÃO EM TEMPO REAL
+========================================== */
+
+.painel h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.statusAtualizacao {
+    display: inline-block;
+    margin-left: 12px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #6b7280;
+    vertical-align: middle;
+}
+
+.statusAtualizacao.erro {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.statusAtualizacao.pausado {
+    color: #b7791f;
+}
+
+/* ==========================================
+   COMPROMISSOS DETALHADOS (DASHBOARD)
+========================================== */
+
+#listaAgenda {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.itemCompromissoDash {
+    display: flex;
+    gap: 18px;
+
+    background: #f4f6fb;
+    border-left: 4px solid #294970;
+    border-radius: 10px;
+    padding: 16px 18px;
+
+    margin-bottom: 0;
+}
+
+.horaCompromissoDash {
+    flex-shrink: 0;
+    align-self: flex-start;
+
+    background: #294970;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+
+    padding: 8px 12px;
+    border-radius: 8px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.infoCompromissoDash {
+    flex: 1;
+    min-width: 0;
+}
+
+.infoCompromissoDash h3 {
+    color: #294970;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.infoCompromissoDash p {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 4px;
+    line-height: 1.5;
+
+    word-break: break-word;
+}
+
+.infoCompromissoDash p:last-child {
+    margin-bottom: 0;
+}
+
+.infoCompromissoDash strong {
+    color: #294970;
+}
+
+@media (max-width: 650px) {
+
+    .itemCompromissoDash {
+        flex-direction: column;
+    }
+
+}
+
+/* ==========================================
+   NOTIFICAÇÕES AUTOMÁTICAS (RF007)
+========================================== */
+
+#listaNotificacoes li.notificacao {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+#listaNotificacoes li.notificacao:hover {
+    background: #e8f0ff;
+}
+
+#listaNotificacoes li.notificacao.naoLida {
+    border-left-color: #d97706;
+    font-weight: 600;
+}
+
+#listaNotificacoes li.notificacao:not(.naoLida) {
+    opacity: 0.65;
+    font-weight: 400;
 }

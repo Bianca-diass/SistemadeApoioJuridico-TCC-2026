@@ -1,53 +1,18 @@
-import { getToken } from "../../services/authService.js";
-
-const API = "http://localhost:3000/agenda";
-
-
-// ==========================================
-// AUTENTICAÇÃO
-// ==========================================
-
-function authHeaders() {
-
-    const token = getToken();
-
-    if (!token) {
-
-        throw new Error(
-            "Usuário não está autenticado. Faça login novamente."
-        );
-
-    }
-
-    return {
-
-        "Content-Type": "application/json",
-
-        "Authorization": `Bearer ${token}`
-
-    };
-
-}
+import {
+    listarCompromissos,
+    editarCompromisso,
+    excluirCompromisso
+} from "../../services/agendaService.js";
 
 
 // ==========================================
 // ELEMENTOS
 // ==========================================
 
-const listaProximos =
-    document.getElementById("listaProximos");
-
-const totalCompromissos =
-    document.getElementById("totalCompromissos");
-
-const compromissosHoje =
-    document.getElementById("compromissosHoje");
-
-const audiencias =
-    document.getElementById("audiencias");
-
-const prazos =
-    document.getElementById("prazos");
+const listaProximos = document.getElementById("listaProximos");
+const totalCompromissos = document.getElementById("totalCompromissos");
+const compromissosHoje = document.getElementById("compromissosHoje");
+const prazos = document.getElementById("prazos");
 
 
 // ==========================================
@@ -58,53 +23,22 @@ async function carregarCompromissos() {
 
     try {
 
-        const response = await fetch(API, {
-
-            method: "GET",
-
-            headers: authHeaders()
-
-        });
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Erro ao carregar compromissos."
-            );
-
-        }
-
-
-        const compromissos =
-            await response.json();
-
+        const compromissos = await listarCompromissos();
 
         atualizarCards(compromissos);
-
         mostrarProximos(compromissos);
-
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Erro:", error);
 
         listaProximos.innerHTML = `
-
             <div class="semCompromissos">
-
                 <i class="fas fa-circle-exclamation"></i>
-
-                <p>
-                    Não foi possível carregar os compromissos.
-                </p>
-
+                <p>Não foi possível carregar os compromissos.</p>
             </div>
-
         `;
-
     }
-
 }
 
 
@@ -114,164 +48,198 @@ async function carregarCompromissos() {
 
 function atualizarCards(compromissos) {
 
-    const ativos =
-        compromissos.filter(
-            compromisso => !compromisso.concluido
-        );
+    totalCompromissos.textContent = compromissos.length;
 
+    const hoje = new Date().toISOString().split("T")[0];
 
-    totalCompromissos.textContent =
-        compromissos.length;
+    const quantidadeHoje = compromissos.filter(compromisso =>
+        compromisso.data === hoje &&
+        compromisso.status !== "Concluído"
+    ).length;
 
+    compromissosHoje.textContent = quantidadeHoje;
 
-    const hoje =
-        new Date().toISOString().split("T")[0];
+    const quantidadePrazos = compromissos.filter(compromisso =>
+        compromisso.tipo?.toLowerCase() === "prazo" &&
+        compromisso.status !== "Concluído"
+    ).length;
 
-
-    const hojeQuantidade =
-        ativos.filter(
-            compromisso =>
-                compromisso.data === hoje
-        ).length;
-
-
-    compromissosHoje.textContent =
-        hojeQuantidade;
-
-
-    audiencias.textContent =
-        ativos.filter(
-            compromisso =>
-                compromisso.tipo?.toLowerCase() === "audiência"
-        ).length;
-
-
-    prazos.textContent =
-        ativos.filter(
-            compromisso =>
-                compromisso.tipo?.toLowerCase() === "prazo"
-        ).length;
-
+    prazos.textContent = quantidadePrazos;
 }
 
 
 // ==========================================
-// PRÓXIMOS COMPROMISSOS
+// MOSTRAR COMPROMISSOS
 // ==========================================
 
 function mostrarProximos(compromissos) {
 
     listaProximos.innerHTML = "";
 
-
     if (!compromissos || compromissos.length === 0) {
 
         listaProximos.innerHTML = `
-
             <div class="semCompromissos">
-
                 <i class="fas fa-calendar-xmark"></i>
-
-                <p>
-                    Nenhum compromisso cadastrado.
-                </p>
-
+                <p>Nenhum compromisso cadastrado.</p>
             </div>
-
         `;
 
         return;
-
     }
 
 
-    // Ordena pela data e horário
+    // Ordenar por data e horário
+    const ordenados = [...compromissos].sort((a, b) => {
 
-    const ordenados =
-        [...compromissos].sort((a, b) => {
+        const dataA = new Date(
+            `${a.data}T${a.horario || "00:00"}`
+        );
 
-            const dataA =
-                new Date(`${a.data}T${a.horario}`);
+        const dataB = new Date(
+            `${b.data}T${b.horario || "00:00"}`
+        );
 
-            const dataB =
-                new Date(`${b.data}T${b.horario}`);
-
-            return dataA - dataB;
-
-        });
+        return dataA - dataB;
+    });
 
 
     ordenados.forEach(compromisso => {
 
-        const item =
-            document.createElement("div");
+        const item = document.createElement("div");
+
+        item.className = "itemCompromisso";
 
 
-        item.className =
-            "itemCompromisso";
-
-
-        if (compromisso.concluido) {
-
+        if (
+            compromisso.status === "Concluído" ||
+            compromisso.concluido
+        ) {
             item.classList.add("concluido");
-
         }
 
 
-        const dataFormatada =
-            formatarData(compromisso.data);
+        // Tipo
+        const tipo = compromisso.tipo
+            ? compromisso.tipo
+            : "";
 
 
+        // HTML do compromisso
         item.innerHTML = `
 
-            <button
-                class="checkCompromisso"
-                title="Marcar como concluído"
-                data-id="${compromisso.id}"
-            >
-
-                <i class="fas ${
-                    compromisso.concluido
-                        ? "fa-check"
-                        : "fa-check"
-                }"></i>
-
-            </button>
-
-
-            <span class="horaCompromisso">
-
+            <div class="horaCompromisso">
                 ${compromisso.horario || "--:--"}
-
-            </span>
+            </div>
 
 
             <div class="infoCompromisso">
 
                 <h3>
-                    ${compromisso.titulo || "Compromisso"}
+                    ${compromisso.titulo || "Sem título"}
                 </h3>
 
 
+                ${
+                    compromisso.descricao
+                    ? `
+                        <p>
+                            <strong>Descrição:</strong>
+                            ${compromisso.descricao}
+                        </p>
+                    `
+                    : ""
+                }
+
+
+                ${
+                    tipo
+                    ? `
+                        <p>
+                            <strong>Tipo:</strong>
+                            ${tipo}
+                        </p>
+                    `
+                    : ""
+                }
+
+
                 <p>
-                    Cliente:
+                    <strong>Cliente:</strong>
                     ${compromisso.cliente || "Não informado"}
                 </p>
 
 
-                <small>
-                    <i class="fas fa-calendar"></i>
-                    ${dataFormatada}
-                </small>
+                <p>
+                    <strong>Processo:</strong>
+                    ${compromisso.processo || "Não informado"}
+                </p>
+
+
+                <p>
+                    <strong>Local:</strong>
+                    ${compromisso.local || "Não informado"}
+                </p>
+
+
+                <p>
+                    <strong>Data:</strong>
+                    ${formatarData(compromisso.data)}
+                </p>
+
+
+                ${
+                    compromisso.dataPrazo
+                    ? `
+                        <p>
+                            <strong>Data do prazo:</strong>
+                            ${formatarData(compromisso.dataPrazo)}
+                        </p>
+                    `
+                    : ""
+                }
+
+
+                ${
+                    compromisso.horaPrazo
+                    ? `
+                        <p>
+                            <strong>Horário limite:</strong>
+                            ${compromisso.horaPrazo}
+                        </p>
+                    `
+                    : ""
+                }
+
+
+                <p>
+                    <strong>Status:</strong>
+                    ${compromisso.status || "Agendado"}
+                </p>
 
             </div>
 
 
-            <span class="tipoCompromisso">
+            <div class="acoesCompromisso">
 
-                ${compromisso.tipo || "Outro"}
+                <button
+                    class="btnEditar"
+                    data-id="${compromisso.id}"
+                >
+                    <i class="fas fa-pen"></i>
+                    Editar
+                </button>
 
-            </span>
+
+                <button
+                    class="btnExcluir"
+                    data-id="${compromisso.id}"
+                >
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+
+            </div>
 
         `;
 
@@ -281,86 +249,76 @@ function mostrarProximos(compromissos) {
     });
 
 
-    adicionarEventosChecklist();
+    adicionarEventos();
 
 }
 
 
 // ==========================================
-// CHECKLIST
+// BOTÕES EDITAR E EXCLUIR
 // ==========================================
 
-function adicionarEventosChecklist() {
+function adicionarEventos() {
 
     document
-        .querySelectorAll(".checkCompromisso")
+        .querySelectorAll(".btnEditar")
         .forEach(botao => {
 
+            botao.addEventListener("click", () => {
 
-            botao.addEventListener(
-                "click",
-                async () => {
+                const id = botao.dataset.id;
 
-                    const id =
-                        botao.dataset.id;
-
-
-                    await concluirCompromisso(id);
-
-                }
-
-            );
-
-        });
-
-}
-
-
-// ==========================================
-// CONCLUIR COMPROMISSO
-// ==========================================
-
-async function concluirCompromisso(id) {
-
-    try {
-
-        const response =
-            await fetch(`${API}/${id}`, {
-
-                method: "PATCH",
-
-                headers: authHeaders(),
-
-                body: JSON.stringify({
-
-                    concluido: true
-
-                })
+                window.location.href =
+                    `cadastro-agenda-adv.html?id=${id}`;
 
             });
 
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Erro ao concluir compromisso."
-            );
-
-        }
+        });
 
 
-        carregarCompromissos();
+    document
+        .querySelectorAll(".btnExcluir")
+        .forEach(botao => {
+
+            botao.addEventListener("click", async () => {
+
+                const id = botao.dataset.id;
 
 
-    } catch (error) {
+                const confirmar = confirm(
+                    "Deseja realmente excluir este compromisso?"
+                );
 
-        console.error(error);
 
-        alert(
-            "Não foi possível concluir o compromisso."
-        );
+                if (!confirmar) {
+                    return;
+                }
 
-    }
+
+                try {
+
+                    await excluirCompromisso(id);
+
+                    alert(
+                        "Compromisso excluído com sucesso!"
+                    );
+
+                    carregarCompromissos();
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        error.message ||
+                        "Erro ao excluir compromisso."
+                    );
+
+                }
+
+            });
+
+        });
 
 }
 
@@ -372,26 +330,22 @@ async function concluirCompromisso(id) {
 function formatarData(data) {
 
     if (!data) {
-
         return "-";
-
     }
 
-
-    const partes =
-        data.split("-");
-
+    const partes = data.split("-");
 
     if (partes.length !== 3) {
-
         return data;
-
     }
 
-
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
-
 }
+
+
+// ==========================================
+// INICIAR
+// ==========================================
 
 document.addEventListener(
     "DOMContentLoaded",

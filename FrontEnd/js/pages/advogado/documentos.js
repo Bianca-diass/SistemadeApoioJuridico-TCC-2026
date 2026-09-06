@@ -16,23 +16,23 @@ const modal = document.getElementById("modalDocumento");
 
 const fecharModal = document.getElementById("fecharModal");
 
+const modalEditar = document.getElementById("modalEditar");
+
+const formEditarDocumento = document.getElementById("formEditarDocumento");
+
+const cancelarEdicao = document.getElementById("cancelarEdicao");
+
 
 // ==========================================
 // FORMATAR DATA (yyyy-mm-dd -> dd/mm/yyyy)
 // ==========================================
 
 function formatarData(data) {
-
     if (!data) return "-";
-
     const partes = data.split("-");
-
     if (partes.length !== 3) return data;
-
     const [ano, mes, dia] = partes;
-
     return `${dia}/${mes}/${ano}`;
-
 }
 
 
@@ -41,23 +41,16 @@ function formatarData(data) {
 // ==========================================
 
 function classeStatus(status) {
-
     switch (status) {
-
         case "Pendente":
             return "pendente";
-
         case "Aprovado":
             return "aprovado";
-
         case "Rejeitado":
             return "rejeitado";
-
         default:
             return "semstatus";
-
     }
-
 }
 
 
@@ -67,86 +60,57 @@ function classeStatus(status) {
 
 function renderizarDocumentos(documentos) {
 
-    tbody.innerHTML = "";
-
-    documentos.forEach(doc => {
-
-        tbody.innerHTML += `
-
+    if (!documentos || documentos.length === 0) {
+        tbody.innerHTML = `
             <tr>
-
-                <td>
-                    <i class="fa-solid fa-file"></i>
-                    ${doc.titulo || "Sem nome"}
+                <td colspan="7" style="text-align:center; padding:20px; color:#999;">
+                    Nenhum documento encontrado.
                 </td>
-
-                <td>
-                    ${doc.tipo || "-"}
-                </td>
-
-                <td>
-                    ${doc.cliente || "-"}
-                </td>
-
-                <td>
-                    ${doc.processo || "<span class=\"texto-secundario\">Não informado</span>"}
-                </td>
-
-                <td>
-                    ${formatarData(doc.dataEnvio)}
-                </td>
-
-                <td>
-                    <span class="status-badge ${classeStatus(doc.status)}">
-                        ${doc.status || "Sem status"}
-                    </span>
-                </td>
-
-                <td>
-
-                    <div class="acoes-documento">
-
-                        <button
-                            class="btn-acao btn-visualizar"
-                            title="Visualizar"
-                            data-id="${doc.id}">
-
-                            <i class="fa-solid fa-eye"></i>
-
-                        </button>
-
-
-                        <button
-                            class="btn-acao btn-renomear"
-                            title="Renomear"
-                            data-id="${doc.id}">
-
-                            <i class="fa-solid fa-pen"></i>
-
-                        </button>
-
-
-                        <button
-                            class="btn-acao btn-excluir"
-                            title="Excluir"
-                            data-id="${doc.id}">
-
-                            <i class="fa-solid fa-trash"></i>
-
-                        </button>
-
-                    </div>
-
-                </td>
-
             </tr>
-
         `;
+        return;
+    }
 
-    });
+    tbody.innerHTML = documentos.map(doc => `
+        <tr>
+            <td>
+                <i class="fa-solid fa-file"></i>
+                ${doc.titulo || "Sem nome"}
+            </td>
 
+            <td>${doc.tipo || "-"}</td>
 
-    adicionarEventos();
+            <td>${doc.cliente || "-"}</td>
+
+            <td>${doc.processo || "<span class=\"texto-secundario\">Não informado</span>"}</td>
+
+            <td>${formatarData(doc.dataEnvio)}</td>
+
+            <td>
+                <span class="status-badge ${classeStatus(doc.status)}">
+                    ${doc.status || "Sem status"}
+                </span>
+            </td>
+
+            <td>
+                <div class="acoes-documento">
+
+                    <button class="btn-acao btn-visualizar" title="Visualizar" data-id="${doc.id}" type="button">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+
+                    <button class="btn-acao btn-renomear" title="Editar" data-id="${doc.id}" type="button">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+
+                    <button class="btn-acao btn-excluir" title="Excluir" data-id="${doc.id}" type="button">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
+                </div>
+            </td>
+        </tr>
+    `).join("");
 
 }
 
@@ -160,14 +124,10 @@ function atualizarCards(documentos) {
     totalDocumentos.textContent = documentos.length;
 
     totalPendentes.textContent =
-        documentos.filter(doc =>
-            doc.status === "Pendente"
-        ).length;
+        documentos.filter(doc => doc.status === "Pendente").length;
 
     totalAprovados.textContent =
-        documentos.filter(doc =>
-            doc.status === "Aprovado"
-        ).length;
+        documentos.filter(doc => doc.status === "Aprovado").length;
 
 }
 
@@ -186,24 +146,10 @@ function atualizarFiltroClientes(documentos) {
         )
     ];
 
-    filtroCliente.innerHTML = `
-
-        <option value="">
-            Todos os clientes
-        </option>
-
-    `;
+    filtroCliente.innerHTML = `<option value="">Todos os clientes</option>`;
 
     clientes.forEach(cliente => {
-
-        filtroCliente.innerHTML += `
-
-            <option value="${cliente}">
-                ${cliente}
-            </option>
-
-        `;
-
+        filtroCliente.innerHTML += `<option value="${cliente}">${cliente}</option>`;
     });
 
 }
@@ -215,50 +161,23 @@ function atualizarFiltroClientes(documentos) {
 
 function filtrarDocumentos() {
 
-    const texto =
-        pesquisa.value.toLowerCase();
+    const texto = pesquisa.value.toLowerCase();
+    const clienteSelecionado = filtroCliente.value.toLowerCase();
 
-    const clienteSelecionado =
-        filtroCliente.value.toLowerCase();
+    const documentosFiltrados = documentoController.documentos.filter(doc => {
 
+        const correspondeTexto =
+            (doc.titulo || "").toLowerCase().includes(texto) ||
+            (doc.tipo || "").toLowerCase().includes(texto) ||
+            (doc.cliente || "").toLowerCase().includes(texto);
 
-    const documentosFiltrados =
-        documentoController.documentos.filter(doc => {
+        const correspondeCliente =
+            !clienteSelecionado ||
+            (doc.cliente || "").toLowerCase() === clienteSelecionado;
 
-            const correspondeTexto =
+        return correspondeTexto && correspondeCliente;
 
-                (doc.titulo || "")
-                    .toLowerCase()
-                    .includes(texto)
-
-                ||
-
-                (doc.tipo || "")
-                    .toLowerCase()
-                    .includes(texto)
-
-                ||
-
-                (doc.cliente || "")
-                    .toLowerCase()
-                    .includes(texto);
-
-
-            const correspondeCliente =
-
-                !clienteSelecionado
-
-                ||
-
-                (doc.cliente || "")
-                    .toLowerCase() === clienteSelecionado;
-
-
-            return correspondeTexto &&
-                   correspondeCliente;
-
-        });
-
+    });
 
     renderizarDocumentos(documentosFiltrados);
 
@@ -266,254 +185,194 @@ function filtrarDocumentos() {
 
 
 // ==========================================
-// BOTÕES
+// ABRIR MODAL DE EDIÇÃO
 // ==========================================
 
-function adicionarEventos() {
-
-
-    // ======================================
-    // VISUALIZAR
-    // ======================================
-
-    document
-        .querySelectorAll(".btn-visualizar")
-        .forEach(botao => {
-
-            botao.addEventListener("click", () => {
-
-                const id = botao.dataset.id;
-
-                const documento =
-                    documentoController.documentos
-                    .find(doc => doc.id === id);
-
-                if (!documento) return;
-
-
-                document.getElementById("modalTitulo")
-                    .textContent =
-                    documento.titulo || "-";
-
-
-                document.getElementById("modalTipo")
-                    .textContent =
-                    documento.tipo || "-";
-
-
-                document.getElementById("modalCliente")
-                    .textContent =
-                    documento.cliente || "-";
-
-
-                document.getElementById("modalProcesso")
-                    .innerHTML =
-                    documento.processo || "<span class=\"texto-secundario\">Não informado</span>";
-
-
-                document.getElementById("modalData")
-                    .textContent =
-                    formatarData(documento.dataEnvio);
-
-
-                document.getElementById("modalStatus")
-                    .innerHTML =
-                    `<span class="status-badge ${classeStatus(documento.status)}">${documento.status || "Sem status"}</span>`;
-
-
-                document.getElementById("modalDescricao")
-                    .innerHTML =
-                    documento.descricao || "<span class=\"texto-secundario\">Não informado</span>";
-
-
-                modal.classList.add("ativo");
-
-            });
-
-        });
-
-
-    // ======================================
-    // RENOMEAR
-    // ======================================
-
-    document
-        .querySelectorAll(".btn-renomear")
-        .forEach(botao => {
-
-            botao.addEventListener("click", async () => {
-
-                const id = botao.dataset.id;
-
-                const documento =
-                    documentoController.documentos
-                    .find(doc => doc.id === id);
-
-                if (!documento) return;
-
-
-                const novoNome =
-                    prompt(
-                        "Digite o novo nome do documento:",
-                        documento.titulo
-                    );
-
-
-                if (!novoNome) return;
-
-
-                const nomeLimpo =
-                    novoNome.trim();
-
-
-                if (!nomeLimpo) return;
-
-
-                try {
-
-                    await documentoController.editarDocumento(
-                        id,
-                        {
-                            titulo: nomeLimpo
-                        }
-                    );
-
-
-                    await documentoController.carregar();
-
-
-                    alert(
-                        "Documento renomeado com sucesso!"
-                    );
-
-
-                } catch (erro) {
-
-                    alert(
-                        "Erro ao renomear documento: " +
-                        erro.message
-                    );
-
-                }
-
-            });
-
-        });
-
-
-    // ======================================
-    // EXCLUIR
-    // ======================================
-
-    document
-        .querySelectorAll(".btn-excluir")
-        .forEach(botao => {
-
-            botao.addEventListener("click", async () => {
-
-                const id = botao.dataset.id;
-
-
-                if (
-                    !confirm(
-                        "Deseja excluir este documento?"
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                try {
-
-                    await documentoController.removerDocumento(id);
-
-                    alert(
-                        "Documento excluído com sucesso!"
-                    );
-
-                } catch (erro) {
-
-                    alert(
-                        "Erro ao excluir documento: " +
-                        erro.message
-                    );
-
-                }
-
-            });
-
-        });
+function abrirEdicao(documento) {
+
+    document.getElementById("editarId").value = documento.id;
+    document.getElementById("editarTitulo").value = documento.titulo || "";
+    document.getElementById("editarTipo").value = documento.tipo || "Outros";
+    document.getElementById("editarCliente").value = documento.cliente || "";
+    document.getElementById("editarProcesso").value = documento.processo || "";
+    document.getElementById("editarData").value = documento.dataEnvio || "";
+    document.getElementById("editarStatus").value = documento.status || "Pendente";
+    document.getElementById("editarDescricao").value = documento.descricao || "";
+
+    modalEditar.classList.add("ativo");
 
 }
 
 
 // ==========================================
-// FECHAR MODAL
+// AÇÕES DA TABELA (DELEGAÇÃO DE EVENTO)
 // ==========================================
 
-fecharModal.addEventListener(
-    "click",
-    () => {
+tbody.addEventListener("click", async (evento) => {
 
-        modal.classList.remove("ativo");
+    const botao = evento.target.closest(".btn-acao");
 
+    if (!botao || !tbody.contains(botao)) return;
+
+    const id = botao.dataset.id;
+
+    const documento = documentoController.documentos.find(doc => doc.id === id);
+
+    if (!documento) {
+        console.error("Documento não encontrado para o id:", id);
+        return;
     }
-);
 
 
-// Fecha clicando fora do modal
+    // ----- VISUALIZAR -----
+    if (botao.classList.contains("btn-visualizar")) {
 
-modal.addEventListener(
-    "click",
-    (e) => {
+        document.getElementById("modalTitulo").textContent = documento.titulo || "-";
+        document.getElementById("modalTipo").textContent = documento.tipo || "-";
+        document.getElementById("modalCliente").textContent = documento.cliente || "-";
 
-        if (e.target === modal) {
+        document.getElementById("modalProcesso").innerHTML =
+            documento.processo || "<span class=\"texto-secundario\">Não informado</span>";
 
-            modal.classList.remove("ativo");
+        document.getElementById("modalData").textContent = formatarData(documento.dataEnvio);
+
+        document.getElementById("modalStatus").innerHTML =
+            `<span class="status-badge ${classeStatus(documento.status)}">${documento.status || "Sem status"}</span>`;
+
+        document.getElementById("modalDescricao").innerHTML =
+            documento.descricao || "<span class=\"texto-secundario\">Não informado</span>";
+
+        modal.classList.add("ativo");
+
+        return;
+    }
+
+
+    // ----- EDITAR -----
+    if (botao.classList.contains("btn-renomear")) {
+
+        abrirEdicao(documento);
+
+        return;
+    }
+
+
+    // ----- EXCLUIR -----
+    if (botao.classList.contains("btn-excluir")) {
+
+        if (!confirm("Deseja excluir este documento?")) return;
+
+        try {
+
+            await documentoController.removerDocumento(id);
+
+            alert("Documento excluído com sucesso!");
+
+        } catch (erro) {
+
+            console.error("Erro ao excluir documento:", erro);
+
+            alert(erro.message || "Erro ao excluir documento.");
 
         }
 
     }
-);
+
+});
 
 
 // ==========================================
-// PESQUISA
+// SALVAR EDIÇÃO
 // ==========================================
 
-pesquisa.addEventListener(
-    "input",
-    filtrarDocumentos
-);
+formEditarDocumento.addEventListener("submit", async (evento) => {
+
+    evento.preventDefault();
+
+    const id = document.getElementById("editarId").value;
+
+    const dadosAtualizados = {
+        titulo: document.getElementById("editarTitulo").value.trim(),
+        tipo: document.getElementById("editarTipo").value,
+        cliente: document.getElementById("editarCliente").value.trim(),
+        processo: document.getElementById("editarProcesso").value.trim(),
+        dataEnvio: document.getElementById("editarData").value,
+        status: document.getElementById("editarStatus").value,
+        descricao: document.getElementById("editarDescricao").value.trim()
+    };
+
+    try {
+
+        await documentoController.editarDocumento(id, dadosAtualizados);
+
+        await documentoController.carregar();
+
+        modalEditar.classList.remove("ativo");
+
+        alert("Documento atualizado com sucesso!");
+
+    } catch (erro) {
+
+        console.error("Erro ao editar documento:", erro);
+
+        alert(erro.message || "Erro ao editar documento.");
+
+    }
+
+});
 
 
 // ==========================================
-// FILTRO CLIENTE
+// FECHAR MODAIS
 // ==========================================
 
-filtroCliente.addEventListener(
-    "change",
-    filtrarDocumentos
-);
+fecharModal.addEventListener("click", () => {
+    modal.classList.remove("ativo");
+});
+
+modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+        modal.classList.remove("ativo");
+    }
+});
+
+cancelarEdicao.addEventListener("click", () => {
+    modalEditar.classList.remove("ativo");
+});
+
+modalEditar.addEventListener("click", (e) => {
+    if (e.target === modalEditar) {
+        modalEditar.classList.remove("ativo");
+    }
+});
+
+
+// ==========================================
+// PESQUISA E FILTRO
+// ==========================================
+
+pesquisa.addEventListener("input", filtrarDocumentos);
+
+filtroCliente.addEventListener("change", filtrarDocumentos);
 
 
 // ==========================================
 // CARREGAR DOCUMENTOS
 // ==========================================
 
-documentoController.onChange(
-    (documentos) => {
+documentoController.onChange((documentos) => {
+    atualizarCards(documentos);
+    atualizarFiltroClientes(documentos);
+    filtrarDocumentos();
+});
 
-        atualizarCards(documentos);
-
-        atualizarFiltroClientes(documentos);
-
-        filtrarDocumentos();
-
-    }
-);
-
-
-documentoController.carregar();
+documentoController.carregar().catch((erro) => {
+    console.error("Erro ao carregar documentos:", erro);
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="7" style="text-align:center; padding:20px; color:#999;">
+                Não foi possível carregar os documentos.
+            </td>
+        </tr>
+    `;
+});

@@ -44,6 +44,39 @@ body {
 
 
 /* ==========================================
+   SETA DE VOLTAR
+========================================== */
+
+.btnVoltar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 15px;
+
+    background: #294970;
+    color: white;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    font-size: 24px;
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.btnVoltar:hover {
+    background: #1f3858;
+    transform: translateX(-3px);
+}
+
+
+/* ==========================================
    CABEÇALHO
 ========================================== */
 
