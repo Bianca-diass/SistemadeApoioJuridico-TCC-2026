@@ -7,12 +7,18 @@ const serviceAccount = require(path.join(
 ));
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket:
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    "sistema-juridico-digital.firebasestorage.app"
 });
 
 const db = admin.firestore();
 
+const bucket = admin.storage().bucket();
+
 module.exports = {
   admin,
-  db
+  db,
+  bucket
 };

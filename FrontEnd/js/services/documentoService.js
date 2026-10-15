@@ -1,4 +1,4 @@
-import { getToken } from "./authService.js";
+import { getToken, fazerLogout } from "./authService.js";
 
 const API = "http://localhost:3000/documentos";
 
@@ -10,86 +10,92 @@ function authHeaders() {
 }
 
 
-// CADASTRAR DOCUMENTO
-export async function cadastrarDocumento(documento) {
-    const resposta = await fetch(API, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(documento)
-    });
+// Token vencido: limpa o login e volta para a tela de entrada
+async function sessaoExpirada() {
+    await fazerLogout();
 
-    const dados = await resposta.json();
+    window.location.href =
+        window.location.pathname.includes("/cliente/")
+            ? "login.html"
+            : "login-adv.html";
+}
+
+
+// Faz a requisição e trata os erros mais comuns em um só lugar
+async function requisicao(url, opcoes, mensagemErro) {
+
+    let resposta;
+
+    try {
+        resposta = await fetch(url, {
+            ...opcoes,
+            headers: authHeaders()
+        });
+    } catch (erro) {
+        throw new Error(
+            "Não foi possível conectar ao servidor. " +
+            "Verifique se o back-end está rodando na porta 3000."
+        );
+    }
+
+    let dados = null;
+
+    try {
+        dados = await resposta.json();
+    } catch (erro) {
+        dados = null;
+    }
+
+    if (resposta.status === 401) {
+        await sessaoExpirada();
+        throw new Error("Sua sessão expirou. Faça login novamente.");
+    }
 
     if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao cadastrar documento");
+        throw new Error((dados && dados.erro) || mensagemErro);
     }
 
     return dados;
+}
+
+
+// CADASTRAR DOCUMENTO
+export function cadastrarDocumento(documento) {
+    return requisicao(
+        API,
+        { method: "POST", body: JSON.stringify(documento) },
+        "Erro ao cadastrar documento"
+    );
 }
 
 
 // LISTAR DOCUMENTOS
-export async function listarDocumentos() {
-    const resposta = await fetch(API, {
-        headers: authHeaders()
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao listar documentos");
-    }
-
-    return dados;
+export function listarDocumentos() {
+    return requisicao(API, {}, "Erro ao listar documentos");
 }
 
 
 // BUSCAR DOCUMENTO POR ID
-export async function buscarDocumento(id) {
-    const resposta = await fetch(`${API}/${id}`, {
-        headers: authHeaders()
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao buscar documento");
-    }
-
-    return dados;
+export function buscarDocumento(id) {
+    return requisicao(`${API}/${id}`, {}, "Erro ao buscar documento");
 }
 
 
 // EDITAR DOCUMENTO
-export async function editarDocumento(id, dadosAtualizados) {
-    const resposta = await fetch(`${API}/${id}`, {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify(dadosAtualizados)
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao editar documento");
-    }
-
-    return dados;
+export function editarDocumento(id, dadosAtualizados) {
+    return requisicao(
+        `${API}/${id}`,
+        { method: "PUT", body: JSON.stringify(dadosAtualizados) },
+        "Erro ao editar documento"
+    );
 }
 
 
 // EXCLUIR DOCUMENTO
-export async function excluirDocumento(id) {
-    const resposta = await fetch(`${API}/${id}`, {
-        method: "DELETE",
-        headers: authHeaders()
-    });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao excluir documento");
-    }
-
-    return dados;
+export function excluirDocumento(id) {
+    return requisicao(
+        `${API}/${id}`,
+        { method: "DELETE" },
+        "Erro ao excluir documento"
+    );
 }

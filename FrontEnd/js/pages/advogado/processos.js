@@ -1,685 +1,255 @@
+
 import {
     listarProcessos,
     excluirProcesso
 } from "../../services/processoService.js";
 
-
-// ==========================================
 // ELEMENTOS
-// ==========================================
-
-const listaProcessos =
-    document.getElementById("listaProcessos");
-
-const totalProcessos =
-    document.getElementById("totalProcessos");
-
-const totalIntimacoes =
-    document.getElementById("totalIntimacoes");
-
-const totalAndamento =
-    document.getElementById("totalAndamento");
-
-const buscarProcesso =
-    document.getElementById("buscarProcesso");
-
-
-// ==========================================
-// PROCESSOS
-// ==========================================
+const listaProcessos = document.getElementById("listaProcessos");
+const totalProcessos = document.getElementById("totalProcessos");
+const totalIntimacoes = document.getElementById("totalIntimacoes");
+const totalAndamento = document.getElementById("totalAndamento");
+const buscarProcesso = document.getElementById("buscarProcesso");
 
 let processos = [];
 
-
-// ==========================================
-// CARREGAR PROCESSOS
-// ==========================================
-
-async function carregarProcessos() {
-
-    try {
-
-        console.log("Buscando processos...");
-
-        // Mostra carregamento somente enquanto busca
-        if (listaProcessos) {
-
-            listaProcessos.innerHTML = `
-                <tr>
-                    <td colspan="9" style="
-                        text-align: center;
-                        padding: 30px;
-                    ">
-                        Carregando processos...
-                    </td>
-                </tr>
-            `;
-
-        }
-
-
-        const dados = await listarProcessos();
-
-
-        console.log(
-            "Processos recebidos:",
-            dados
-        );
-
-
-        // Garante que sempre teremos um array
-        processos =
-            Array.isArray(dados)
-                ? dados
-                : [];
-
-
-        // Atualiza os cards
-        atualizarCards();
-
-
-        // Mostra os processos
-        renderizarProcessos();
-
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar processos:",
-            erro
-        );
-
-
-        processos = [];
-
-
-        atualizarCards();
-
-
-        if (listaProcessos) {
-
-            listaProcessos.innerHTML = `
-                <tr>
-                    <td colspan="9" style="
-                        text-align: center;
-                        padding: 30px;
-                        color: #c0392b;
-                    ">
-                        Erro ao carregar os processos.
-                    </td>
-                </tr>
-            `;
-
-        }
-
-    }
-
+// NORMALIZAR TEXTO
+function normalizar(valor) {
+    return String(valor ?? "").trim().toLowerCase();
 }
 
+// ESCAPAR HTML PARA EVITAR INJEÇÃO
+function escaparHTML(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[caractere]);
+}
 
-// ==========================================
-// ATUALIZAR CARDS
-// ==========================================
+// VERIFICAR INTIMAÇÃO
+function possuiIntimacao(valor) {
+    return valor === true ||
+        valor === 1 ||
+        ["true", "1", "sim", "pendente"].includes(normalizar(valor));
+}
 
-function atualizarCards() {
+// FORMATAR DATA
+function formatarData(data) {
+    if (!data) return "-";
 
-    // TOTAL DE PROCESSOS
+    const valor = String(data);
+    const partes = valor.substring(0, 10).split("-");
 
-    if (totalProcessos) {
-
-        totalProcessos.textContent =
-            processos.length;
-
+    if (partes.length === 3 && partes[0].length === 4) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
+    return valor;
+}
 
-    // TOTAL DE INTIMAÇÕES
+// VERIFICAR PRAZO
+function verificarPrazo(data) {
+    if (!data) return "sem-prazo";
+
+    const prazo = new Date(`${String(data).substring(0, 10)}T00:00:00`);
+    if (Number.isNaN(prazo.getTime())) return "sem-prazo";
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const diferenca = Math.ceil((prazo - hoje) / 86400000);
+
+    if (diferenca < 0) return "vencido";
+    if (diferenca <= 7) return "proximo";
+    return "normal";
+}
+
+// ATUALIZAR CARDS
+function atualizarCards() {
+    if (totalProcessos) {
+        totalProcessos.textContent = processos.length;
+    }
 
     if (totalIntimacoes) {
-
         totalIntimacoes.textContent =
-            processos.filter(
-                processo =>
-                    processo.intimacao === true
-            ).length;
-
+            processos.filter(processo => possuiIntimacao(processo.intimacao)).length;
     }
-
-
-    // TOTAL EM ANDAMENTO
 
     if (totalAndamento) {
-
         totalAndamento.textContent =
-            processos.filter(
-                processo =>
-                    String(processo.status || "")
-                        .toLowerCase()
-                        .trim() === "em andamento"
+            processos.filter(processo =>
+                normalizar(processo.status) === "em andamento"
             ).length;
-
     }
-
 }
 
-
-// ==========================================
-// RENDERIZAR PROCESSOS
-// ==========================================
-
-function renderizarProcessos(
-    lista = processos
-) {
-
-    if (!listaProcessos) {
-
-        console.error(
-            "Elemento #listaProcessos não encontrado."
-        );
-
-        return;
-
+// CARREGAR PROCESSOS
+async function carregarProcessos() {
+    if (listaProcessos) {
+        listaProcessos.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align:center;padding:30px">
+                    Carregando processos...
+                </td>
+            </tr>
+        `;
     }
 
+    try {
+        const dados = await listarProcessos();
+        processos = Array.isArray(dados) ? dados : [];
+        atualizarCards();
+        aplicarFiltros();
+    } catch (erro) {
+        console.error("Erro ao carregar processos:", erro);
+
+        if (listaProcessos) {
+            listaProcessos.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center;padding:30px">
+                        Não foi possível carregar os processos. Verifique a conexão com a API.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+// FILTRAR PROCESSOS
+function aplicarFiltros() {
+    const termo = normalizar(buscarProcesso?.value);
+
+    const filtrados = processos.filter(processo => {
+        const campos = [
+            processo.numeroProcesso,
+            processo.cliente,
+            processo.comarca,
+            processo.tribunal,
+            processo.status,
+            processo.tipoManifestacao
+        ];
+
+        return campos.some(campo => normalizar(campo).includes(termo));
+    });
+
+    renderizarProcessos(filtrados);
+}
+
+// RENDERIZAR TABELA
+function renderizarProcessos(lista) {
+    if (!listaProcessos) return;
 
     listaProcessos.innerHTML = "";
 
-
-    // ======================================
-    // NENHUM PROCESSO
-    // ======================================
-
-    if (
-        !Array.isArray(lista) ||
-        lista.length === 0
-    ) {
-
+    if (!lista.length) {
         listaProcessos.innerHTML = `
             <tr>
-                <td colspan="9" style="
-                    text-align: center;
-                    padding: 30px;
-                ">
+                <td colspan="9" style="text-align:center;padding:30px">
                     Nenhum processo encontrado.
                 </td>
             </tr>
         `;
-
         return;
-
     }
-
-
-    // ======================================
-    // CRIAR LINHAS
-    // ======================================
 
     lista.forEach(processo => {
+        const linha = document.createElement("tr");
+        const id = processo.id;
+        const numero = escaparHTML(processo.numeroProcesso || "-");
+        const cliente = escaparHTML(processo.cliente || "-");
+        const tribunal = escaparHTML(processo.tribunal || processo.comarca || "-");
+        const status = escaparHTML(processo.status || "Sem status");
+        const manifestacao = escaparHTML(processo.tipoManifestacao || "Nenhuma");
+        const movimentacao = escaparHTML(processo.ultimaMovimentacao || "-");
+        const intimacao = possuiIntimacao(processo.intimacao);
+        const prazoEstado = verificarPrazo(processo.prazo);
+        const prazo = formatarData(processo.prazo);
 
-        const linha =
-            document.createElement("tr");
+        let textoPrazo = prazo;
 
-
-        // ==================================
-        // DADOS
-        // ==================================
-
-        const numero =
-            processo.numeroProcesso ||
-            "-";
-
-
-        const cliente =
-            processo.cliente ||
-            "-";
-
-
-        const tribunal =
-            processo.tribunal ||
-            processo.comarca ||
-            "-";
-
-
-        const status =
-            processo.status ||
-            "-";
-
-
-        const manifestacao =
-            processo.tipoManifestacao ||
-            "Nenhuma";
-
-
-        const ultimaMovimentacao =
-            processo.ultimaMovimentacao ||
-            "-";
-
-
-        const intimacao =
-            processo.intimacao === true;
-
-
-        const prazo =
-            processo.prazo
-                ? formatarData(processo.prazo)
-                : "-";
-
-
-        // ==================================
-        // LINHA
-        // ==================================
+        if (prazoEstado === "vencido") {
+            textoPrazo += " (Vencido)";
+        } else if (prazoEstado === "proximo") {
+            textoPrazo += " (Próximo)";
+        }
 
         linha.innerHTML = `
-
+            <td>${numero}</td>
+            <td>${cliente}</td>
+            <td>${tribunal}</td>
+            <td><span class="status">${status}</span></td>
+            <td>${manifestacao}</td>
+            <td>${movimentacao}</td>
             <td>
-                ${numero}
-            </td>
-
-
-            <td>
-                ${cliente}
-            </td>
-
-
-            <td>
-                ${tribunal}
-            </td>
-
-
-            <td>
-
-                <span class="status">
-                    ${status}
+                <span class="${intimacao ? "badge-alerta" : "badge-ok"}">
+                    ${intimacao ? "Nova intimação" : "Sem pendências"}
                 </span>
-
             </td>
-
-
+            <td class="prazo-${prazoEstado}">${escaparHTML(textoPrazo)}</td>
             <td>
-                ${manifestacao}
-            </td>
-
-
-            <td>
-                ${ultimaMovimentacao}
-            </td>
-
-
-            <td>
-
-                ${
-                    intimacao
-
-                    ? `
-                        <span class="badge-alerta">
-                            Nova intimação
-                        </span>
-                    `
-
-                    : `
-                        <span class="badge-ok">
-                            Sem pendências
-                        </span>
-                    `
-                }
-
-            </td>
-
-
-            <td>
-                ${prazo}
-            </td>
-
-
-            <td>
-
-                <button
-                    class="btn-visualizar"
-                    title="Visualizar"
-                    data-id="${processo.id}"
-                >
-
+                <button class="btn-visualizar" title="Visualizar" data-id="${escaparHTML(id)}">
                     <i class="fa-solid fa-eye"></i>
-
                 </button>
-
-
-                <button
-                    class="btn-editar"
-                    title="Editar"
-                    data-id="${processo.id}"
-                >
-
+                <button class="btn-editar" title="Editar" data-id="${escaparHTML(id)}">
                     <i class="fa-solid fa-pen"></i>
-
                 </button>
-
-
-                <button
-                    class="btn-excluir"
-                    title="Excluir"
-                    data-id="${processo.id}"
-                >
-
+                <button class="btn-excluir" title="Excluir" data-id="${escaparHTML(id)}">
                     <i class="fa-solid fa-trash"></i>
-
                 </button>
-
             </td>
-
         `;
 
-
-        listaProcessos.appendChild(
-            linha
-        );
-
+        listaProcessos.appendChild(linha);
     });
-
-
-    // Adiciona os eventos dos botões
-    adicionarEventos();
-
 }
 
+// EVENTOS DA TABELA
+listaProcessos?.addEventListener("click", async evento => {
+    const botao = evento.target.closest("button[data-id]");
+    if (!botao) return;
 
-// ==========================================
+    const id = botao.dataset.id;
+    if (!id) return;
+
+    if (botao.classList.contains("btn-visualizar")) {
+        window.location.href =
+            `visualizar-processo-adv.html?id=${encodeURIComponent(id)}`;
+        return;
+    }
+
+    if (botao.classList.contains("btn-editar")) {
+        window.location.href =
+            `cadastro-processo-adv.html?id=${encodeURIComponent(id)}`;
+        return;
+    }
+
+    if (botao.classList.contains("btn-excluir")) {
+        if (!confirm("Deseja realmente excluir este processo?")) return;
+
+        botao.disabled = true;
+
+        try {
+            await excluirProcesso(id);
+
+            processos = processos.filter(
+                processo => String(processo.id) !== String(id)
+            );
+
+            atualizarCards();
+            aplicarFiltros();
+        } catch (erro) {
+            console.error("Erro ao excluir processo:", erro);
+            alert("Não foi possível excluir o processo.");
+            botao.disabled = false;
+        }
+    }
+});
+
 // PESQUISA
-// ==========================================
+buscarProcesso?.addEventListener("input", aplicarFiltros);
 
-if (buscarProcesso) {
-
-    buscarProcesso.addEventListener(
-        "input",
-        function () {
-
-            const termo =
-                this.value
-                    .toLowerCase()
-                    .trim();
-
-
-            const filtrados =
-                processos.filter(
-                    processo => {
-
-                        const numero =
-                            String(
-                                processo.numeroProcesso ||
-                                ""
-                            )
-                            .toLowerCase();
-
-
-                        const cliente =
-                            String(
-                                processo.cliente ||
-                                ""
-                            )
-                            .toLowerCase();
-
-
-                        const comarca =
-                            String(
-                                processo.comarca ||
-                                ""
-                            )
-                            .toLowerCase();
-
-
-                        const tribunal =
-                            String(
-                                processo.tribunal ||
-                                ""
-                            )
-                            .toLowerCase();
-
-
-                        return (
-                            numero.includes(termo) ||
-                            cliente.includes(termo) ||
-                            comarca.includes(termo) ||
-                            tribunal.includes(termo)
-                        );
-
-                    }
-                );
-
-
-            renderizarProcessos(
-                filtrados
-            );
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// BOTÕES
-// ==========================================
-
-function adicionarEventos() {
-
-
-    // ======================================
-    // VISUALIZAR
-    // ======================================
-
-    const botoesVisualizar =
-        document.querySelectorAll(
-            ".btn-visualizar"
-        );
-
-
-    botoesVisualizar.forEach(
-        botao => {
-
-            botao.addEventListener(
-                "click",
-                function () {
-
-                    const id =
-                        this.dataset.id;
-
-
-                    if (!id) {
-
-                        console.error(
-                            "ID do processo não encontrado."
-                        );
-
-                        return;
-
-                    }
-
-
-                    window.location.href =
-                        `visualizar-processo-adv.html?id=${id}`;
-
-                }
-            );
-
-        }
-    );
-
-
-    // ======================================
-    // EDITAR
-    // ======================================
-
-    const botoesEditar =
-        document.querySelectorAll(
-            ".btn-editar"
-        );
-
-
-    botoesEditar.forEach(
-        botao => {
-
-            botao.addEventListener(
-                "click",
-                function () {
-
-                    const id =
-                        this.dataset.id;
-
-
-                    if (!id) {
-
-                        console.error(
-                            "ID do processo não encontrado."
-                        );
-
-                        return;
-
-                    }
-
-
-                    window.location.href =
-                        `cadastro-processo-adv.html?id=${id}`;
-
-                }
-            );
-
-        }
-    );
-
-
-    // ======================================
-    // EXCLUIR
-    // ======================================
-
-    const botoesExcluir =
-        document.querySelectorAll(
-            ".btn-excluir"
-        );
-
-
-    botoesExcluir.forEach(
-        botao => {
-
-            botao.addEventListener(
-                "click",
-                async function () {
-
-                    const id =
-                        this.dataset.id;
-
-
-                    if (!id) {
-
-                        console.error(
-                            "ID do processo não encontrado."
-                        );
-
-                        return;
-
-                    }
-
-
-                    const confirmar =
-                        confirm(
-                            "Deseja realmente excluir este processo?"
-                        );
-
-
-                    if (!confirmar) {
-
-                        return;
-
-                    }
-
-
-                    try {
-
-                        // Desabilita o botão
-                        this.disabled = true;
-
-
-                        await excluirProcesso(
-                            id
-                        );
-
-
-                        // Remove da lista local
-                        processos =
-                            processos.filter(
-                                processo =>
-                                    processo.id !== id
-                            );
-
-
-                        // Atualiza os cards
-                        atualizarCards();
-
-
-                        // Atualiza a tabela
-                        renderizarProcessos();
-
-
-                    } catch (erro) {
-
-                        console.error(
-                            "Erro ao excluir processo:",
-                            erro
-                        );
-
-
-                        alert(
-                            "Não foi possível excluir o processo."
-                        );
-
-
-                        this.disabled = false;
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// FORMATAR DATA
-// ==========================================
-
-function formatarData(data) {
-
-    if (!data) {
-
-        return "-";
-
-    }
-
-
-    const valor =
-        String(data);
-
-
-    const partes =
-        valor.split("-");
-
-
-    if (partes.length === 3) {
-
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-
-    }
-
-
-    return valor;
-
-}
-
-
-// ==========================================
 // INICIALIZAÇÃO
-// ==========================================
-
 carregarProcessos();

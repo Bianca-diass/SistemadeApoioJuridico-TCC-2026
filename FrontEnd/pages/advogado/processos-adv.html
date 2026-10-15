@@ -1,194 +1,126 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Processos</title>
 
     <link rel="stylesheet" href="../../css/style.css">
-
     <link rel="stylesheet" href="../../css/style-advogado/processos-adv.css">
-
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
-
 <div class="container">
-
     <main class="pagina-processos">
-
-        <!-- SETA DE VOLTAR -->
 
         <a href="dashboard-adv.html" class="btnVoltar" title="Voltar">
             <i class="fa-solid fa-arrow-left"></i>
         </a>
 
-
-        <!-- CABEÇALHO -->
-
         <header class="cabecalho-processos">
-
             <div>
-
                 <h1>Processos</h1>
-
-                <p>
-                    Gerencie e acompanhe os processos jurídicos.
-                </p>
-
+                <p>Gerencie e acompanhe os processos jurídicos.</p>
             </div>
 
-
-            <a
-                href="cadastro-processo-adv.html"
-                class="botao-novo">
-
+            <a href="cadastro-processo-adv.html" class="botao-novo">
                 <i class="fa-solid fa-plus"></i>
-
                 Novo Processo
-
             </a>
-
         </header>
 
-
-        <!-- CARDS -->
-
         <section class="cards-dashboard">
-
             <div class="card">
-
                 <div class="icone azul">
-
                     <i class="fa-solid fa-folder"></i>
-
                 </div>
-
                 <div>
-
                     <span>Total de processos</span>
-
                     <h2 id="totalProcessos">0</h2>
-
                 </div>
-
             </div>
 
-
             <div class="card">
-
                 <div class="icone vermelho">
-
                     <i class="fa-solid fa-bell"></i>
-
                 </div>
-
                 <div>
-
                     <span>Intimações</span>
-
                     <h2 id="totalIntimacoes">0</h2>
-
                 </div>
-
             </div>
-
 
             <div class="card">
-
                 <div class="icone amarelo">
-
                     <i class="fa-solid fa-clock"></i>
-
                 </div>
-
                 <div>
-
                     <span>Em andamento</span>
-
                     <h2 id="totalAndamento">0</h2>
-
                 </div>
-
             </div>
-
         </section>
 
+        <section class="filtros-processos">
+            <div class="barra-pesquisa">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                    type="search"
+                    id="buscarProcesso"
+                    placeholder="Buscar por processo, cliente ou tribunal..."
+                >
+            </div>
 
-        <!-- BARRA DE PESQUISA -->
+            <div class="filtro-status">
+                <i class="fa-solid fa-filter"></i>
+                <select id="filtroStatus">
+                    <option value="">Todos os status</option>
+                    <option value="em andamento">Em andamento</option>
+                    <option value="suspenso">Suspenso</option>
+                    <option value="arquivado">Arquivado</option>
+                    <option value="concluído">Concluído</option>
+                </select>
+            </div>
+        </section>
 
-        <div class="barra-pesquisa">
-
-            <i class="fa-solid fa-magnifying-glass"></i>
-
-            <input
-                type="text"
-                id="buscarProcesso"
-                placeholder="Buscar processo ou cliente..."
-            >
-
+        <div class="legenda-prazos">
+            <span><i class="bolinha vencido"></i> Prazo vencido</span>
+            <span><i class="bolinha proximo"></i> Prazo próximo</span>
+            <span><i class="bolinha normal"></i> Prazo dentro do período</span>
         </div>
 
-
-        <!-- TABELA -->
-
-        <div class="tabela-container">
-
+        <section class="tabela-container">
             <table>
-
                 <thead>
-
                     <tr>
-
                         <th>Nº Processo</th>
-
                         <th>Cliente</th>
-
                         <th>Tribunal</th>
-
                         <th>Status</th>
-
                         <th>Manifestação</th>
-
                         <th>Última movimentação</th>
-
                         <th>Intimação</th>
-
                         <th>Prazo</th>
-
                         <th>Ações</th>
-
                     </tr>
-
                 </thead>
 
-
                 <tbody id="listaProcessos">
-
-                    <!-- Processos carregados pelo JavaScript -->
-
+                    <tr>
+                        <td colspan="9" class="mensagem-tabela">
+                            Carregando processos...
+                        </td>
+                    </tr>
                 </tbody>
-
             </table>
-
-        </div>
+        </section>
 
     </main>
-
 </div>
 
-
-<script
-    type="module"
-    src="../../js/pages/advogado/processos.js">
-</script>
-
+<script type="module" src="../../js/pages/advogado/processos.js"></script>
 </body>
-
 </html>

@@ -1,386 +1,109 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurações</title>
 
-
-    <link
-        rel="stylesheet"
-        href="../../css/style.css">
-
-
-    <link
-        rel="stylesheet"
-        href="../../css/style-advogado/configuracao-adv.css">
-
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+    <link rel="stylesheet" href="../../css/style-advogado/configuracao-adv.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
-
 <body>
-
-
-<div class="container">
-
     <main class="conteudo">
-
-
-        <!-- ==================================================
-             TOPO
-        ================================================== -->
+        <a href="dashboard-adv.html" class="btnVoltar" title="Voltar">
+            <i class="fas fa-arrow-left"></i>
+        </a>
 
         <header class="topoPagina">
-
-            <a href="dashboard-adv.html" class="btnVoltar" title="Voltar">
-                <i class="fas fa-arrow-left"></i>
-            </a>
-
-            <h1>
-                Configurações
-            </h1>
-
-            <p>
-                Gerencie suas informações pessoais,
-                segurança e preferências da sua conta.
-            </p>
-
+            <h1>Configurações</h1>
+            <p>Gerencie suas informações pessoais, segurança e preferências da sua conta.</p>
         </header>
 
-
-
-        <!-- ==================================================
-             PERFIL
-        ================================================== -->
-
         <section class="painel">
-
-
-            <h2>
-
-                <i class="fas fa-user"></i>
-
-                Perfil
-
-            </h2>
-
+            <h2><i class="fas fa-user"></i> Perfil</h2>
 
             <form id="formPerfil">
-
-
                 <div class="campo">
-
-                    <label for="nome">
-                        Nome Completo
-                    </label>
-
-                    <input
-                        type="text"
-                        id="nome"
-                        name="nome"
-                        placeholder="Nome completo"
-                        autocomplete="name"
-                        required>
-
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" placeholder="Nome completo" required>
                 </div>
 
-
-
                 <div class="campo">
-
-                    <label for="email">
-                        E-mail
-                    </label>
-
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="E-mail"
-                        autocomplete="email"
-                        required>
-
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="E-mail" required>
                 </div>
 
-
-
                 <div class="campo">
-
-                    <label for="telefone">
-                        Telefone
-                    </label>
-
-                    <input
-                        type="text"
-                        id="telefone"
-                        name="telefone"
-                        placeholder="(67) 99999-9999"
-                        autocomplete="tel">
-
+                    <label for="telefone">Telefone</label>
+                    <input type="text" id="telefone" name="telefone" placeholder="(67) 99999-9999">
                 </div>
 
-
-
                 <div class="campo">
-
-                    <label for="cpf">
-                        CPF
-                    </label>
-
-                    <input
-                        type="text"
-                        id="cpf"
-                        name="cpf"
-                        placeholder="CPF"
-                        readonly>
-
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" name="cpf" placeholder="CPF" readonly>
                 </div>
 
-
-
                 <div class="campo">
-
-                    <label for="oab">
-                        OAB
-                    </label>
-
-                    <input
-                        type="text"
-                        id="oab"
-                        name="oab"
-                        placeholder="OAB"
-                        readonly>
-
+                    <label for="oab">OAB</label>
+                    <input type="text" id="oab" name="oab" placeholder="OAB" readonly>
                 </div>
 
-
-
-                <button
-                    type="submit"
-                    id="btnSalvarPerfil">
-
-                    <i class="fas fa-floppy-disk"></i>
-
-                    Salvar Alterações
-
+                <button type="submit" id="btnSalvarPerfil">
+                    <i class="fas fa-floppy-disk"></i> Salvar Alterações
                 </button>
 
-
-                <p
-                    id="mensagemPerfil"
-                    style="
-                        display:none;
-                        margin-top:15px;
-                        font-weight:600;
-                    ">
-                </p>
-
-
+                <p id="mensagemPerfil" class="mensagem"></p>
             </form>
-
-
         </section>
-
-
-
-        <!-- ==================================================
-             SEGURANÇA
-        ================================================== -->
 
         <section class="painel">
-
-
-            <h2>
-
-                <i class="fas fa-lock"></i>
-
-                Segurança
-
-            </h2>
-
+            <h2><i class="fas fa-lock"></i> Segurança</h2>
 
             <form id="formSenha">
-
-
                 <div class="campo">
-
-                    <label for="novaSenha">
-                        Nova Senha
-                    </label>
-
-                    <input
-                        type="password"
-                        id="novaSenha"
-                        name="novaSenha"
-                        placeholder="Digite sua nova senha"
-                        autocomplete="new-password"
-                        minlength="6"
-                        required>
-
+                    <label for="novaSenha">Nova Senha</label>
+                    <input type="password" id="novaSenha" name="novaSenha"
+                        placeholder="Digite sua nova senha" minlength="6" required>
                 </div>
 
-
-
                 <div class="campo">
-
-                    <label for="confirmarSenha">
-                        Confirmar Nova Senha
-                    </label>
-
-                    <input
-                        type="password"
-                        id="confirmarSenha"
-                        name="confirmarSenha"
-                        placeholder="Confirme sua nova senha"
-                        autocomplete="new-password"
-                        minlength="6"
-                        required>
-
+                    <label for="confirmarSenha">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmarSenha" name="confirmarSenha"
+                        placeholder="Confirme sua nova senha" minlength="6" required>
                 </div>
 
-
-
-                <button
-                    type="submit"
-                    id="btnAlterarSenha">
-
-                    <i class="fas fa-key"></i>
-
-                    Alterar Senha
-
+                <button type="submit" id="btnAlterarSenha">
+                    <i class="fas fa-key"></i> Alterar Senha
                 </button>
 
-
-                <p
-                    id="mensagemSenha"
-                    style="
-                        display:none;
-                        margin-top:15px;
-                        font-weight:600;
-                    ">
-                </p>
-
-
+                <p id="mensagemSenha" class="mensagem"></p>
             </form>
-
-
         </section>
-
-
-
-        <!-- ==================================================
-             IDIOMA
-        ================================================== -->
 
         <section class="painel idioma">
-
-
-            <h2>
-
-                <i class="fas fa-language"></i>
-
-                Idioma
-
-            </h2>
-
+            <h2><i class="fas fa-language"></i> Idioma</h2>
 
             <div class="campo">
-
-
-                <label for="idioma">
-                    Idioma do Sistema
-                </label>
-
-
+                <label for="idioma">Idioma do Sistema</label>
                 <select id="idioma">
-
-
-                    <option value="pt-BR">
-                        🇧🇷 Português (Brasil)
-                    </option>
-
-
-                    <option value="en">
-                        🇺🇸 English
-                    </option>
-
-
-                    <option value="es">
-                        🇪🇸 Español
-                    </option>
-
-
+                    <option value="pt-BR">Português (Brasil)</option>
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
                 </select>
-
-
             </div>
-
-
         </section>
-
-
-
-        <!-- ==================================================
-             SAIR
-        ================================================== -->
 
         <section class="painel sair">
+            <h2><i class="fas fa-right-from-bracket"></i> Encerrar Sessão</h2>
 
-
-            <h2>
-
-                <i class="fas fa-right-from-bracket"></i>
-
-                Encerrar Sessão
-
-            </h2>
-
-
-            <button
-                type="button"
-                class="logout"
-                id="btnLogout">
-
-
-                <i class="fas fa-right-from-bracket"></i>
-
-                Sair do Sistema
-
-
+            <button type="button" class="logout" id="btnLogout">
+                <i class="fas fa-right-from-bracket"></i> Sair do Sistema
             </button>
-
-
         </section>
-
-
     </main>
 
-
-</div>
-
-
-
-<!-- ==================================================
-     JAVASCRIPT
-================================================== -->
-
-<script
-    type="module"
-    src="../../js/pages/advogado/configuracoes-adv.js">
-</script>
-
-
+    <script type="module" src="../../js/pages/advogado/configuracoes-adv.js"></script>
 </body>
-
 </html>

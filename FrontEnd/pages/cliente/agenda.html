@@ -1,123 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Agenda</title>
-
-    <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/style-cliente/agenda-cliente.css">
-
-    <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda - Área do Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style-cliente/cliente.css">
 </head>
-
-<body>
-
-<div class="container">
-
-    <!-- MENU -->
-
-    <aside class="sidebar">
-
-        <h2>Área do Cliente</h2>
-
-        <nav>
-
-            <a href="dashboard.html">
-                <i class="fas fa-house"></i>
-                Dashboard
-            </a>
-
-            <a href="agenda.html" class="ativo">
-                <i class="fas fa-calendar-days"></i>
-                Agenda
-            </a>
-
-            <a href="configuracoes.html">
-                <i class="fas fa-gear"></i>
-                Configurações
-            </a>
-
-        </nav>
-
-    </aside>
-
-    <!-- CONTEÚDO -->
-
-    <main class="conteudo">
-
-        <header class="topoPagina">
-
-            <div>
-                <h1>Minha Agenda</h1>
-                <p>Acompanhe seus compromissos e audiências.</p>
-            </div>
-
-        </header>
-
-        <!-- PRÓXIMOS COMPROMISSOS -->
-
-        <section class="painel">
-
-            <h2>Próximos Compromissos</h2>
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>Data</th>
-                        <th>Horário</th>
-                        <th>Compromisso</th>
-                        <th>Local</th>
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    <tr>
-                        <td>15/08/2026</td>
-                        <td>14:30</td>
-                        <td>Audiência Trabalhista</td>
-                        <td>Fórum de Dourados/MS</td>
-                    </tr>
-
-                    <tr>
-                        <td>18/08/2026</td>
-                        <td>09:00</td>
-                        <td>Reunião com Advogado</td>
-                        <td>Escritório</td>
-                    </tr>
-
-                    <tr>
-                        <td>20/08/2026</td>
-                        <td>10:00</td>
-                        <td>Entrega de Documentos</td>
-                        <td>Online</td>
-                    </tr>
-
-                    <tr>
-                        <td>25/08/2026</td>
-                        <td>15:00</td>
-                        <td>Sessão de Conciliação</td>
-                        <td>Fórum</td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </section>
-
-    </main>
-
-</div>
-
+<body class="agenda-page">
+<aside>
+  <div class="brand">Área do Cliente</div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="agenda.html" class="on">Agenda</a>
+    <a href="documentos.html">Documentos</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user"><div class="av">C</div><div>Cliente<small><a href="login.html">Sair</a></small></div></div>
+</aside>
+<main>
+  <header><h1>Agenda</h1><p class="sub">Seus compromissos e prazos de agosto de 2026.</p></header>
+  <section class="card">
+    <div class="ev"><div class="date">15<small>ago</small></div><p><b>Audiência trabalhista</b>Fórum de Dourados/MS<br><time>14h30</time></p></div>
+    <div class="ev"><div class="date">18<small>ago</small></div><p><b>Reunião com o advogado</b>Análise do processo<br><time>09h00</time></p></div>
+    <div class="ev"><div class="date">20<small>ago</small></div><p><b>Prazo para enviar documentos</b>Divórcio Consensual<br><time>10h00</time></p></div>
+    <div class="ev"><div class="date">25<small>ago</small></div><p><b>Sessão de conciliação</b>Divórcio Consensual<br><time>15h00</time></p></div>
+    <div class="ev"><div class="date">30<small>ago</small></div><p><b>Atualização do andamento</b>Com o advogado responsável<br><time>08h30</time></p></div>
+  </section>
+</main>
 </body>
-</html>
+</html>s

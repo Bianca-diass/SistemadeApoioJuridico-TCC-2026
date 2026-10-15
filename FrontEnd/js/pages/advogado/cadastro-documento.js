@@ -7,8 +7,8 @@ import { listarClientes } from "../../services/clienteService.js";
 // ==========================================
 
 const form = document.getElementById("formDocumento");
-
 const selectCliente = document.getElementById("cliente");
+const botaoSalvar = form.querySelector(".botao-salvar");
 
 
 // ==========================================
@@ -17,65 +17,29 @@ const selectCliente = document.getElementById("cliente");
 
 async function carregarClientes() {
 
+    selectCliente.innerHTML =
+        `<option value="">Carregando clientes...</option>`;
+
     try {
-
-        selectCliente.innerHTML = `
-            <option value="">
-                Carregando clientes...
-            </option>
-        `;
-
 
         await listarClientes((clientes) => {
 
-            selectCliente.innerHTML = `
-                <option value="">
-                    Selecione o cliente
-                </option>
-            `;
-
-
             if (!clientes || clientes.length === 0) {
-
-                selectCliente.innerHTML = `
-                    <option value="">
-                        Nenhum cliente cadastrado
-                    </option>
-                `;
-
+                selectCliente.innerHTML =
+                    `<option value="">Nenhum cliente cadastrado</option>`;
                 return;
             }
 
+            selectCliente.innerHTML =
+                `<option value="">Selecione o cliente</option>`;
 
-            clientes.forEach(cliente => {
+            clientes.forEach((cliente) => {
 
-                const option =
-                    document.createElement("option");
+                const option = document.createElement("option");
 
-
-                // ID DO CLIENTE
-
-                option.value =
-                    cliente.id ||
-                    cliente._id ||
-                    cliente.uid;
-
-
-                // NOME DO CLIENTE
-
-                option.textContent =
-                    cliente.nome ||
-                    cliente.name ||
-                    "Cliente sem nome";
-
-
-                // GUARDA O NOME
-
-                option.dataset.nome =
-                    cliente.nome ||
-                    cliente.name ||
-                    "";
-
+                option.value = cliente.id;
+                option.textContent = cliente.nome || "Cliente sem nome";
+                option.dataset.nome = cliente.nome || "";
 
                 selectCliente.appendChild(option);
 
@@ -83,20 +47,24 @@ async function carregarClientes() {
 
         });
 
-
     } catch (erro) {
 
-        console.error(
-            "Erro ao carregar clientes:",
-            erro
+        console.error("Erro ao carregar clientes:", erro);
+
+        selectCliente.innerHTML =
+            `<option value="">Erro ao carregar clientes</option>`;
+
+        // Token vencido: o back-end responde "Token inválido ou expirado"
+        if (/token/i.test(erro.message)) {
+            alert("Sua sessão expirou. Faça login novamente.");
+            window.location.href = "login-adv.html";
+            return;
+        }
+
+        alert(
+            "Não foi possível carregar os clientes. " +
+            "Verifique se o back-end está rodando (porta 3000)."
         );
-
-
-        selectCliente.innerHTML = `
-            <option value="">
-                Erro ao carregar clientes
-            </option>
-        `;
 
     }
 
@@ -107,164 +75,66 @@ async function carregarClientes() {
 // CADASTRAR DOCUMENTO
 // ==========================================
 
-form.addEventListener(
-    "submit",
-    async (evento) => {
+form.addEventListener("submit", async (evento) => {
 
-        evento.preventDefault();
+    evento.preventDefault();
 
+    const clienteSelecionado =
+        selectCliente.options[selectCliente.selectedIndex];
 
-        try {
+    if (!clienteSelecionado || !clienteSelecionado.value) {
+        alert("Selecione um cliente.");
+        return;
+    }
 
-            // CLIENTE SELECIONADO
+    const dados = {
+        titulo: document.getElementById("titulo").value.trim(),
+        tipo: document.getElementById("tipo").value,
+        cliente: clienteSelecionado.dataset.nome,
+        clienteId: clienteSelecionado.value,
+        processo: document.getElementById("processo").value.trim(),
+        dataEnvio: document.getElementById("dataEnvio").value,
+        status: document.getElementById("status").value,
+        descricao: document.getElementById("descricao").value.trim()
+    };
 
-            const clienteSelecionado =
-                selectCliente.options[
-                    selectCliente.selectedIndex
-                ];
+    // Evita clicar duas vezes e cadastrar em duplicidade
+    botaoSalvar.disabled = true;
 
+    try {
 
-            if (
-                !clienteSelecionado ||
-                !clienteSelecionado.value
-            ) {
+        await documentoController.cadastrarDocumento(dados);
 
-                alert(
-                    "Selecione um cliente."
-                );
+        alert("Documento cadastrado com sucesso!");
 
-                return;
+        window.location.href = "documentos-adv.html";
 
-            }
+    } catch (erro) {
 
+        console.error("Erro ao cadastrar documento:", erro);
 
-            // ==================================
-            // DADOS DO DOCUMENTO
-            // ==================================
+        alert("Erro ao cadastrar documento: " + erro.message);
 
-            const dados = {
-
-                titulo:
-                    document
-                    .getElementById("titulo")
-                    .value
-                    .trim(),
-
-
-                tipo:
-                    document
-                    .getElementById("tipo")
-                    .value,
-
-
-                cliente:
-                    clienteSelecionado.dataset.nome,
-
-
-                clienteId:
-                    clienteSelecionado.value,
-
-
-                processo:
-                    document
-                    .getElementById("processo")
-                    .value
-                    .trim(),
-
-
-                dataEnvio:
-                    document
-                    .getElementById("dataEnvio")
-                    .value,
-
-
-                status:
-                    document
-                    .getElementById("status")
-                    .value,
-
-
-                descricao:
-                    document
-                    .getElementById("descricao")
-                    .value
-                    .trim()
-
-            };
-
-
-            // ==================================
-            // CADASTRAR
-            // ==================================
-
-            await documentoController
-                .cadastrarDocumento(dados);
-
-
-            alert(
-                "Documento cadastrado com sucesso!"
-            );
-
-
-            // ==================================
-            // VOLTAR PARA DOCUMENTOS
-            // ==================================
-
-            window.location.href =
-                "documentos-adv.html";
-
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao cadastrar documento:",
-                erro
-            );
-
-
-            alert(
-                "Erro ao cadastrar documento: " +
-                erro.message
-            );
-
-        }
+        botaoSalvar.disabled = false;
 
     }
-);
+
+});
 
 
 // ==========================================
-// COLOCAR DATA ATUAL
+// DATA ATUAL NO CAMPO
 // ==========================================
 
 function colocarDataAtual() {
 
-    const campoData =
-        document.getElementById("dataEnvio");
+    const hoje = new Date();
 
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, "0");
 
-    const hoje =
-        new Date();
-
-
-    const ano =
-        hoje.getFullYear();
-
-
-    const mes =
-        String(
-            hoje.getMonth() + 1
-        ).padStart(2, "0");
-
-
-    const dia =
-        String(
-            hoje.getDate()
-        ).padStart(2, "0");
-
-
-    campoData.value =
-        `${ano}-${mes}-${dia}`;
+    document.getElementById("dataEnvio").value = `${ano}-${mes}-${dia}`;
 
 }
 

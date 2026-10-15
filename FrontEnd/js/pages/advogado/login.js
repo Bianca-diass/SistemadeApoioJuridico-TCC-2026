@@ -30,7 +30,7 @@ btnEntrar.addEventListener("click", async () => {
 
   try {
     await authController.login(emailInput.value.trim(), senhaInput.value.trim());
-    window.location.href = "dashboard.html";
+    window.location.href = "dashboard-adv.html";
   } catch (erro) {
     mostrarErro(erro.message || "Erro no login");
   }

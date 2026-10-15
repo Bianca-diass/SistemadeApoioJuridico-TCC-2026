@@ -1,294 +1,170 @@
-/* ==========================================
-   CONFIGURAÇÕES - ADVOGADO
-   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-
-/* ==========================================
-   LAYOUT GERAL
-   ========================================== */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #35445a;
+    background: #f3f6fb;
+}
 
 .conteudo {
-    flex: 1;
-    padding: 40px;
-    background: #f5f7fb;
-}
-
-/* Limita a largura do conteúdo e centraliza */
-.conteudo > * {
+    width: 100%;
     max-width: 850px;
-    margin-left: auto;
-    margin-right: auto;
+    min-height: 100vh;
+    padding: 25px;
+    margin: 0 auto;
 }
 
-
-/* ==========================================
-   TOPO DA PÁGINA
-   ========================================== */
-
-.topoPagina {
-    text-align: center;
-    margin-bottom: 35px;
-}
-
-.topoPagina h1 {
-    font-size: 32px;
-    color: #294970;
-    margin-bottom: 8px;
-}
-
-.topoPagina p {
-    color: #666;
-    font-size: 16px;
-}
-
-
-/* ==========================================
-   SETA DE VOLTAR
-   ========================================== */
-
+/* VOLTAR */
 .btnVoltar {
-    position: relative;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    width: 42px;
-    height: 42px;
-
-    margin-bottom: 15px;
-
-    background: #294970;
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
-
+    background: #294970;
+    color: white;
+    font-size: 20px;
     text-decoration: none;
-
-    transition: 0.3s;
-}
-
-/* Linha fina da seta */
-.btnVoltar::before {
-    content: "";
-
-    position: absolute;
-
-    width: 17px;
-    height: 1.5px;
-
-    background: #ffffff;
-
-    left: 13px;
-    top: 20px;
-
-    border-radius: 2px;
-}
-
-/* Ponta fina da seta */
-.btnVoltar::after {
-    content: "";
-
-    position: absolute;
-
-    width: 8px;
-    height: 8px;
-
-    border-left: 1.5px solid #ffffff;
-    border-bottom: 1.5px solid #ffffff;
-
-    transform: rotate(45deg);
-
-    left: 12px;
-    top: 16px;
+    margin-bottom: 15px;
+    transition: .2s;
 }
 
 .btnVoltar:hover {
-    background: #1f3858;
-    transform: translateX(-3px);
+    background: #1d3554;
 }
 
+/* TÍTULO */
+.topoPagina {
+    margin-bottom: 20px;
+}
 
-/* ==========================================
-   PAINÉIS
-   ========================================== */
+.topoPagina h1 {
+    color: #294970;
+    font-size: 26px;
+    margin-bottom: 6px;
+}
 
+.topoPagina p {
+    color: #778397;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* PAINÉIS */
 .painel {
-    background: #fff;
-    border-radius: 18px;
-    padding: 30px;
-    margin-bottom: 25px;
-
-    box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #e6ecf4;
+    box-shadow: 0 4px 12px rgba(35, 60, 90, .05);
+    margin-bottom: 16px;
 }
 
 .painel h2 {
     display: flex;
     align-items: center;
-    gap: 12px;
-
+    gap: 8px;
     color: #294970;
-
-    margin-bottom: 25px;
-
-    font-size: 22px;
+    font-size: 18px;
+    margin-bottom: 16px;
 }
 
-.painel h2 i {
-    color: #294970;
-}
-
-
-/* ==========================================
-   FORMULÁRIOS
-   ========================================== */
-
-.painel form {
-    display: flex;
-    flex-direction: column;
-}
-
-
-/* ==========================================
-   CAMPOS
-   ========================================== */
-
+/* CAMPOS */
 .campo {
     display: flex;
     flex-direction: column;
-
-    margin-bottom: 20px;
-}
-
-/* Espaço maior entre último campo e botão */
-.campo:last-of-type {
-    margin-bottom: 25px;
+    gap: 6px;
+    margin-bottom: 13px;
 }
 
 .campo label {
-    margin-bottom: 8px;
-
+    color: #536176;
+    font-size: 13px;
     font-weight: 600;
-
-    color: #444;
 }
 
 .campo input,
 .campo select {
     width: 100%;
-
-    padding: 14px 16px;
-
-    border: 1px solid #d9d9d9;
-
-    border-radius: 12px;
-
-    font-size: 15px;
-
-    background: #fff;
-
-    transition: .3s;
+    padding: 9px 11px;
+    border: 1px solid #d8e0eb;
+    border-radius: 7px;
+    background: white;
+    color: #35445a;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
 }
 
 .campo input:focus,
 .campo select:focus {
-    outline: none;
-
     border-color: #294970;
-
-    box-shadow: 0 0 0 4px rgba(41, 73, 112, .15);
+    box-shadow: 0 0 0 2px rgba(41, 73, 112, .1);
 }
 
 .campo input[readonly] {
-    background: #f2f2f2;
-
-    color: #777;
-
-    cursor: not-allowed;
+    background: #f3f6fb;
+    color: #778397;
 }
 
-
-/* ==========================================
-   BOTÕES
-   ========================================== */
-
+/* BOTÕES */
 button {
-    width: fit-content;
-
-    display: flex;
+    display: inline-flex;
     align-items: center;
-
-    gap: 10px;
-
-    padding: 14px 24px;
-
-    margin-top: 5px;
-
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 14px;
     border: none;
-
-    border-radius: 12px;
-
+    border-radius: 7px;
     background: #294970;
-
-    color: #fff;
-
-    font-size: 15px;
-
+    color: white;
+    font-family: inherit;
+    font-size: 13px;
     font-weight: 600;
-
     cursor: pointer;
-
-    transition: .3s;
+    transition: .2s;
 }
 
 button:hover {
     background: #1d3554;
-
-    transform: translateY(-2px);
-}
-
-
-/* ==========================================
-   PAINEL DE SAIR / LOGOUT
-   ========================================== */
-
-.painel.sair {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    flex-wrap: wrap;
-
-    gap: 15px;
-}
-
-.painel.sair h2 {
-    margin-bottom: 0;
 }
 
 .logout {
-    background: #d9534f;
+    background: #c03939;
 }
 
 .logout:hover {
-    background: #bb2d2b;
+    background: #a52e2e;
 }
 
+/* MENSAGENS */
+.mensagem {
+    display: none;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
 
-/* ==========================================
-   RESPONSIVO
-   ========================================== */
-
-@media (max-width: 900px) {
-
+/* CELULAR */
+@media (max-width: 600px) {
     .conteudo {
-        padding: 25px;
+        padding: 16px;
     }
 
-    .conteudo > * {
-        max-width: 100%;
+    .topoPagina h1 {
+        font-size: 23px;
     }
 
-    .painel.sair {
-        flex-direction: column;
-        align-items: flex-start;
+    .painel {
+        padding: 15px;
+    }
+
+    button {
+        width: 100%;
     }
 }

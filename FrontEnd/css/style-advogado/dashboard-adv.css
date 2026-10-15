@@ -1,10 +1,6 @@
+
 /* ==========================================
    DASHBOARD ADVOGADO
-========================================== */
-
-
-/* ==========================================
-   RESET
 ========================================== */
 
 * {
@@ -12,23 +8,18 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
+    font-weight: 400;
 }
-
-
-/* ==========================================
-   BODY
-========================================== */
 
 body {
     background: #f4f6fb;
     display: flex;
     min-height: 100vh;
+    color: #475569;
+    -webkit-font-smoothing: antialiased;
 }
 
-
-/* ==========================================
-   MENU LATERAL
-========================================== */
+/* MENU LATERAL */
 
 .sidebar {
     width: 260px;
@@ -45,6 +36,7 @@ body {
 .sidebar h2 {
     text-align: center;
     font-size: 22px;
+    font-weight: 500;
     margin-bottom: 40px;
     color: white;
 }
@@ -59,7 +51,8 @@ body {
     color: white;
     text-decoration: none;
     font-size: 15px;
-    transition: 0.3s;
+    font-weight: 400;
+    transition: background 0.3s;
 }
 
 .sidebar nav a i {
@@ -72,10 +65,7 @@ body {
     background: #3d6697;
 }
 
-
-/* ==========================================
-   CONTEÚDO
-========================================== */
+/* CONTEÚDO */
 
 .conteudo {
     flex: 1;
@@ -84,10 +74,7 @@ body {
     width: calc(100% - 260px);
 }
 
-
-/* ==========================================
-   TOPO
-========================================== */
+/* TOPO */
 
 .topoDashboard {
     margin-bottom: 30px;
@@ -95,19 +82,18 @@ body {
 
 .topoDashboard h1 {
     color: #294970;
-    font-size: 32px;
+    font-size: 30px;
+    font-weight: 500;
     margin-bottom: 8px;
 }
 
 .topoDashboard p {
-    color: #666;
-    font-size: 16px;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 400;
 }
 
-
-/* ==========================================
-   CARDS
-========================================== */
+/* CARDS */
 
 .cardsDashboard {
     display: grid;
@@ -120,63 +106,58 @@ body {
     background: white;
     padding: 25px;
     border-radius: 15px;
-
     display: flex;
     align-items: center;
     gap: 20px;
-
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
     transition: 0.3s;
 }
 
 .card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .card i {
-    font-size: 35px;
+    font-size: 32px;
     color: #294970;
 }
 
 .card h2 {
-    font-size: 30px;
+    font-size: 28px;
+    font-weight: 500;
     color: #294970;
     margin-bottom: 3px;
 }
 
 .card span {
-    color: #666;
-    font-size: 14px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 400;
 }
 
-
-/* ==========================================
-   PAINÉIS
-========================================== */
+/* PAINÉIS */
 
 .painel {
     background: white;
     padding: 25px;
     border-radius: 15px;
     margin-bottom: 25px;
-
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
     overflow-x: auto;
 }
 
 .painel h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     color: #294970;
     font-size: 21px;
+    font-weight: 500;
     margin-bottom: 20px;
 }
 
-
-/* ==========================================
-   TABELA DE PROCESSOS
-========================================== */
+/* TABELAS */
 
 table {
     width: 100%;
@@ -189,7 +170,8 @@ table th {
     color: white;
     padding: 14px;
     text-align: left;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 table th:first-child {
@@ -203,18 +185,17 @@ table th:last-child {
 table td {
     padding: 14px;
     border-bottom: 1px solid #e5e7eb;
-    color: #555;
-    font-size: 14px;
-
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 400;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Colunas que precisam de mais espaço para o texto (podem quebrar linha) */
 table td.colTexto {
     white-space: normal;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 table tbody tr:last-child td {
@@ -225,10 +206,7 @@ table tbody tr:hover {
     background: #f4f7fb;
 }
 
-
-/* ==========================================
-   LISTAS
-========================================== */
+/* LISTAS */
 
 ul {
     list-style: none;
@@ -241,8 +219,10 @@ ul li {
     background: #f4f6fb;
     border-radius: 10px;
     margin-bottom: 12px;
-    color: #555;
+    color: #475569;
     font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
     border-left: 4px solid #294970;
 }
 
@@ -250,44 +230,143 @@ ul li:last-child {
     margin-bottom: 0;
 }
 
-
-/* ==========================================
-   AGENDA
-========================================== */
-
 #listaAgenda strong {
     color: #294970;
+    font-weight: 500;
 }
 
-
-/* ==========================================
-   NOTIFICAÇÕES
-========================================== */
+/* NOTIFICAÇÕES */
 
 #listaNotificacoes li {
     border-left-color: #3d6697;
 }
 
+#listaNotificacoes li.notificacao {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transition: background 0.2s;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+}
 
-/* ==========================================
-   RESPONSIVO
-========================================== */
+#listaNotificacoes li.notificacao:hover {
+    background: #e8f0ff;
+}
+
+/* Notificações não lidas */
+
+#listaNotificacoes li.notificacao.naoLida {
+    border-left-color: #d97706;
+    font-weight: 400;
+}
+
+/* Deixa o título em destaque sem ficar muito grosso */
+
+#listaNotificacoes li.notificacao strong,
+#listaNotificacoes li.notificacao b {
+    font-weight: 500;
+    color: #405875;
+}
+
+/* Notificações já lidas */
+
+#listaNotificacoes li.notificacao:not(.naoLida) {
+    opacity: 0.75;
+    font-weight: 400;
+}
+
+/* ATUALIZAÇÃO EM TEMPO REAL */
+
+.statusAtualizacao {
+    display: inline-block;
+    margin-left: 12px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #64748b;
+    vertical-align: middle;
+}
+
+.statusAtualizacao.erro {
+    color: #c0392b;
+    font-weight: 500;
+}
+
+.statusAtualizacao.pausado {
+    color: #b7791f;
+}
+
+/* COMPROMISSOS */
+
+#listaAgenda {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.itemCompromissoDash {
+    display: flex;
+    gap: 18px;
+    background: #f4f6fb;
+    border-left: 4px solid #294970;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 0;
+}
+
+.horaCompromissoDash {
+    flex-shrink: 0;
+    align-self: flex-start;
+    background: #294970;
+    color: white;
+    font-weight: 500;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.infoCompromissoDash {
+    flex: 1;
+    min-width: 0;
+}
+
+.infoCompromissoDash h3 {
+    color: #294970;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.infoCompromissoDash p {
+    font-size: 13px;
+    font-weight: 400;
+    color: #64748b;
+    margin-bottom: 4px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.infoCompromissoDash p:last-child {
+    margin-bottom: 0;
+}
+
+.infoCompromissoDash strong {
+    color: #294970;
+    font-weight: 500;
+}
+
+/* TABLET */
 
 @media (max-width: 1100px) {
-
     .cardsDashboard {
         grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
-
-/* ==========================================
-   TABLET
-========================================== */
-
 @media (max-width: 800px) {
-
     .sidebar {
         width: 220px;
     }
@@ -301,16 +380,11 @@ ul li:last-child {
     .cardsDashboard {
         grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
-
-/* ==========================================
-   CELULAR
-========================================== */
+/* CELULAR */
 
 @media (max-width: 650px) {
-
     body {
         flex-direction: column;
     }
@@ -358,129 +432,7 @@ ul li:last-child {
         display: block;
     }
 
-}
-/* ==========================================
-   INDICADOR DE ATUALIZAÇÃO EM TEMPO REAL
-========================================== */
-
-.painel h2 {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.statusAtualizacao {
-    display: inline-block;
-    margin-left: 12px;
-    font-size: 12px;
-    font-weight: 400;
-    color: #6b7280;
-    vertical-align: middle;
-}
-
-.statusAtualizacao.erro {
-    color: #c0392b;
-    font-weight: 600;
-}
-
-.statusAtualizacao.pausado {
-    color: #b7791f;
-}
-
-/* ==========================================
-   COMPROMISSOS DETALHADOS (DASHBOARD)
-========================================== */
-
-#listaAgenda {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.itemCompromissoDash {
-    display: flex;
-    gap: 18px;
-
-    background: #f4f6fb;
-    border-left: 4px solid #294970;
-    border-radius: 10px;
-    padding: 16px 18px;
-
-    margin-bottom: 0;
-}
-
-.horaCompromissoDash {
-    flex-shrink: 0;
-    align-self: flex-start;
-
-    background: #294970;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-
-    padding: 8px 12px;
-    border-radius: 8px;
-    min-width: 60px;
-    text-align: center;
-}
-
-.infoCompromissoDash {
-    flex: 1;
-    min-width: 0;
-}
-
-.infoCompromissoDash h3 {
-    color: #294970;
-    font-size: 16px;
-    margin-bottom: 8px;
-}
-
-.infoCompromissoDash p {
-    font-size: 13px;
-    color: #555;
-    margin-bottom: 4px;
-    line-height: 1.5;
-
-    word-break: break-word;
-}
-
-.infoCompromissoDash p:last-child {
-    margin-bottom: 0;
-}
-
-.infoCompromissoDash strong {
-    color: #294970;
-}
-
-@media (max-width: 650px) {
-
     .itemCompromissoDash {
         flex-direction: column;
     }
-
-}
-
-/* ==========================================
-   NOTIFICAÇÕES AUTOMÁTICAS (RF007)
-========================================== */
-
-#listaNotificacoes li.notificacao {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    transition: 0.2s;
-}
-
-#listaNotificacoes li.notificacao:hover {
-    background: #e8f0ff;
-}
-
-#listaNotificacoes li.notificacao.naoLida {
-    border-left-color: #d97706;
-    font-weight: 600;
-}
-
-#listaNotificacoes li.notificacao:not(.naoLida) {
-    opacity: 0.65;
-    font-weight: 400;
 }

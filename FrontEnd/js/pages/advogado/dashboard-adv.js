@@ -144,6 +144,26 @@ function converterParaData(valor) {
 
     }
 
+    // Data simples "AAAA-MM-DD" (vinda do <input type="date">):
+    // precisa ser lida como data LOCAL. Com new Date("2026-10-14")
+    // o navegador usa meia-noite UTC, que no Brasil é o dia anterior
+    // às 21h - e compromissos de hoje sumiam da lista.
+    if (typeof valor === "string") {
+
+        const partes = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+        if (partes) {
+
+            return new Date(
+                Number(partes[1]),
+                Number(partes[2]) - 1,
+                Number(partes[3])
+            );
+
+        }
+
+    }
+
     const data = new Date(valor);
 
     return isNaN(data.getTime()) ? null : data;
@@ -326,10 +346,23 @@ function renderizarProximosCompromissos(compromissos) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    // Só mostra compromissos de hoje em diante e ainda não concluídos
+    // Só mostra compromissos de hoje em diante, que não estejam
+    // concluídos nem cancelados
+    let ocultosPorStatus = 0;
+    let ocultosPorData = 0;
+
     const futuros = compromissos.filter((compromisso) => {
 
-        if (compromisso.status === "Concluído" || compromisso.concluido === true) {
+        const status = String(compromisso.status || "").toLowerCase();
+
+        if (
+            status === "concluído" ||
+            status === "concluido" ||
+            status === "cancelado" ||
+            compromisso.concluido === true
+        ) {
+
+            ocultosPorStatus++;
 
             return false;
 
@@ -339,14 +372,31 @@ function renderizarProximosCompromissos(compromissos) {
 
         if (!dataCompromisso) return true; // sem data definida, mostra mesmo assim
 
-        return dataCompromisso >= hoje;
+        if (dataCompromisso < hoje) {
+
+            ocultosPorData++;
+
+            return false;
+
+        }
+
+        return true;
 
     });
 
     if (futuros.length === 0) {
 
+        const ocultos = ocultosPorStatus + ocultosPorData;
+
         listaAgendaEl.innerHTML = `
-            <li>Nenhum compromisso futuro cadastrado.</li>
+            <li>
+                Nenhum compromisso futuro cadastrado.
+                ${ocultos > 0 ? `<br><small>
+                    (${ocultos} compromisso(s) não aparece(m) aqui:
+                    ${ocultosPorStatus} concluído(s)/cancelado(s) e
+                    ${ocultosPorData} com data já passada.)
+                </small>` : ""}
+            </li>
         `;
 
         return;
@@ -468,6 +518,23 @@ function iniciarNotificacoesTempoReal() {
             renderizarNotificacoes(lista);
 
             marcarAtualizado(statusNotificacoesEl);
+
+        }, (erro) => {
+
+            console.error("Erro ao carregar notificações:", erro);
+
+            marcarErro(
+                statusNotificacoesEl,
+                "Não foi possível carregar as notificações."
+            );
+
+            if (listaNotificacoesEl.querySelector("li[data-id]") === null) {
+
+                listaNotificacoesEl.innerHTML = `
+                    <li>Erro ao carregar as notificações.</li>
+                `;
+
+            }
 
         });
 

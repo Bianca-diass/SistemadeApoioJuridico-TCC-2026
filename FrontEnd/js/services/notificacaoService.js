@@ -1,103 +1,138 @@
-﻿// js/services/notificacaoService.js
+﻿
+import { getToken } from "./authService.js";
 
-import { db } from "../config/firebaseConfig.js";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  updateDoc,
-  deleteDoc,
-  doc,
-  Timestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const API = "http://localhost:3000/notificacoes";
+const INTERVALO = 8000;
 
-const colecao = collection(db, "notificacoes");
+function headers() {
+  const token = getToken();
 
-// CRIAR
-export async function enviarNotificacao({ clienteId, titulo, mensagem }) {
-  await addDoc(colecao, {
-    clienteId,
-    titulo,
-    mensagem,
-    dataEnvio: Timestamp.now(),
-    lida: false,
-    status: "Não Lida",
+  if (!token) {
+    throw new Error("Faça login novamente.");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+}
+
+async function requisicao(url, options = {}) {
+  const resposta = await fetch(url, {
+    ...options,
+    headers: {
+      ...headers(),
+      ...(options.headers || {})
+    }
   });
+
+  const dados = await resposta.json().catch(() => ({}));
+
+  if (!resposta.ok) {
+    throw new Error(
+      dados.erro || "Erro ao processar notificação."
+    );
+  }
+
+  return dados;
 }
 
-// NOTIFICAÇÕES DE UM CLIENTE ESPECÍFICO
-export function listarPorCliente(clienteId, callback) {
-  const q = query(
-    colecao,
-    where("clienteId", "==", clienteId),
-    orderBy("dataEnvio", "desc")
-  );
-
-  return onSnapshot(q, (snapshot) => {
-    const notificacoes = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-    callback(notificacoes);
-  });
+export async function listarTodasNotificacoes() {
+  const dados = await requisicao(API);
+  return Array.isArray(dados) ? dados : [];
 }
 
-// EDITAR
-export async function editarNotificacao({ id, titulo, mensagem }) {
-  const ref = doc(db, "notificacoes", id);
-  await updateDoc(ref, { titulo, mensagem });
-}
-
-// EXCLUIR
-export async function excluirNotificacao(id) {
-  const ref = doc(db, "notificacoes", id);
-  await deleteDoc(ref);
-}
-
-// MARCAR COMO LIDA
-export async function marcarComoLida(id) {
-  const ref = doc(db, "notificacoes", id);
-  await updateDoc(ref, { lida: true, status: "Lida" });
-}
-
-// TODAS AS NOTIFICAÇÕES
 export function listarNotificacoes(callback) {
-  const q = query(colecao, orderBy("dataEnvio", "desc"));
+  let ativo = true;
+  let carregando = false;
 
-  return onSnapshot(q, (snapshot) => {
-    const notificacoes = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-    callback(notificacoes);
+  async function atualizar() {
+    if (!ativo || carregando) return;
+
+    carregando = true;
+
+    try {
+      const notificacoes = await listarTodasNotificacoes();
+
+      if (ativo) callback(notificacoes);
+    } catch (error) {
+      console.error("Erro ao carregar notificações:", error);
+    } finally {
+      carregando = false;
+    }
+  }
+
+  atualizar();
+
+  const intervalo = setInterval(atualizar, INTERVALO);
+
+  return () => {
+    ativo = false;
+    clearInterval(intervalo);
+  };
+}
+
+export async function listarPorCliente(clienteId) {
+  const notificacoes = await listarTodasNotificacoes();
+
+  return notificacoes.filter(
+    item => item.clienteId === clienteId
+  );
+}
+
+export async function enviarNotificacao({
+  clienteId = null,
+  titulo,
+  mensagem,
+  tipo = "sistema",
+  processoId = null,
+  compromissoId = null
+}) {
+  return requisicao(API, {
+    method: "POST",
+    body: JSON.stringify({
+      clienteId,
+      titulo,
+      mensagem,
+      tipo,
+      processoId,
+      compromissoId
+    })
   });
 }
 
-// FILTRO LIDAS
-export function listarLidas(callback) {
-  const q = query(colecao, where("lida", "==", true));
-
-  return onSnapshot(q, (snapshot) => {
-    const notificacoes = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-    callback(notificacoes);
+export async function editarNotificacao({
+  id,
+  titulo,
+  mensagem
+}) {
+  return requisicao(`${API}/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify({ titulo, mensagem })
   });
 }
 
-// FILTRO NÃO LIDAS
-export function listarNaoLidas(callback) {
-  const q = query(colecao, where("lida", "==", false));
-
-  return onSnapshot(q, (snapshot) => {
-    const notificacoes = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-    callback(notificacoes);
+export async function excluirNotificacao(id) {
+  return requisicao(`${API}/${encodeURIComponent(id)}`, {
+    method: "DELETE"
   });
+}
+
+export async function marcarComoLida(id) {
+  return requisicao(`${API}/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify({ lida: true })
+  });
+}
+
+export async function listarLidas() {
+  const notificacoes = await listarTodasNotificacoes();
+
+  return notificacoes.filter(item => item.lida === true);
+}
+
+export async function listarNaoLidas() {
+  const notificacoes = await listarTodasNotificacoes();
+
+  return notificacoes.filter(item => item.lida !== true);
 }

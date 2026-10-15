@@ -1,589 +1,287 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-/* ==========================================
-   SETA DE VOLTAR
-========================================== */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f3f6fb;
+    color: #35445a;
+}
+
+.conteudo {
+    max-width: 1050px;
+    width: 100%;
+    margin: auto;
+    padding: 25px;
+}
 
 .btnVoltar {
-    position: relative;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    width: 42px;
-    height: 42px;
-
-    margin-bottom: 15px;
-
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
     background: #294970;
-
-    border-radius: 10px;
-
-    text-decoration: none;
-
-    transition: 0.3s;
-}
-
-/* Linha fina da seta */
-.btnVoltar::before {
-    content: "";
-
-    position: absolute;
-
-    width: 17px;
-    height: 1.5px;
-
-    background: #ffffff;
-
-    left: 13px;
-    top: 20px;
-
-    border-radius: 2px;
-}
-
-/* Ponta fina da seta */
-.btnVoltar::after {
-    content: "";
-
-    position: absolute;
-
-    width: 8px;
-    height: 8px;
-
-    border-left: 1.5px solid #ffffff;
-    border-bottom: 1.5px solid #ffffff;
-
-    transform: rotate(45deg);
-
-    left: 12px;
-    top: 16px;
-}
-
-.btnVoltar:hover {
-    background: #1f3858;
-    transform: translateX(-3px);
-}
-
-
-/* ==========================================
-   AÇÕES DA TABELA
-========================================== */
-
-.acoes-documento {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.btn-acao {
-    border: none;
-
-    width: 35px;
-    height: 35px;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
     color: white;
+    text-decoration: none;
+    margin-bottom: 18px;
 }
 
-.btn-visualizar {
-    background: #54813B;
+.topo {
+    margin-bottom: 22px;
 }
 
-.btn-renomear {
-    background: #d89b28;
+.topo h1 {
+    color: #294970;
+    font-size: 27px;
+    margin-bottom: 6px;
 }
 
-.btn-excluir {
-    background: #d9534f;
+.topo p {
+    color: #778397;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
-.btn-acao:hover {
-    opacity: 0.8;
-}
-
-
-/* ==========================================
-   FILTRO POR CLIENTE
-========================================== */
-
-.filtro-cliente {
+.resumo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
     margin-bottom: 20px;
 }
 
-.filtro-cliente select {
-    width: 100%;
-    max-width: 350px;
-
-    padding: 12px;
-
-    border: 1px solid #ddd;
-
-    border-radius: 8px;
-
-    font-size: 14px;
-}
-
-
-/* ==========================================
-   STATUS (BADGE)
-========================================== */
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 6px 14px;
-
-    border-radius: 20px;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    white-space: nowrap;
-}
-
-.status-badge.pendente {
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.status-badge.aprovado {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.status-badge.rejeitado {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.status-badge.semstatus {
-    background: #e5e7eb;
-    color: #4b5563;
-}
-
-.texto-secundario {
-    color: #6b7280;
-    font-size: 13px;
-}
-
-
-/* ==========================================
-   MODAL - VISUALIZAR DOCUMENTO
-========================================== */
-
-.modal-documento {
-    display: none;
-
-    position: fixed;
-
-    inset: 0;
-
-    background: rgba(0, 0, 0, 0.5);
-
-    align-items: center;
-    justify-content: center;
-
-    z-index: 999;
-
-    padding: 20px;
-}
-
-.modal-documento.ativo {
+.card {
     display: flex;
-}
-
-
-/* ==========================================
-   CONTEÚDO DO MODAL
-========================================== */
-
-.conteudo-modal.cardInformacoes {
-    --tinta: #111111;
-    --branco: #FAFAF8;
-    --acento: #7A2333;
-    --acento-fundo: #F3E6E8;
-    --cinza: #6B6B6B;
-    --cinza-claro: #9C9C94;
-    --linha: #DEDBD3;
-
-    --display: 'Space Grotesk', sans-serif;
-    --corpo: 'Inter', sans-serif;
-    --mono: 'JetBrains Mono', monospace;
-
-    width: 100%;
-    max-width: 650px;
-
-    max-height: 90vh;
-
-    overflow-y: auto;
-
-    background: var(--branco);
-
-    border-radius: 0;
-
-    border: 1px solid var(--linha);
-
-    padding: 36px 32px;
-
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-
-    font-family: var(--corpo);
-
-    color: var(--tinta);
-
-    -webkit-font-smoothing: antialiased;
-}
-
-
-/* ==========================================
-   TÍTULO DO CARD
-========================================== */
-
-.tituloCard {
-    display: grid;
-
-    grid-template-columns: 40px 44px 1fr;
-
     align-items: center;
-
-    gap: 4px;
-
-    margin-bottom: 28px;
-
-    padding-bottom: 20px;
-
-    border-bottom: 3px solid var(--tinta);
+    gap: 15px;
+    padding: 18px;
+    background: white;
+    border: 1px solid #e6ecf4;
+    border-radius: 12px;
 }
 
-.tituloCard::before {
-    content: "01";
-
-    font-family: var(--mono);
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-    color: var(--acento);
-
-    letter-spacing: 0.05em;
-}
-
-.tituloCard i {
-    width: 40px;
-    height: 40px;
-
-    border-radius: 0;
-
+.card > i {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    background: transparent;
-
-    border: 1.5px solid var(--tinta);
-
-    color: var(--tinta);
-
-    font-size: 16px;
+    width: 43px;
+    height: 43px;
+    border-radius: 10px;
+    background: #edf3fa;
+    color: #294970;
+    font-size: 20px;
 }
 
-.tituloCard h2 {
-    font-family: var(--display);
-
-    font-size: 19px;
-
-    font-weight: 600;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.01em;
-
-    color: var(--tinta);
-}
-
-
-/* ==========================================
-   GRID DE INFORMAÇÕES
-========================================== */
-
-.informacoesGrid {
-    display: grid;
-
-    grid-template-columns: repeat(2, 1fr);
-
-    gap: 22px 32px;
-}
-
-.informacao {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-
-    padding-bottom: 16px;
-
-    border-bottom: 1px solid var(--linha);
-}
-
-.informacao label {
-    font-size: 11px;
-
-    font-weight: 600;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.08em;
-
-    color: var(--cinza);
-}
-
-.informacao span {
+.card span {
     display: block;
-
-    min-height: 0;
-
-    padding: 0;
-
-    background: transparent;
-
-    border: none;
-
-    border-radius: 0;
-
-    font-family: var(--corpo);
-
-    font-size: 16px;
-
-    font-weight: 600;
-
-    color: var(--tinta);
-}
-
-.informacao span.informacao-descricao {
-    font-size: 14px;
-
-    font-weight: 400;
-
-    white-space: pre-wrap;
-
-    word-break: break-word;
-}
-
-.informacao span.texto-secundario {
-    font-weight: 400;
-
-    color: var(--cinza-claro);
-}
-
-.informacao.nome {
-    grid-column: 1 / -1;
-}
-
-
-/* ==========================================
-   BOTÕES DO MODAL
-========================================== */
-
-.botoesCliente {
-    display: flex;
-
-    justify-content: flex-end;
-
-    align-items: center;
-
-    gap: 12px;
-
-    margin-top: 32px;
-}
-
-.botaoVoltar {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 8px;
-
-    border-radius: 0;
-
-    padding: 13px 22px;
-
-    text-decoration: none;
-
-    cursor: pointer;
-
-    font-family: var(--corpo);
-
-    font-size: 14px;
-
-    font-weight: 600;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.04em;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        border-color 0.2s ease;
-
-    background: transparent;
-
-    color: var(--tinta);
-
-    border: 1.5px solid var(--tinta);
-}
-
-.botaoVoltar:hover {
-    background: var(--tinta);
-
-    color: var(--branco);
-}
-
-.botaoVoltar:focus-visible {
-    outline: 2px solid var(--acento);
-
-    outline-offset: 3px;
-}
-
-
-/* ==========================================
-   BADGE DENTRO DAS INFORMAÇÕES
-========================================== */
-
-.informacao span .status-badge {
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 5px 14px;
-
-    border-radius: 20px;
-
-    font-family: var(--corpo);
-
+    color: #778397;
     font-size: 12px;
+    margin-bottom: 5px;
+}
 
+.card strong {
+    color: #294970;
+    font-size: 23px;
+}
+
+.painel {
+    background: white;
+    border: 1px solid #e6ecf4;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(35, 60, 90, .04);
+}
+
+.painel h2 {
+    color: #294970;
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.painel h2 i {
+    margin-right: 7px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 15px;
+}
+
+.campo label {
+    font-size: 13px;
     font-weight: 600;
+    color: #536176;
+}
 
-    text-transform: uppercase;
+.campo input,
+.campo select,
+.filtros input,
+.filtros select {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #d8e0eb;
+    border-radius: 7px;
+    background: white;
+    color: #35445a;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+}
 
-    letter-spacing: 0.03em;
+.campo input:focus,
+.campo select:focus,
+.filtros input:focus,
+.filtros select:focus {
+    border-color: #294970;
+}
 
+.campo small {
+    color: #778397;
+    font-size: 11px;
+}
+
+button,
+.acao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 7px;
+    background: #294970;
+    color: white;
+    font-family: inherit;
+    font-size: 12px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+button:hover,
+.acao:hover {
+    background: #1d3554;
+}
+
+.filtros {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    margin-bottom: 17px;
+}
+
+.tabela {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
     white-space: nowrap;
 }
 
-
-/* ==========================================
-   MODAL EDITAR DOCUMENTO
-========================================== */
-
-.campoEditar {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 6px;
-
-    margin-bottom: 16px;
-}
-
-.campoEditar label {
-    font-size: 12px;
-
-    font-weight: 600;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.05em;
-
-    color: #6B6B6B;
-}
-
-.campoEditar input,
-.campoEditar select,
-.campoEditar textarea {
-    padding: 10px 12px;
-
-    border: 1px solid #DEDBD3;
-
-    border-radius: 6px;
-
-    font-size: 14px;
-
-    font-family: 'Inter', sans-serif;
-
-    color: #111;
-}
-
-.campoEditar textarea {
-    resize: vertical;
-}
-
-.campoEditar input:focus,
-.campoEditar select:focus,
-.campoEditar textarea:focus {
-    outline: none;
-
-    border-color: #294970;
-}
-
-
-/* ==========================================
-   BOTÃO SALVAR EDIÇÃO
-========================================== */
-
-#salvarEdicao {
+th {
+    padding: 12px;
+    text-align: left;
     background: #294970;
-
     color: white;
-
-    border-color: #294970;
+    font-size: 12px;
 }
 
-#salvarEdicao:hover {
-    background: #1f3858;
-
-    color: white;
+th:first-child {
+    border-radius: 7px 0 0 7px;
 }
 
+th:last-child {
+    border-radius: 0 7px 7px 0;
+}
 
-/* ==========================================
-   RESPONSIVO
-========================================== */
+td {
+    padding: 12px;
+    border-bottom: 1px solid #edf1f6;
+    font-size: 12px;
+    color: #536176;
+}
+
+.vazio {
+    text-align: center;
+    padding: 22px;
+    color: #778397;
+}
+
+.acoes {
+    display: flex;
+    gap: 6px;
+}
+
+.acao.excluir {
+    background: #c03939;
+}
+
+.acao.excluir:hover {
+    background: #a52e2e;
+}
+
+#mensagem {
+    margin-top: 12px;
+    font-size: 13px;
+}
 
 @media (max-width: 600px) {
+    .conteudo {
+        padding: 16px;
+    }
 
-    .informacoesGrid {
+    .topo h1 {
+        font-size: 24px;
+    }
+
+    .resumo {
+        gap: 10px;
+    }
+
+    .card {
+        padding: 12px;
+        gap: 9px;
+    }
+
+    .card > i {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+    }
+
+    .card span {
+        font-size: 11px;
+    }
+
+    .card strong {
+        font-size: 20px;
+    }
+
+    .painel {
+        padding: 15px;
+    }
+
+    .filtros {
         grid-template-columns: 1fr;
     }
 
-    .informacao.nome {
-        grid-column: auto;
+    .tabela {
+        overflow-x: auto;
     }
+}
 
-    .tituloCard {
-        grid-template-columns: 30px 40px 1fr;
+@media (max-width: 350px) {
+    .resumo {
+        grid-template-columns: 1fr;
     }
-
-    .conteudo-modal.cardInformacoes {
-        padding: 28px 20px;
-    }
-
 }

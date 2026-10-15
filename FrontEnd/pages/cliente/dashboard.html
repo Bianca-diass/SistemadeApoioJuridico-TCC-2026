@@ -1,216 +1,99 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Área do Cliente</title>
-
-    <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/style-cliente/dashboard-cliente.css">
-
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard - Área do Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style-cliente/cliente.css">
 </head>
-
 <body>
-
-<div class="container">
-
-    <!-- MENU -->
-
-    <aside class="sidebar">
-
-        <h2>Área do Cliente</h2>
-
-        <nav>
-
-            <a href="dashboard.html" class="ativo">
-                <i class="fas fa-house"></i>
-                Dashboard
-            </a>
-
-            <a href="agenda.html">
-                <i class="fas fa-calendar-days"></i>
-                Agenda
-            </a>
-
-            <a href="configuracoes.html">
-                <i class="fas fa-gear"></i>
-                Configurações
-            </a>
-
-        </nav>
-
-    </aside>
-
-    <!-- CONTEÚDO -->
-
-    <main class="conteudo">
-
-        <header class="topoDashboard">
-
-            <div>
-
-                <h1>Bem-vindo, Cliente!</h1>
-
-                <p>Área exclusiva do cliente.</p>
-
-            </div>
-
-        </header>
-
-        <!-- CARDS -->
-
-        <section class="cardsDashboard">
-
-            <div class="card">
-
-                <i class="fas fa-folder-open"></i>
-
-                <div>
-
-                    <h2 id="totalProcessos">3</h2>
-
-                    <span>Meus Processos</span>
-
-                </div>
-
-            </div>
-
-            <div class="card">
-
-                <i class="fas fa-calendar-days"></i>
-
-                <div>
-
-                    <h2 id="totalAgenda">5</h2>
-
-                    <span>Compromissos</span>
-
-                </div>
-
-            </div>
-
-            <div class="card">
-
-                <i class="fas fa-bell"></i>
-
-                <div>
-
-                    <h2 id="totalNotificacoes">5</h2>
-
-                    <span>Notificações</span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        <!-- PROCESSOS -->
-
-        <section class="painel">
-
-            <h2>Meus Processos</h2>
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>Nº do Processo</th>
-                        <th>Classe Processual</th>
-                        <th>Status</th>
-                        <th>Última Movimentação</th>
-                        <th>Próximo Prazo</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="listaProcessos">
-
-                    <tr>
-                        <td>0001234-56.2026.8.12.0001</td>
-                        <td>Ação Trabalhista</td>
-                        <td>Em andamento</td>
-                        <td>Audiência designada</td>
-                        <td>15/08/2026</td>
-                    </tr>
-
-                    <tr>
-                        <td>0002458-91.2026.8.12.0001</td>
-                        <td>Divórcio Consensual</td>
-                        <td>Aguardando decisão</td>
-                        <td>Concluso ao juiz</td>
-                        <td>20/08/2026</td>
-                    </tr>
-
-                    <tr>
-                        <td>0003875-44.2026.8.12.0001</td>
-                        <td>Inventário</td>
-                        <td>Documentação pendente</td>
-                        <td>Solicitada documentação</td>
-                        <td>28/08/2026</td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </section>
-
-        <!-- AGENDA -->
-
-        <section class="painel">
-
-            <h2>Próximos Compromissos</h2>
-
-            <ul id="listaAgenda">
-
-                <li>📅 <strong>15/08/2026 - 14h30</strong> | Audiência Trabalhista - Fórum de Dourados/MS.</li>
-
-                <li>📄 <strong>18/08/2026 - 09h00</strong> | Reunião com o advogado para análise do processo.</li>
-
-                <li>⚖️ <strong>20/08/2026 - 10h00</strong> | Prazo final para envio de documentos complementares.</li>
-
-                <li>🤝 <strong>25/08/2026 - 15h00</strong> | Sessão de conciliação referente ao processo de Divórcio Consensual.</li>
-
-                <li>📋 <strong>30/08/2026 - 08h30</strong> | Atualização do andamento processual com o advogado responsável.</li>
-
-            </ul>
-
-        </section>
-
-        <!-- NOTIFICAÇÕES -->
-
-        <section class="painel">
-
-            <h2>Notificações</h2>
-
-            <ul id="listaNotificacoes">
-
-                <li>📌 Seu processo nº 0001234-56.2026.8.12.0001 recebeu uma nova movimentação.</li>
-
-                <li>📅 Audiência agendada para o dia <strong>15/08/2026</strong>, às 14h30.</li>
-
-                <li>⏰ O prazo para envio de documentos encerra em <strong>20/08/2026</strong>.</li>
-
-                <li>📄 Um novo documento foi anexado ao processo de Divórcio Consensual.</li>
-
-                <li>✅ Seu advogado confirmou presença na audiência do próximo compromisso.</li>
-
-            </ul>
-
-        </section>
-
-    </main>
-
-</div>
-
+<aside>
+  <div class="brand">Área do Cliente</div>
+  <nav>
+    <a href="dashboard.html" class="on">Dashboard</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="documentos.html">Documentos</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user"><div class="av">C</div><div>Cliente<small><a href="login.html">Sair</a></small></div></div>
+</aside>
+<main>
+  <header>
+    <h1>Olá, Cliente</h1>
+    <p class="sub" id="sub">Você tem 1 pendência e 3 notificações novas.</p>
+  </header>
+
+  <section class="top">
+    <article class="card next">
+      <small>Próximo compromisso</small>
+      <strong>Audiência trabalhista</strong>
+      <div class="when"><span>15/08/2026, 14h30</span><span>Fórum de Dourados/MS</span></div>
+      <a class="btn alt" href="agenda.html">Ver na agenda</a>
+    </article>
+    <article class="card alert">
+      <small>Precisa da sua atenção</small>
+      <strong>Enviar documentos complementares</strong>
+      <span>Prazo final: 20/08/2026, 10h00. Processo de Divórcio Consensual.</span>
+      <a class="btn" href="documentos.html">Enviar documentos</a>
+    </article>
+  </section>
+
+  <section class="stats">
+    <div class="card stat"><b>3</b><span>Meus processos</span></div>
+    <div class="card stat"><b>5</b><span>Compromissos</span></div>
+    <div class="card stat"><b id="qtd-notif">3</b><span>Notificações não lidas</span></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Meus processos</h2></div>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Processo</th><th>Situação</th><th>Última movimentação</th><th>Próximo prazo</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Ação Trabalhista</b><small>0001234-56.2026.8.12.0001</small></td>
+          <td><span class="badge b-info">Em andamento</span><div class="steps" title="Etapa 3 de 5"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div></td>
+          <td>Audiência designada</td>
+          <td><b>15/08/2026</b></td>
+        </tr>
+        <tr>
+          <td><b>Divórcio Consensual</b><small>0002458-91.2026.8.12.0001</small></td>
+          <td><span class="badge b-warn">Aguardando decisão</span><div class="steps" title="Etapa 4 de 5"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></div></td>
+          <td>Concluso ao juiz</td>
+          <td><b>20/08/2026</b></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section class="card">
+      <div class="head"><h2>Próximos compromissos</h2><a class="link" href="agenda.html">Abrir agenda</a></div>
+      <div class="ev"><div class="date">15<small>ago</small></div><p><b>Audiência trabalhista</b>Fórum de Dourados/MS<br><time>14h30</time></p></div>
+      <div class="ev"><div class="date">18<small>ago</small></div><p><b>Reunião com o advogado</b>Análise do processo<br><time>09h00</time></p></div>
+      <div class="ev"><div class="date">20<small>ago</small></div><p><b>Prazo para enviar documentos</b>Divórcio Consensual<br><time>10h00</time></p></div>
+      <div class="ev"><div class="date">25<small>ago</small></div><p><b>Sessão de conciliação</b>Divórcio Consensual<br><time>15h00</time></p></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><h2>Notificações</h2>
+        <div class="tabs">
+          <button aria-pressed="true" data-f="all">Todas</button>
+          <button aria-pressed="false" data-f="new">Não lidas</button>
+        </div>
+      </div>
+      <div id="list">
+        <div class="nt"><span class="dot"></span><span>Processo 0001234-56 recebeu uma nova movimentação.</span><button>Marcar como lida</button></div>
+        <div class="nt"><span class="dot"></span><span>Novo documento anexado ao Divórcio Consensual.</span><button>Marcar como lida</button></div>
+        <div class="nt"><span class="dot"></span><span>O prazo para envio de documentos termina em 20/08/2026.</span><button>Marcar como lida</button></div>
+        <div class="nt read"><span class="dot"></span><span>Seu advogado confirmou presença na audiência.</span></div>
+        <div class="nt read"><span class="dot"></span><span>Audiência agendada para 15/08/2026, às 14h30.</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="../../js/pages/cliente/cliente.js"></script>
 </body>
-
 </html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentos - Área do Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style-cliente/cliente.css">
+</head>
+<body class="documentos-page">
+<aside>
+  <div class="brand">Área do Cliente</div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="agenda.html">Agenda</a>
+    <a href="documentos.html" class="on">Documentos</a>
+    <a href="configuracoes.html">Configurações</a>
+  </nav>
+  <div class="user"><div class="av">C</div><div>Cliente<small><a href="login.html">Sair</a></small></div></div>
+</aside>
+<main>
+  <header>
+    <h1>Documentos</h1>
+    <p class="sub">Acompanhe os documentos dos seus processos.</p>
+  </header>
+
+  <section class="card">
+    <div class="upload">
+      <p>Formatos aceitos: PDF, JPG e PNG, até 10 MB.</p>
+      <label class="btn" for="arquivo">Enviar documento</label>
+      <input type="file" id="arquivo" accept=".pdf,.jpg,.jpeg,.png">
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Meus documentos</h2></div>
+    <div id="docs"></div>
+  </section>
+</main>
+<script type="module" src="../../js/pages/cliente/documentos.js"></script>
+</body>
+</html>

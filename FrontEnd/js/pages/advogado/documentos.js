@@ -1,26 +1,33 @@
 import { documentoController } from "../../controllers/documentosController.js";
 
 const tbody = document.getElementById("listaDocumentos");
-
 const pesquisa = document.getElementById("pesquisarDocumento");
-
 const filtroCliente = document.getElementById("filtroCliente");
-
 const totalDocumentos = document.getElementById("totalDocumentos");
-
 const totalPendentes = document.getElementById("totalPendentes");
-
 const totalAprovados = document.getElementById("totalAprovados");
-
 const modal = document.getElementById("modalDocumento");
-
 const fecharModal = document.getElementById("fecharModal");
-
 const modalEditar = document.getElementById("modalEditar");
-
 const formEditarDocumento = document.getElementById("formEditarDocumento");
-
 const cancelarEdicao = document.getElementById("cancelarEdicao");
+
+
+// ==========================================
+// ESCAPAR TEXTO (evita que o que foi digitado
+// seja interpretado como HTML na tela)
+// ==========================================
+
+function escapar(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+const NAO_INFORMADO = `<span class="texto-secundario">Não informado</span>`;
 
 
 // ==========================================
@@ -75,35 +82,35 @@ function renderizarDocumentos(documentos) {
         <tr>
             <td>
                 <i class="fa-solid fa-file"></i>
-                ${doc.titulo || "Sem nome"}
+                ${escapar(doc.titulo || "Sem nome")}
             </td>
 
-            <td>${doc.tipo || "-"}</td>
+            <td>${escapar(doc.tipo || "-")}</td>
 
-            <td>${doc.cliente || "-"}</td>
+            <td>${escapar(doc.cliente || "-")}</td>
 
-            <td>${doc.processo || "<span class=\"texto-secundario\">Não informado</span>"}</td>
+            <td>${doc.processo ? escapar(doc.processo) : NAO_INFORMADO}</td>
 
             <td>${formatarData(doc.dataEnvio)}</td>
 
             <td>
                 <span class="status-badge ${classeStatus(doc.status)}">
-                    ${doc.status || "Sem status"}
+                    ${escapar(doc.status || "Sem status")}
                 </span>
             </td>
 
             <td>
                 <div class="acoes-documento">
 
-                    <button class="btn-acao btn-visualizar" title="Visualizar" data-id="${doc.id}" type="button">
+                    <button class="btn-acao btn-visualizar" title="Visualizar" data-id="${escapar(doc.id)}" type="button">
                         <i class="fa-solid fa-eye"></i>
                     </button>
 
-                    <button class="btn-acao btn-renomear" title="Editar" data-id="${doc.id}" type="button">
+                    <button class="btn-acao btn-renomear" title="Editar" data-id="${escapar(doc.id)}" type="button">
                         <i class="fa-solid fa-pen"></i>
                     </button>
 
-                    <button class="btn-acao btn-excluir" title="Excluir" data-id="${doc.id}" type="button">
+                    <button class="btn-acao btn-excluir" title="Excluir" data-id="${escapar(doc.id)}" type="button">
                         <i class="fa-solid fa-trash"></i>
                     </button>
 
@@ -134,9 +141,12 @@ function atualizarCards(documentos) {
 
 // ==========================================
 // PREENCHER FILTRO DE CLIENTES
+// (mantém o cliente escolhido depois de editar/excluir)
 // ==========================================
 
 function atualizarFiltroClientes(documentos) {
+
+    const selecionado = filtroCliente.value;
 
     const clientes = [
         ...new Set(
@@ -149,8 +159,15 @@ function atualizarFiltroClientes(documentos) {
     filtroCliente.innerHTML = `<option value="">Todos os clientes</option>`;
 
     clientes.forEach(cliente => {
-        filtroCliente.innerHTML += `<option value="${cliente}">${cliente}</option>`;
+        const option = document.createElement("option");
+        option.value = cliente;
+        option.textContent = cliente;
+        filtroCliente.appendChild(option);
     });
+
+    if (clientes.includes(selecionado)) {
+        filtroCliente.value = selecionado;
+    }
 
 }
 
@@ -186,6 +203,8 @@ function filtrarDocumentos() {
 
 // ==========================================
 // ABRIR MODAL DE EDIÇÃO
+// O cliente não pode ser trocado aqui: ele está
+// vinculado ao documento pelo id (clienteId).
 // ==========================================
 
 function abrirEdicao(documento) {
@@ -193,7 +212,11 @@ function abrirEdicao(documento) {
     document.getElementById("editarId").value = documento.id;
     document.getElementById("editarTitulo").value = documento.titulo || "";
     document.getElementById("editarTipo").value = documento.tipo || "Outros";
-    document.getElementById("editarCliente").value = documento.cliente || "";
+
+    const campoCliente = document.getElementById("editarCliente");
+    campoCliente.value = documento.cliente || "";
+    campoCliente.readOnly = true;
+
     document.getElementById("editarProcesso").value = documento.processo || "";
     document.getElementById("editarData").value = documento.dataEnvio || "";
     document.getElementById("editarStatus").value = documento.status || "Pendente";
@@ -232,15 +255,15 @@ tbody.addEventListener("click", async (evento) => {
         document.getElementById("modalCliente").textContent = documento.cliente || "-";
 
         document.getElementById("modalProcesso").innerHTML =
-            documento.processo || "<span class=\"texto-secundario\">Não informado</span>";
+            documento.processo ? escapar(documento.processo) : NAO_INFORMADO;
 
         document.getElementById("modalData").textContent = formatarData(documento.dataEnvio);
 
         document.getElementById("modalStatus").innerHTML =
-            `<span class="status-badge ${classeStatus(documento.status)}">${documento.status || "Sem status"}</span>`;
+            `<span class="status-badge ${classeStatus(documento.status)}">${escapar(documento.status || "Sem status")}</span>`;
 
         document.getElementById("modalDescricao").innerHTML =
-            documento.descricao || "<span class=\"texto-secundario\">Não informado</span>";
+            documento.descricao ? escapar(documento.descricao) : NAO_INFORMADO;
 
         modal.classList.add("ativo");
 
@@ -294,7 +317,6 @@ formEditarDocumento.addEventListener("submit", async (evento) => {
     const dadosAtualizados = {
         titulo: document.getElementById("editarTitulo").value.trim(),
         tipo: document.getElementById("editarTipo").value,
-        cliente: document.getElementById("editarCliente").value.trim(),
         processo: document.getElementById("editarProcesso").value.trim(),
         dataEnvio: document.getElementById("editarData").value,
         status: document.getElementById("editarStatus").value,
@@ -371,7 +393,7 @@ documentoController.carregar().catch((erro) => {
     tbody.innerHTML = `
         <tr>
             <td colspan="7" style="text-align:center; padding:20px; color:#999;">
-                Não foi possível carregar os documentos.
+                ${escapar(erro.message || "Não foi possível carregar os documentos.")}
             </td>
         </tr>
     `;

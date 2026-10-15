@@ -1,100 +1,116 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurações - Área do Cliente</title>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Configurações</title>
-
-    <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/style-cliente/configuracoes-cliente.css">
-
-    <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style-cliente/cliente.css">
 </head>
-
 <body>
 
-<div class="container">
+  <aside>
+    <div class="brand">Área do Cliente</div>
 
-    <!-- MENU -->
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="agenda.html">Agenda</a>
+      <a href="documentos.html">Documentos</a>
+      <a href="configuracoes.html" class="on">Configurações</a>
+    </nav>
 
-    <aside class="sidebar">
+    <div class="user">
+      <div class="av">C</div>
+      <div>
+        Cliente
+        <small><a href="login.html">Sair</a></small>
+      </div>
+    </div>
+  </aside>
 
-        <h2>Área do Cliente</h2>
+  <main>
+    <header>
+      <h1>Configurações</h1>
+      <p class="sub">Atualize seus dados e preferências.</p>
+    </header>
 
-        <nav>
+    <section class="card">
+      <form id="form-config">
+        <label>
+          Nome completo
+          <input type="text" name="nome" value="Cliente" required>
+        </label>
 
-            <a href="dashboard.html">
-                <i class="fas fa-house"></i>
-                Dashboard
-            </a>
+        <label>
+          E-mail
+          <input type="email" name="email" placeholder="seu@email.com" required>
+        </label>
 
-            <a href="agenda.html">
-                <i class="fas fa-calendar-days"></i>
-                Agenda
-            </a>
+        <label>
+          Telefone
+          <input type="tel" name="telefone" placeholder="(67) 90000-0000">
+        </label>
 
-            <a href="configuracoes.html" class="ativo">
-                <i class="fas fa-gear"></i>
-                Configurações
-            </a>
+        <button class="btn" type="submit" id="btn-salvar">
+          Salvar alterações
+        </button>
 
-        </nav>
+        <span class="badge b-ok" id="msg" hidden></span>
+      </form>
+    </section>
+  </main>
 
-    </aside>
+  <script>
+    const CHAVE = 'config-cliente';
 
-    <!-- CONTEÚDO -->
+    const form = document.getElementById('form-config');
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('btn-salvar');
 
-    <main class="conteudo">
+    function avisar(texto, tipo = 'sucesso') {
+      msg.textContent = texto;
+      msg.className = 'badge ' + (tipo === 'erro' ? 'b-warn' : 'b-ok');
+      msg.hidden = false;
 
-        <header class="topoPagina">
+      setTimeout(() => {
+        msg.hidden = true;
+      }, 3500);
+    }
 
-            <h1>Configurações</h1>
+    // Carrega os dados salvos neste navegador.
+    try {
+      const salvo = JSON.parse(localStorage.getItem(CHAVE) || '{}');
 
-            <p>Gerencie suas informações pessoais.</p>
+      for (const [campo, valor] of Object.entries(salvo)) {
+        if (form.elements[campo]) {
+          form.elements[campo].value = valor;
+        }
+      }
+    } catch (erro) {
+      console.error('Erro ao carregar configurações:', erro);
+    }
 
-        </header>
+    // Salva as alterações.
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
 
-        <section class="painel">
+      const dados = Object.fromEntries(new FormData(form));
 
-            <h2>Dados do Cliente</h2>
+      btn.disabled = true;
 
-            <form>
-
-                <div class="campo">
-                    <label>Nome Completo</label>
-                    <input type="text" value="João da Silva">
-                </div>
-
-                <div class="campo">
-                    <label>E-mail</label>
-                    <input type="email" value="joao@email.com">
-                </div>
-
-                <div class="campo">
-                    <label>Telefone</label>
-                    <input type="text" value="(67) 99999-9999">
-                </div>
-
-                <div class="campo">
-                    <label>Nova Senha</label>
-                    <input type="password" placeholder="********">
-                </div>
-
-                <button type="submit">Salvar Alterações</button>
-
-            </form>
-
-        </section>
-
-    </main>
-
-</div>
+      try {
+        localStorage.setItem(CHAVE, JSON.stringify(dados));
+        avisar('Alterações salvas com sucesso!');
+      } catch (erro) {
+        avisar('Não foi possível salvar as alterações.', 'erro');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 
 </body>
-
 </html>
+```

@@ -5,9 +5,11 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const clientesRoutes = require("./routes/clientes");
+const clienteRoutes = require("./routes/cliente");
 const processosRoutes = require("./routes/processos");
 const agendaRoutes = require("./routes/agenda");
 const documentosRoutes = require("./routes/documentos");
+const notificacoesRoutes = require("./routes/notificacoes");
 
 const { iniciarJobDeLembretes } = require("./jobs/lembretesJob");
 
@@ -33,9 +35,13 @@ app.use("/processos", processosRoutes);
 
 app.use("/clientes", clientesRoutes);
 
+app.use("/cliente", clienteRoutes);
+
 app.use("/agenda", agendaRoutes);
 
 app.use("/documentos", documentosRoutes);
+
+app.use("/notificacoes", notificacoesRoutes);
 
 
 // ==========================================================
