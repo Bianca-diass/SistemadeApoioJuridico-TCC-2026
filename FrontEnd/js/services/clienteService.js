@@ -46,6 +46,25 @@ export async function listarClientes(callback) {
     return () => {};
 }
 
+// BUSCAR UM CLIENTE PELO ID
+export async function buscarCliente(id) {
+    const resposta = await fetch(`${API}/${encodeURIComponent(id)}`, {
+        headers: authHeaders()
+    });
+
+    const dados = await resposta.json();
+
+    if (resposta.status === 404) {
+        return null;
+    }
+
+    if (!resposta.ok) {
+        throw new Error(dados.erro || "Erro ao buscar cliente");
+    }
+
+    return dados;
+}
+
 // EDITAR CLIENTE
 export async function editarCliente(id, dadosAtualizados) {
     const resposta = await fetch(`${API}/${id}`, {

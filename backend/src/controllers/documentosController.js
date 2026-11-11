@@ -1,6 +1,5 @@
-const { db } = require("../config/firebase");
 
-const COLECAO = "documentos";
+const { supabaseAdmin } = require("../config/supabase");
 
 const TIPOS_VALIDOS = [
   "Contrato",
@@ -14,44 +13,71 @@ const TIPOS_VALIDOS = [
 
 const STATUS_VALIDOS = ["Pendente", "Aprovado", "Rejeitado"];
 
-
-// ==========================================================
+// ==========================================
 // FUNÇÕES AUXILIARES
-// ==========================================================
+// ==========================================
 
 function texto(valor) {
   return typeof valor === "string" ? valor.trim() : "";
 }
 
-// O advogado tem um documento em "advogados" com id = uid do login
-async function ehAdvogado(uid) {
-  const doc = await db.collection("advogados").doc(uid).get();
-  return doc.exists;
+async function buscarAdvogado(uid) {
+  const { data, error } = await supabaseAdmin
+    .from("advogados")
+    .select("id")
+    .eq("auth_user_id", uid)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
 }
 
-// O cliente com login tem documento em "clientes" com id = uid
-// (ou com um campo "uid"). Devolve o id do cadastro dele.
-async function idClienteDoUsuario(uid) {
-  const direto = await db.collection("clientes").doc(uid).get();
-  if (direto.exists) return direto.id;
+async function buscarClienteId(uid) {
+  const { data, error } = await supabaseAdmin
+    .from("clientes")
+    .select("id")
+    .eq("auth_user_id", uid)
+    .maybeSingle();
 
-  const consulta = await db
-    .collection("clientes")
-    .where("uid", "==", uid)
-    .limit(1)
-    .get();
+  if (error) throw error;
 
-  return consulta.empty ? null : consulta.docs[0].id;
+  return data ? data.id : null;
 }
 
+async function listarIdsClientesDoAdvogado(advogadoId) {
+  const { data, error } = await supabaseAdmin
+    .from("advogado_clientes")
+    .select("cliente_id")
+    .eq("advogado_id", advogadoId);
 
-// ==========================================================
-// CADASTRAR (somente advogado)
-// ==========================================================
+  if (error) throw error;
+
+  return (data || []).map((item) => item.cliente_id);
+}
+
+async function verificarVinculo(advogadoId, clienteId) {
+  const { data, error } = await supabaseAdmin
+    .from("advogado_clientes")
+    .select("cliente_id")
+    .eq("advogado_id", advogadoId)
+    .eq("cliente_id", clienteId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return !!data;
+}
+
+// ==========================================
+// CADASTRAR DOCUMENTO
+// ==========================================
 
 const cadastrarDocumento = async (req, res) => {
   try {
-    if (!(await ehAdvogado(req.usuario.uid))) {
+    const advogado = await buscarAdvogado(req.usuario.uid);
+
+    if (!advogado) {
       return res.status(403).json({
         erro: "Apenas advogados podem cadastrar documentos."
       });
@@ -59,10 +85,10 @@ const cadastrarDocumento = async (req, res) => {
 
     const titulo = texto(req.body.titulo);
     const tipo = texto(req.body.tipo);
-    const clienteId = texto(req.body.clienteId);
+    const clienteId = texto(req.body.clienteId || req.body.cliente_id);
     const processo = texto(req.body.processo);
     const descricao = texto(req.body.descricao);
-    const dataEnvio = texto(req.body.dataEnvio);
+    const dataEnvio = texto(req.body.dataEnvio || req.body.data_envio);
     const status = texto(req.body.status);
 
     if (!titulo || !tipo || !clienteId || !dataEnvio || !status) {
@@ -72,153 +98,240 @@ const cadastrarDocumento = async (req, res) => {
     }
 
     if (!TIPOS_VALIDOS.includes(tipo)) {
-      return res.status(400).json({ erro: "Tipo de documento inválido." });
+      return res.status(400).json({
+        erro: "Tipo de documento inválido."
+      });
     }
 
     if (!STATUS_VALIDOS.includes(status)) {
-      return res.status(400).json({ erro: "Status inválido." });
+      return res.status(400).json({
+        erro: "Status inválido."
+      });
     }
 
-    // Confere se o cliente existe e pega o nome direto do banco
-    const clienteDoc = await db.collection("clientes").doc(clienteId).get();
+    const possuiVinculo = await verificarVinculo(
+      advogado.id,
+      clienteId
+    );
 
-    if (!clienteDoc.exists) {
-      return res.status(400).json({ erro: "Cliente não encontrado." });
+    if (!possuiVinculo) {
+      return res.status(403).json({
+        erro: "Este cliente não está vinculado ao seu cadastro."
+      });
+    }
+
+    const { data: cliente, error: erroCliente } = await supabaseAdmin
+      .from("clientes")
+      .select("id, nome")
+      .eq("id", clienteId)
+      .maybeSingle();
+
+    if (erroCliente) throw erroCliente;
+
+    if (!cliente) {
+      return res.status(404).json({
+        erro: "Cliente não encontrado."
+      });
     }
 
     const documento = {
       titulo,
       tipo,
-      cliente: clienteDoc.data().nome || texto(req.body.cliente),
-      clienteId,
+      cliente: cliente.nome || "",
+      cliente_id: clienteId,
       processo,
       descricao,
-      dataEnvio,
+      data_envio: dataEnvio,
       status,
-      criadoPor: req.usuario.uid,
-      criadoEm: new Date()
+      criado_por: req.usuario.uid,
+      origem: "advogado",
+      arquivo_path: texto(req.body.arquivo_path) || null,
+      arquivo_tipo: texto(req.body.arquivo_tipo) || null,
+      arquivo_tamanho: req.body.arquivo_tamanho || null
     };
 
-    const doc = await db.collection(COLECAO).add(documento);
+    const { data, error } = await supabaseAdmin
+      .from("documentos")
+      .insert(documento)
+      .select("id")
+      .single();
 
-    res.status(201).json({
-      mensagem: "Documento cadastrado com sucesso",
-      id: doc.id
+    if (error) throw error;
+
+    return res.status(201).json({
+      mensagem: "Documento cadastrado com sucesso.",
+      id: data.id
     });
 
   } catch (error) {
-    console.error("ERRO AO CADASTRAR DOCUMENTO:", error);
-    res.status(500).json({ erro: error.message });
+    console.error("Erro ao cadastrar documento:", error.message);
+
+    return res.status(500).json({
+      erro: "Erro ao cadastrar documento."
+    });
   }
 };
 
-
-// ==========================================================
-// LISTAR
-// advogado: vê todos | cliente: vê só os dele
-// ==========================================================
+// ==========================================
+// LISTAR DOCUMENTOS
+// ==========================================
 
 const listarDocumentos = async (req, res) => {
   try {
-    const uid = req.usuario.uid;
+    const advogado = await buscarAdvogado(req.usuario.uid);
 
-    let consulta = db.collection(COLECAO);
+    let consulta = supabaseAdmin
+      .from("documentos")
+      .select("*");
 
-    if (!(await ehAdvogado(uid))) {
-      const clienteId = await idClienteDoUsuario(uid);
+    if (advogado) {
+      const idsClientes = await listarIdsClientesDoAdvogado(
+        advogado.id
+      );
 
-      if (!clienteId) {
-        return res.status(403).json({ erro: "Acesso negado." });
+      if (idsClientes.length === 0) {
+        return res.status(200).json([]);
       }
 
-      consulta = consulta.where("clienteId", "==", clienteId);
+      consulta = consulta.in("cliente_id", idsClientes);
+    } else {
+      const clienteId = await buscarClienteId(req.usuario.uid);
+
+      if (!clienteId) {
+        return res.status(403).json({
+          erro: "Acesso negado."
+        });
+      }
+
+      consulta = consulta.eq("cliente_id", clienteId);
     }
 
-    const snapshot = await consulta.get();
+    const { data, error } = await consulta
+      .order("data_envio", { ascending: false });
 
-    const documentos = [];
+    if (error) throw error;
 
-    snapshot.forEach((doc) => {
-      documentos.push({ id: doc.id, ...doc.data() });
-    });
-
-    // Mais recentes primeiro
-    documentos.sort((a, b) =>
-      String(b.dataEnvio || "").localeCompare(String(a.dataEnvio || ""))
-    );
-
-    res.status(200).json(documentos);
+    return res.status(200).json(data || []);
 
   } catch (error) {
-    console.error("ERRO AO LISTAR DOCUMENTOS:", error);
-    res.status(500).json({ erro: error.message });
+    console.error("Erro ao listar documentos:", error.message);
+
+    return res.status(500).json({
+      erro: "Erro ao listar documentos."
+    });
   }
 };
 
-
-// ==========================================================
-// BUSCAR POR ID
-// ==========================================================
+// ==========================================
+// BUSCAR DOCUMENTO POR ID
+// ==========================================
 
 const obterDocumento = async (req, res) => {
   try {
-    const uid = req.usuario.uid;
+    const { id } = req.params;
 
-    const doc = await db.collection(COLECAO).doc(req.params.id).get();
+    const { data: documento, error } = await supabaseAdmin
+      .from("documentos")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-    if (!doc.exists) {
-      return res.status(404).json({ erro: "Documento não encontrado." });
+    if (error) throw error;
+
+    if (!documento) {
+      return res.status(404).json({
+        erro: "Documento não encontrado."
+      });
     }
 
-    if (!(await ehAdvogado(uid))) {
-      const clienteId = await idClienteDoUsuario(uid);
+    const advogado = await buscarAdvogado(req.usuario.uid);
 
-      if (!clienteId || doc.data().clienteId !== clienteId) {
-        return res.status(403).json({ erro: "Acesso negado." });
+    if (advogado) {
+      const possuiVinculo = await verificarVinculo(
+        advogado.id,
+        documento.cliente_id
+      );
+
+      if (!possuiVinculo) {
+        return res.status(403).json({
+          erro: "Acesso negado."
+        });
+      }
+    } else {
+      const clienteId = await buscarClienteId(req.usuario.uid);
+
+      if (!clienteId || documento.cliente_id !== clienteId) {
+        return res.status(403).json({
+          erro: "Acesso negado."
+        });
       }
     }
 
-    res.status(200).json({ id: doc.id, ...doc.data() });
+    return res.status(200).json(documento);
 
   } catch (error) {
-    console.error("ERRO AO BUSCAR DOCUMENTO:", error);
-    res.status(500).json({ erro: error.message });
+    console.error("Erro ao buscar documento:", error.message);
+
+    return res.status(500).json({
+      erro: "Erro ao buscar documento."
+    });
   }
 };
 
-
-// ==========================================================
-// EDITAR (somente advogado)
-// ==========================================================
+// ==========================================
+// EDITAR DOCUMENTO (SOMENTE ADVOGADO)
+// ==========================================
 
 const editarDocumento = async (req, res) => {
   try {
-    if (!(await ehAdvogado(req.usuario.uid))) {
+    const advogado = await buscarAdvogado(req.usuario.uid);
+
+    if (!advogado) {
       return res.status(403).json({
         erro: "Apenas advogados podem editar documentos."
       });
     }
 
-    const ref = db.collection(COLECAO).doc(req.params.id);
+    const { id } = req.params;
 
-    if (!(await ref.get()).exists) {
-      return res.status(404).json({ erro: "Documento não encontrado." });
+    const { data: documento, error: erroDocumento } = await supabaseAdmin
+      .from("documentos")
+      .select("id, cliente_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroDocumento) throw erroDocumento;
+
+    if (!documento) {
+      return res.status(404).json({
+        erro: "Documento não encontrado."
+      });
     }
 
-    // Só estes campos podem ser alterados
+    const possuiVinculo = await verificarVinculo(
+      advogado.id,
+      documento.cliente_id
+    );
+
+    if (!possuiVinculo) {
+      return res.status(403).json({
+        erro: "Você não tem permissão para editar este documento."
+      });
+    }
+
     const dadosAtualizados = {
       titulo: texto(req.body.titulo),
       tipo: texto(req.body.tipo),
       processo: texto(req.body.processo),
       descricao: texto(req.body.descricao),
-      dataEnvio: texto(req.body.dataEnvio),
+      data_envio: texto(req.body.dataEnvio || req.body.data_envio),
       status: texto(req.body.status)
     };
 
     if (
       !dadosAtualizados.titulo ||
       !dadosAtualizados.tipo ||
-      !dadosAtualizados.dataEnvio ||
+      !dadosAtualizados.data_envio ||
       !dadosAtualizados.status
     ) {
       return res.status(400).json({
@@ -227,52 +340,97 @@ const editarDocumento = async (req, res) => {
     }
 
     if (!TIPOS_VALIDOS.includes(dadosAtualizados.tipo)) {
-      return res.status(400).json({ erro: "Tipo de documento inválido." });
+      return res.status(400).json({
+        erro: "Tipo de documento inválido."
+      });
     }
 
     if (!STATUS_VALIDOS.includes(dadosAtualizados.status)) {
-      return res.status(400).json({ erro: "Status inválido." });
+      return res.status(400).json({
+        erro: "Status inválido."
+      });
     }
 
-    await ref.update(dadosAtualizados);
+    const { error } = await supabaseAdmin
+      .from("documentos")
+      .update(dadosAtualizados)
+      .eq("id", id);
 
-    res.status(200).json({ mensagem: "Documento atualizado com sucesso" });
+    if (error) throw error;
+
+    return res.status(200).json({
+      mensagem: "Documento atualizado com sucesso."
+    });
 
   } catch (error) {
-    console.error("ERRO AO EDITAR DOCUMENTO:", error);
-    res.status(500).json({ erro: error.message });
+    console.error("Erro ao editar documento:", error.message);
+
+    return res.status(500).json({
+      erro: "Erro ao editar documento."
+    });
   }
 };
 
-
-// ==========================================================
-// EXCLUIR (somente advogado)
-// ==========================================================
+// ==========================================
+// EXCLUIR DOCUMENTO (SOMENTE ADVOGADO)
+// ==========================================
 
 const excluirDocumento = async (req, res) => {
   try {
-    if (!(await ehAdvogado(req.usuario.uid))) {
+    const advogado = await buscarAdvogado(req.usuario.uid);
+
+    if (!advogado) {
       return res.status(403).json({
         erro: "Apenas advogados podem excluir documentos."
       });
     }
 
-    const ref = db.collection(COLECAO).doc(req.params.id);
+    const { id } = req.params;
 
-    if (!(await ref.get()).exists) {
-      return res.status(404).json({ erro: "Documento não encontrado." });
+    const { data: documento, error: erroDocumento } = await supabaseAdmin
+      .from("documentos")
+      .select("id, cliente_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroDocumento) throw erroDocumento;
+
+    if (!documento) {
+      return res.status(404).json({
+        erro: "Documento não encontrado."
+      });
     }
 
-    await ref.delete();
+    const possuiVinculo = await verificarVinculo(
+      advogado.id,
+      documento.cliente_id
+    );
 
-    res.status(200).json({ mensagem: "Documento excluído com sucesso" });
+    if (!possuiVinculo) {
+      return res.status(403).json({
+        erro: "Você não tem permissão para excluir este documento."
+      });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("documentos")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    return res.status(200).json({
+      mensagem: "Documento excluído com sucesso."
+    });
 
   } catch (error) {
-    console.error("ERRO AO EXCLUIR DOCUMENTO:", error);
-    res.status(500).json({ erro: error.message });
+    console.error("Erro ao excluir documento:", error.message);
+
+    return res.status(500).json({
+      erro: "Erro ao excluir documento."
+    });
   }
 };
-
 
 module.exports = {
   cadastrarDocumento,

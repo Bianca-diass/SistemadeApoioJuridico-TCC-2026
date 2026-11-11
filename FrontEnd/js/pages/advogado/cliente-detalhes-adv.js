@@ -140,7 +140,7 @@ function mostrarCliente(cliente) {
     // ==================================================
 
     botaoEditar.href =
-        `cadastro-cliente-adv.html?id=${encodeURIComponent(cliente.id)}`;
+        `editar-cliente.html?id=${encodeURIComponent(cliente.id)}`;
 
 
     // ==================================================

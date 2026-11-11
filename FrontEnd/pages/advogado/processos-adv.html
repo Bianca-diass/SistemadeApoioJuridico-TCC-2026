@@ -7,12 +7,18 @@
 
     <title>Processos</title>
 
-    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="../../css/style-advogado/processos-adv.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
+
 <div class="container">
     <main class="pagina-processos">
 
@@ -33,10 +39,12 @@
         </header>
 
         <section class="cards-dashboard">
+
             <div class="card">
                 <div class="icone azul">
                     <i class="fa-solid fa-folder"></i>
                 </div>
+
                 <div>
                     <span>Total de processos</span>
                     <h2 id="totalProcessos">0</h2>
@@ -47,6 +55,7 @@
                 <div class="icone vermelho">
                     <i class="fa-solid fa-bell"></i>
                 </div>
+
                 <div>
                     <span>Intimações</span>
                     <h2 id="totalIntimacoes">0</h2>
@@ -57,16 +66,20 @@
                 <div class="icone amarelo">
                     <i class="fa-solid fa-clock"></i>
                 </div>
+
                 <div>
                     <span>Em andamento</span>
                     <h2 id="totalAndamento">0</h2>
                 </div>
             </div>
+
         </section>
 
         <section class="filtros-processos">
+
             <div class="barra-pesquisa">
                 <i class="fa-solid fa-magnifying-glass"></i>
+
                 <input
                     type="search"
                     id="buscarProcesso"
@@ -76,6 +89,7 @@
 
             <div class="filtro-status">
                 <i class="fa-solid fa-filter"></i>
+
                 <select id="filtroStatus">
                     <option value="">Todos os status</option>
                     <option value="em andamento">Em andamento</option>
@@ -84,6 +98,7 @@
                     <option value="concluído">Concluído</option>
                 </select>
             </div>
+
         </section>
 
         <div class="legenda-prazos">
@@ -93,6 +108,7 @@
         </div>
 
         <section class="tabela-container">
+
             <table>
                 <thead>
                     <tr>
@@ -116,11 +132,13 @@
                     </tr>
                 </tbody>
             </table>
+
         </section>
 
     </main>
 </div>
 
 <script type="module" src="../../js/pages/advogado/processos.js"></script>
+
 </body>
 </html>

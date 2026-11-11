@@ -1,0 +1,355 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
+/* ==========================================
+   CONFIGURAÇÕES GERAIS
+========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --azul-escuro: #0f1f33;
+    --azul-botao: #234367;
+    --dourado: #d4a95a;
+    --fundo-card: #eceff3;
+    --texto: #3b4756;
+    --texto-suave: #5f6b7a;
+    --borda: #dde2e9;
+    --branco: #ffffff;
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+
+    background-size:
+        40px 40px,
+        40px 40px,
+        100% 100%;
+
+    background-attachment: fixed;
+    color: var(--texto);
+}
+
+.container {
+    width: 100%;
+    min-height: 100vh;
+}
+
+.conteudo {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 35px 60px;
+}
+
+/* ==========================================
+   BOTÃO VOLTAR
+========================================== */
+
+.btnVoltar {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--azul-escuro);
+    border: 1px solid rgba(212,169,90,0.5);
+    border-radius: 50%;
+
+    color: var(--dourado);
+    font-size: 25px;
+    text-decoration: none;
+
+    transition: 0.3s;
+    margin-bottom: 28px;
+}
+
+.btnVoltar:hover {
+    background: var(--dourado);
+    color: var(--azul-escuro);
+    transform: translateX(-3px);
+}
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.topoPagina {
+    margin-bottom: 30px;
+}
+
+.topoPagina h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 35px;
+    font-weight: 700;
+    color: var(--branco);
+    margin-bottom: 10px;
+}
+
+.topoPagina p {
+    font-size: 15px;
+    color: #b8c4d3;
+    line-height: 1.6;
+}
+
+/* ==========================================
+   CARD DO FORMULÁRIO
+========================================== */
+
+.cardFormulario {
+    position: relative;
+    overflow: hidden;
+
+    width: 100%;
+    padding: 38px;
+
+    background: var(--fundo-card);
+    border-radius: 17px;
+
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.cardFormulario::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 90px;
+    height: 3px;
+
+    background: var(--dourado);
+    border-radius: 0 0 5px 5px;
+}
+
+/* ==========================================
+   GRUPOS E LABELS
+========================================== */
+
+.grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+}
+
+.grupo label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--azul-escuro);
+}
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.grupo input,
+.grupo select,
+.grupo textarea {
+    width: 100%;
+    min-height: 46px;
+
+    padding: 12px 14px;
+
+    background: var(--branco);
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--texto);
+
+    outline: none;
+    transition: 0.25s;
+}
+
+.grupo input::placeholder,
+.grupo textarea::placeholder {
+    color: #929dab;
+}
+
+.grupo textarea {
+    min-height: 115px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.grupo select {
+    cursor: pointer;
+}
+
+.grupo input:focus,
+.grupo select:focus,
+.grupo textarea:focus {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
+}
+
+/* ==========================================
+   REMOVER AUTOFILL AZUL
+========================================== */
+
+.grupo input:-webkit-autofill,
+.grupo input:-webkit-autofill:hover,
+.grupo input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--texto);
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ==========================================
+   DESCRIÇÃO
+========================================== */
+
+.grupo:has(#descricao) {
+    grid-column: span 2;
+}
+
+/* ==========================================
+   BOTÕES
+========================================== */
+
+.botoes {
+    grid-column: span 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+
+    margin-top: 12px;
+    padding-top: 25px;
+
+    border-top: 1px solid var(--borda);
+}
+
+.botoes button {
+    min-height: 46px;
+    padding: 0 23px;
+
+    border-radius: 10px;
+
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* BOTÃO SALVAR */
+
+.salvar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    background: var(--azul-botao);
+    border: 1px solid var(--azul-botao);
+
+    color: var(--branco);
+}
+
+.salvar i {
+    color: var(--dourado);
+}
+
+.salvar:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15,31,51,.2);
+}
+
+/* BOTÃO LIMPAR */
+
+.cancelar {
+    background: transparent;
+    border: 1.5px solid var(--azul-escuro);
+
+    color: var(--azul-escuro);
+}
+
+.cancelar:hover {
+    background: var(--azul-escuro);
+    color: var(--branco);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   RESPONSIVIDADE - TABLET
+========================================== */
+
+@media (max-width: 768px) {
+
+    .conteudo {
+        padding: 30px 25px 45px;
+    }
+
+    .cardFormulario {
+        padding: 30px;
+        gap: 20px;
+    }
+
+    .topoPagina h1 {
+        font-size: 31px;
+    }
+
+}
+
+/* ==========================================
+   RESPONSIVIDADE - CELULAR
+========================================== */
+
+@media (max-width: 600px) {
+
+    .conteudo {
+        padding: 25px 16px 40px;
+    }
+
+    .topoPagina h1 {
+        font-size: 27px;
+    }
+
+    .topoPagina p {
+        font-size: 13px;
+    }
+
+    .cardFormulario {
+        grid-template-columns: 1fr;
+        padding: 27px 20px;
+        gap: 20px;
+    }
+
+    .grupo:has(#descricao) {
+        grid-column: span 1;
+    }
+
+    .botoes {
+        grid-column: span 1;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .botoes button {
+        width: 100%;
+    }
+
+}

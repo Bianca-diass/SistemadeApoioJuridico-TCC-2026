@@ -47,13 +47,16 @@ app.use("/notificacoes", notificacoesRoutes);
 // ==========================================================
 // FRONT-END
 // ==========================================================
+// extensions: ["html"] permite abrir as páginas com ou sem .html
+// (ex.: /pages/advogado/login-adv e /pages/advogado/login-adv.html)
 
 app.use(
     express.static(
         path.join(
             __dirname,
             "../../FrontEnd"
-        )
+        ),
+        { extensions: ["html"] }
     )
 );
 
@@ -140,7 +143,7 @@ app.listen(
         // RF007 - Notificações automáticas
         // ==========================================================
         // Inicia o job que verifica prazos e audiências se
-        // aproximando e cria notificações automáticas no Firestore.
+        // aproximando e cria notificações automáticas.
 
         iniciarJobDeLembretes();
 

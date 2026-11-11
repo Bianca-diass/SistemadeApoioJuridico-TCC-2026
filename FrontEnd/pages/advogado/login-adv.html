@@ -1,162 +1,75 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Login - Sistema Jurídico</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/style-advogado/login-advogado.css">
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
 
 <div class="login-container">
-
     <div class="login-box">
 
         <div class="logo">
-
             <i class="fas fa-scale-balanced"></i>
-
             <h1>Sistema Jurídico</h1>
-
             <p>Faça login para continuar</p>
-
         </div>
 
         <form id="formLogin">
 
             <div class="campo">
-
                 <label for="email">Email</label>
-
                 <input
                     type="email"
                     id="email"
                     placeholder="Digite seu e-mail"
                     required>
-
             </div>
 
             <div class="campo">
-
                 <label for="senha">Senha</label>
-
                 <input
                     type="password"
                     id="senha"
                     placeholder="Digite sua senha"
                     required>
-
             </div>
 
-            <button type="submit">
+            <div id="msgErro" style="display:none; color:red; margin:10px 0;"></div>
 
+            <button type="submit" id="btnEntrar">
                 <i class="fas fa-right-to-bracket"></i>
-
                 Entrar
-
             </button>
 
         </form>
 
         <div class="rodape">
-
             <p>Não possui uma conta?</p>
 
             <button type="button" id="btnCadastro">
-
                 Criar Conta
-
             </button>
-
         </div>
 
     </div>
-
 </div>
 
-<script>
-
-const form = document.getElementById("formLogin");
-const btnCadastro = document.getElementById("btnCadastro");
-
-
-// ==========================================
-// LOGIN
-// ==========================================
-
-form.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
-
-    const email = document.getElementById("email").value.trim();
-    const senha = document.getElementById("senha").value;
-
-    try {
-
-        const resposta = await fetch("http://localhost:3000/auth/login", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                email,
-                senha
-            })
-
-        });
-
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-
-            throw new Error(
-                dados.erro || "Erro ao realizar login"
-            );
-
-        }
-
-        localStorage.setItem("token", dados.token);
-
-        alert("Login realizado com sucesso!");
-
-        window.location.href = "dashboard-adv.html";
-
-    } catch (erro) {
-
-        console.error("Erro no login:", erro);
-
-        alert("Erro: " + erro.message);
-
-    }
-
-});
-
-
-// ==========================================
-// CRIAR CONTA
-// ==========================================
-
-btnCadastro.addEventListener("click", () => {
-
-    window.location.href = "cadastro-adv.html";
-
-});
-
-</script>
+<script type="module" src="../../js/pages/advogado/login.js"></script>
 
 </body>
-
 </html>

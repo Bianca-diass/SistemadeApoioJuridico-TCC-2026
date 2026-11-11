@@ -1,3 +1,18 @@
+/* ==========================================
+   CONFIGURAÇÕES - ADVOGADO
+   Mesmo visual da tela inicial (azul-marinho + dourado)
+========================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap");
+
+:root {
+    --azul-escuro: #0f1f33;
+    --azul: #234367;
+    --dourado: #d4a95a;
+    --card: #eceff3;
+    --suave: #5f6b7a;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,166 +20,256 @@
 }
 
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    color: #35445a;
-    background: #f3f6fb;
+    font-family: 'Inter', Arial, sans-serif;
+    min-height: 100vh;
+    color: var(--azul-escuro);
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+    background-attachment: fixed;
 }
+
+
+/* ===== CONTEÚDO ===== */
 
 .conteudo {
     width: 100%;
-    max-width: 850px;
-    min-height: 100vh;
-    padding: 25px;
+    max-width: 760px;
     margin: 0 auto;
+    padding: 35px 20px 50px;
 }
 
-/* VOLTAR */
+/* botão voltar */
 .btnVoltar {
+    width: 42px;
+    height: 42px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: #294970;
-    color: white;
-    font-size: 20px;
+    margin-bottom: 14px;
+    background: var(--azul-escuro);
+    color: var(--dourado);
+    border: 2px solid rgba(212, 169, 90, 0.45);
+    border-radius: 50%;
     text-decoration: none;
-    margin-bottom: 15px;
-    transition: .2s;
+    transition: transform .2s, background .2s;
 }
 
 .btnVoltar:hover {
-    background: #1d3554;
+    background: #16304d;
+    transform: translateX(-3px);
 }
 
-/* TÍTULO */
+
+/* ===== TOPO ===== */
+
 .topoPagina {
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .topoPagina h1 {
-    color: #294970;
-    font-size: 26px;
-    margin-bottom: 6px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 34px;
+    color: #fff;
+    margin-bottom: 8px;
 }
 
 .topoPagina p {
-    color: #778397;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.5;
+    color: #b8c4d3;
 }
 
-/* PAINÉIS */
+
+/* ===== PAINÉIS (cards claros) ===== */
+
 .painel {
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid #e6ecf4;
-    box-shadow: 0 4px 12px rgba(35, 60, 90, .05);
-    margin-bottom: 16px;
+    position: relative;
+    padding: 34px 30px 28px;
+    margin-bottom: 24px;
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* linha dourada no topo */
+.painel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: var(--dourado);
 }
 
 .painel h2 {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: #294970;
-    font-size: 18px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #d3d8df;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--azul-escuro);
 }
 
-/* CAMPOS */
+.painel h2 i {
+    color: var(--dourado);
+}
+
+
+/* ===== CAMPOS ===== */
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
 .campo {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 13px;
+    gap: 8px;
 }
 
 .campo label {
-    color: #536176;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
+    color: var(--azul-escuro);
 }
 
 .campo input,
 .campo select {
     width: 100%;
-    padding: 9px 11px;
-    border: 1px solid #d8e0eb;
-    border-radius: 7px;
-    background: white;
-    color: #35445a;
+    padding: 13px 15px;
+    background: #fff;
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 15px;
+    color: var(--azul-escuro);
     outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.campo input::placeholder {
+    color: #9aa5b3;
 }
 
 .campo input:focus,
 .campo select:focus {
-    border-color: #294970;
-    box-shadow: 0 0 0 2px rgba(41, 73, 112, .1);
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212, 169, 90, 0.25);
 }
 
+/* CPF e OAB (somente leitura) */
 .campo input[readonly] {
-    background: #f3f6fb;
-    color: #778397;
+    background: #e3e7ed;
+    color: #7b8797;
+    cursor: not-allowed;
 }
 
-/* BOTÕES */
-button {
-    display: inline-flex;
+.campo input[readonly]:focus {
+    border-color: #cfd6df;
+    box-shadow: none;
+}
+
+.campo input:-webkit-autofill,
+.campo input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+    -webkit-text-fill-color: var(--azul-escuro) !important;
+}
+
+
+/* ===== BOTÕES ===== */
+
+.painel button {
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 10px 14px;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 22px;
+    background: var(--azul);
+    color: #fff;
     border: none;
-    border-radius: 7px;
-    background: #294970;
-    color: white;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 10px;
     cursor: pointer;
-    transition: .2s;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    transition: transform .2s, box-shadow .2s, filter .2s;
 }
 
-button:hover {
-    background: #1d3554;
+.painel button i {
+    color: var(--dourado);
 }
 
+.painel button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15, 31, 51, 0.35);
+}
+
+.painel button:disabled {
+    background: #8a9bb0;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+    box-shadow: none;
+}
+
+/* sair do sistema (vermelho) */
 .logout {
-    background: #c03939;
+    background: #fff !important;
+    color: #c0392b !important;
+    border: 1.5px solid #c0392b !important;
+}
+
+.logout i {
+    color: #c0392b !important;
 }
 
 .logout:hover {
-    background: #a52e2e;
+    background: #c0392b !important;
+    color: #fff !important;
+    filter: none !important;
+    box-shadow: 0 8px 18px rgba(192, 57, 43, 0.3) !important;
 }
 
-/* MENSAGENS */
+.logout:hover i {
+    color: #fff !important;
+}
+
+
+/* ===== MENSAGENS (sucesso / erro) ===== */
+
 .mensagem {
-    display: none;
-    margin-top: 12px;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    min-height: 20px;
 }
 
-/* CELULAR */
+
+/* ===== CELULAR ===== */
+
 @media (max-width: 600px) {
     .conteudo {
-        padding: 16px;
+        padding: 22px 14px 40px;
     }
 
     .topoPagina h1 {
-        font-size: 23px;
+        font-size: 27px;
     }
 
     .painel {
-        padding: 15px;
-    }
-
-    button {
-        width: 100%;
+        padding: 30px 18px 22px;
     }
 }

@@ -24,8 +24,8 @@ selectTipoPessoa.addEventListener("change", () => {
 
 // Máscara automática do CPF (000.000.000-00)
 inputCpf.addEventListener("input", () => {
-    let valor = inputCpf.value.replace(/\D/g, ""); // remove tudo que não é número
-    valor = valor.slice(0, 11); // limita a 11 dígitos
+    let valor = inputCpf.value.replace(/\D/g, "");
+    valor = valor.slice(0, 11);
 
     valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
     valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
@@ -36,8 +36,8 @@ inputCpf.addEventListener("input", () => {
 
 // Máscara automática do CNPJ (00.000.000/0000-00)
 inputCnpj.addEventListener("input", () => {
-    let valor = inputCnpj.value.replace(/\D/g, ""); // remove tudo que não é número
-    valor = valor.slice(0, 14); // limita a 14 dígitos
+    let valor = inputCnpj.value.replace(/\D/g, "");
+    valor = valor.slice(0, 14);
 
     valor = valor.replace(/(\d{2})(\d)/, "$1.$2");
     valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
@@ -47,13 +47,25 @@ inputCnpj.addEventListener("input", () => {
     inputCnpj.value = valor;
 });
 
-// Carrega as cidades do estado selecionado
-selectEstado.addEventListener("change", async () => {
+// ==========================================================
+// CIDADES DO ESTADO SELECIONADO
+// ==========================================================
+
+let ufCarregada = "";
+
+async function carregarCidades() {
+
     const uf = selectEstado.value;
 
     if (!uf) {
+        ufCarregada = "";
         selectCidade.innerHTML = '<option value="">Selecione o estado primeiro</option>';
         selectCidade.disabled = true;
+        return;
+    }
+
+    // Evita recarregar a mesma lista sem necessidade
+    if (uf === ufCarregada && !selectCidade.disabled) {
         return;
     }
 
@@ -61,12 +73,26 @@ selectEstado.addEventListener("change", async () => {
     selectCidade.innerHTML = '<option value="">Carregando cidades...</option>';
 
     try {
-        const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+
+        const res = await fetch(
+            `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`
+        );
+
+        if (!res.ok) {
+            throw new Error("IBGE respondeu com status " + res.status);
+        }
+
         const cidades = await res.json();
 
         cidades.sort((a, b) => a.nome.localeCompare(b.nome));
 
+        // Se o usuário trocou de estado enquanto carregava, descarta
+        if (selectEstado.value !== uf) {
+            return;
+        }
+
         selectCidade.innerHTML = '<option value="">Selecione a cidade</option>';
+
         cidades.forEach(cidade => {
             const option = document.createElement("option");
             option.value = cidade.nome;
@@ -74,12 +100,27 @@ selectEstado.addEventListener("change", async () => {
             selectCidade.appendChild(option);
         });
 
+        ufCarregada = uf;
         selectCidade.disabled = false;
+
     } catch (err) {
-        selectCidade.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+
+        ufCarregada = "";
+        selectCidade.innerHTML = '<option value="">Erro ao carregar cidades - troque o estado para tentar de novo</option>';
         console.error("Erro ao buscar cidades:", err);
     }
-});
+}
+
+// "change" é o normal; "input" cobre autopreenchimento do navegador
+selectEstado.addEventListener("change", carregarCidades);
+selectEstado.addEventListener("input", carregarCidades);
+
+// Se o estado já vier preenchido (voltar da página, autopreenchimento)
+carregarCidades();
+
+// ==========================================================
+// SALVAR
+// ==========================================================
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -102,9 +143,6 @@ form.addEventListener("submit", async (e) => {
 
         alert("Cliente cadastrado com sucesso!");
 
-        // =================================================
-        // VOLTAR PARA A LISTA (mesmo comportamento do cadastro de processo)
-        // =================================================
         window.location.href = "clientes-adv.html";
 
     } catch (erro) {

@@ -1,4 +1,3 @@
-
 import {
     listarProcessos,
     excluirProcesso
@@ -12,6 +11,16 @@ const totalAndamento = document.getElementById("totalAndamento");
 const buscarProcesso = document.getElementById("buscarProcesso");
 
 let processos = [];
+
+// PADRONIZAR NOMES DOS CAMPOS VINDOS DA API
+function padronizarProcesso(p) {
+    return {
+        ...p,
+        numeroProcesso: p.numeroProcesso ?? p.numero_processo ?? "",
+        ultimaMovimentacao: p.ultimaMovimentacao ?? p.ultima_movimentacao ?? "",
+        tipoManifestacao: p.tipoManifestacao ?? p.tipo_manifestacao ?? ""
+    };
+}
 
 // NORMALIZAR TEXTO
 function normalizar(valor) {
@@ -100,7 +109,7 @@ async function carregarProcessos() {
 
     try {
         const dados = await listarProcessos();
-        processos = Array.isArray(dados) ? dados : [];
+        processos = Array.isArray(dados) ? dados.map(padronizarProcesso) : [];
         atualizarCards();
         aplicarFiltros();
     } catch (erro) {

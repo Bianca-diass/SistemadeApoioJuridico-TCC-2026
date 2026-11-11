@@ -1,32 +1,140 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agenda - Área do Cliente</title>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../css/style-cliente/cliente.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Agenda - Área do Cliente</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="../../css/style-cliente/agenda-cliente.css">
 </head>
+
 <body class="agenda-page">
-<aside>
-  <div class="brand">Área do Cliente</div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="agenda.html" class="on">Agenda</a>
-    <a href="documentos.html">Documentos</a>
-    <a href="configuracoes.html">Configurações</a>
-  </nav>
-  <div class="user"><div class="av">C</div><div>Cliente<small><a href="login.html">Sair</a></small></div></div>
-</aside>
-<main>
-  <header><h1>Agenda</h1><p class="sub">Seus compromissos e prazos de agosto de 2026.</p></header>
-  <section class="card">
-    <div class="ev"><div class="date">15<small>ago</small></div><p><b>Audiência trabalhista</b>Fórum de Dourados/MS<br><time>14h30</time></p></div>
-    <div class="ev"><div class="date">18<small>ago</small></div><p><b>Reunião com o advogado</b>Análise do processo<br><time>09h00</time></p></div>
-    <div class="ev"><div class="date">20<small>ago</small></div><p><b>Prazo para enviar documentos</b>Divórcio Consensual<br><time>10h00</time></p></div>
-    <div class="ev"><div class="date">25<small>ago</small></div><p><b>Sessão de conciliação</b>Divórcio Consensual<br><time>15h00</time></p></div>
-    <div class="ev"><div class="date">30<small>ago</small></div><p><b>Atualização do andamento</b>Com o advogado responsável<br><time>08h30</time></p></div>
-  </section>
-</main>
+
+  <aside>
+    <div class="brand">
+      <i class="fa-solid fa-scale-balanced"></i>
+      Área do Cliente
+    </div>
+
+    <nav>
+      <a href="dashboard.html">
+        <i class="fa-solid fa-chart-line"></i>
+        Dashboard
+      </a>
+
+      <a href="agenda.html" class="on">
+        <i class="fa-regular fa-calendar"></i>
+        Agenda
+      </a>
+
+      <a href="documentos.html">
+        <i class="fa-regular fa-file-lines"></i>
+        Documentos
+      </a>
+
+      <a href="configuracoes.html">
+        <i class="fa-solid fa-gear"></i>
+        Configurações
+      </a>
+    </nav>
+
+    <div class="user">
+      <div class="av" id="inicialUsuario">C</div>
+
+      <div>
+        <span id="nomeUsuario">Cliente</span>
+
+        <small>
+          <a href="login.html" id="btnSair">Sair</a>
+        </small>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+
+    <header>
+      <h1>Agenda</h1>
+      <p class="sub" id="sub">Carregando seus compromissos...</p>
+    </header>
+
+    <section class="card">
+
+      <div class="head">
+
+        <h2>Meus compromissos</h2>
+
+        <div class="tabs" id="abas">
+
+          <button type="button"
+            data-f="proximos"
+            aria-pressed="true">
+            Próximos
+          </button>
+
+          <button type="button"
+            data-f="anteriores"
+            aria-pressed="false">
+            Anteriores
+          </button>
+
+          <button type="button"
+            data-f="todos"
+            aria-pressed="false">
+            Todos
+          </button>
+
+        </div>
+      </div>
+
+      <div id="agenda"></div>
+
+    </section>
+
+  </main>
+
+  <div class="modal" id="modal" hidden>
+
+    <div class="modal-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitulo">
+
+      <div class="modal-head">
+
+        <h3 id="modalTitulo">Compromisso</h3>
+
+        <button class="btn-x"
+          id="modalFechar"
+          type="button"
+          aria-label="Fechar">
+
+          <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+      </div>
+
+      <div class="modal-corpo" id="modalCorpo"></div>
+
+      <p class="modal-aviso">
+        <i class="fa-regular fa-circle-info"></i>
+        Para remarcar ou cancelar, fale com o seu advogado.
+      </p>
+
+    </div>
+
+  </div>
+
+  <script type="module"
+    src="../../js/pages/cliente/agenda.js">
+  </script>
+
 </body>
-</html>s
+</html>

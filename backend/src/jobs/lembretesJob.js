@@ -1,61 +1,40 @@
-// ==========================================================
-// backend/src/jobs/lembretesJob.js
-//
-// Job periódico (roda sozinho enquanto o servidor está no ar)
-// que verifica prazos e audiências se aproximando e cria
-// notificações automáticas — completa o requisito:
-//
-// RF007 - O sistema deve enviar notificações automáticas
-// sobre prazos, audiências e atualizações de processos.
-//
-// Não depende de nenhuma biblioteca externa de "cron":
-// usa apenas setInterval, o que é suficiente enquanto o
-// processo Node do backend continuar rodando.
-// ==========================================================
 
-const { db } = require("../config/firebase");
+const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
 
-
 // ==========================================================
-// CONFIGURAÇÃO
+// CONFIGURAÇÕES
 // ==========================================================
 
-// De quanto em quanto tempo o job roda
-const INTERVALO_VERIFICACAO_MS = 5 * 60 * 1000; // 5 minutos
+const INTERVALO_VERIFICACAO_MS = 5 * 60 * 1000;
 
-// Com quantas horas de antecedência avisar sobre um
-// compromisso (audiência/reunião/prazo na agenda)
 const HORAS_ANTECEDENCIA_COMPROMISSO = 24;
-
-// Com quantas horas de antecedência avisar sobre o campo
-// "prazo" cadastrado direto no processo
 const HORAS_ANTECEDENCIA_PRAZO_PROCESSO = 48;
 
 
 // ==========================================================
-// AUXILIAR: TRANSFORMA "data" + "horario" EM UM Date
+// COMBINAR DATA E HORÁRIO
 // ==========================================================
 
 function combinarDataHorario(data, horario) {
-
     if (!data) return null;
 
-    const dataCompleta = new Date(`${data}T${horario || "00:00"}`);
+    const dataCompleta = new Date(
+        `${data}T${horario || "00:00"}`
+    );
 
-    return isNaN(dataCompleta.getTime()) ? null : dataCompleta;
-
+    return isNaN(dataCompleta.getTime())
+        ? null
+        : dataCompleta;
 }
 
 
 // ==========================================================
-// VERIFICA COMPROMISSOS PRÓXIMOS (AUDIÊNCIAS / PRAZOS / etc.)
+// VERIFICAR COMPROMISSOS DA AGENDA
 // ==========================================================
 
 async function verificarCompromissosProximos() {
-
     try {
-
         const agora = new Date();
 
         const limite = new Date(
@@ -63,16 +42,18 @@ async function verificarCompromissosProximos() {
             HORAS_ANTECEDENCIA_COMPROMISSO * 60 * 60 * 1000
         );
 
-        const snapshot = await db.collection("agenda").get();
+        const { data: compromissos, error } = await supabaseAdmin
+            .from("agenda")
+            .select("*");
 
-        for (const doc of snapshot.docs) {
+        if (error) throw error;
 
-            const compromisso = doc.data();
-
-            // Já concluído ou já avisado? Pula.
+        for (const compromisso of compromissos || []) {
             if (compromisso.concluido === true) continue;
+
             if (compromisso.status === "Concluído") continue;
-            if (compromisso.lembreteEnviado === true) continue;
+
+            if (compromisso.lembrete_enviado === true) continue;
 
             const dataCompromisso = combinarDataHorario(
                 compromisso.data,
@@ -81,9 +62,10 @@ async function verificarCompromissosProximos() {
 
             if (!dataCompromisso) continue;
 
-            // Está dentro da janela de antecedência e ainda não passou?
-            if (dataCompromisso >= agora && dataCompromisso <= limite) {
-
+            if (
+                dataCompromisso >= agora &&
+                dataCompromisso <= limite
+            ) {
                 const tipoNormalizado =
                     String(compromisso.tipo || "").toLowerCase();
 
@@ -95,7 +77,6 @@ async function verificarCompromissosProximos() {
                     tipoNormalizado === "prazo";
 
                 await criarNotificacao({
-
                     tipo: ehAudiencia
                         ? "audiencia"
                         : (ehPrazo ? "prazo" : "sistema"),
@@ -113,37 +94,34 @@ async function verificarCompromissosProximos() {
                             ? ` (Cliente: ${compromisso.cliente})`
                             : ""),
 
-                    compromissoId: doc.id
-
+                    clienteId: compromisso.cliente_id || null,
+                    compromissoId: compromisso.id
                 });
 
-                // Marca para não notificar de novo a cada execução do job
-                await doc.ref.update({ lembreteEnviado: true });
+                const { error: erroAtualizacao } = await supabaseAdmin
+                    .from("agenda")
+                    .update({ lembrete_enviado: true })
+                    .eq("id", compromisso.id);
 
+                if (erroAtualizacao) throw erroAtualizacao;
             }
-
         }
 
     } catch (error) {
-
         console.error(
             "Erro ao verificar compromissos próximos:",
             error
         );
-
     }
-
 }
 
 
 // ==========================================================
-// VERIFICA PRAZOS CADASTRADOS DIRETO NO PROCESSO
+// VERIFICAR PRAZOS DOS PROCESSOS
 // ==========================================================
 
 async function verificarPrazosDeProcessos() {
-
     try {
-
         const agora = new Date();
 
         const limite = new Date(
@@ -151,83 +129,80 @@ async function verificarPrazosDeProcessos() {
             HORAS_ANTECEDENCIA_PRAZO_PROCESSO * 60 * 60 * 1000
         );
 
-        const snapshot = await db.collection("processos").get();
+        const { data: processos, error } = await supabaseAdmin
+            .from("processos")
+            .select("*");
 
-        for (const doc of snapshot.docs) {
+        if (error) throw error;
 
-            const processo = doc.data();
-
+        for (const processo of processos || []) {
             if (!processo.prazo) continue;
-            if (processo.lembretePrazoEnviado === true) continue;
+
+            if (processo.lembrete_prazo_enviado === true) continue;
 
             const dataPrazo = new Date(processo.prazo);
 
             if (isNaN(dataPrazo.getTime())) continue;
 
             if (dataPrazo >= agora && dataPrazo <= limite) {
-
                 await criarNotificacao({
-
                     tipo: "prazo",
 
                     titulo: "Prazo processual próximo do vencimento",
 
                     mensagem:
-                        `O processo ${processo.numeroProcesso || "sem número"} ` +
+                        `O processo ${processo.numero_processo || "sem número"} ` +
                         `(cliente: ${processo.cliente || "não informado"}) ` +
                         `tem prazo em ${processo.prazo}.`,
 
-                    processoId: doc.id
-
+                    clienteId: processo.cliente_id || null,
+                    processoId: processo.id
                 });
 
-                await doc.ref.update({ lembretePrazoEnviado: true });
+                const { error: erroAtualizacao } = await supabaseAdmin
+                    .from("processos")
+                    .update({ lembrete_prazo_enviado: true })
+                    .eq("id", processo.id);
 
+                if (erroAtualizacao) throw erroAtualizacao;
             }
-
         }
 
     } catch (error) {
-
         console.error(
             "Erro ao verificar prazos de processos:",
             error
         );
-
     }
-
 }
 
 
 // ==========================================================
-// EXECUTA UMA RODADA COMPLETA
+// EXECUTAR VERIFICAÇÕES
 // ==========================================================
 
 async function executarVerificacoes() {
-
     await verificarCompromissosProximos();
     await verificarPrazosDeProcessos();
-
 }
 
 
 // ==========================================================
-// INICIA O JOB (chamado uma vez no server.js)
+// INICIAR JOB
 // ==========================================================
 
 function iniciarJobDeLembretes() {
-
-    // Primeira verificação logo após o servidor subir
     executarVerificacoes();
 
-    // E depois repete no intervalo configurado
-    setInterval(executarVerificacoes, INTERVALO_VERIFICACAO_MS);
-
-    console.log(
-        `🔔 Job de lembretes automáticos iniciado ` +
-        `(verifica a cada ${INTERVALO_VERIFICACAO_MS / 60000} minutos).`
+    setInterval(
+        executarVerificacoes,
+        INTERVALO_VERIFICACAO_MS
     );
 
+    console.log(
+        "Job de lembretes automáticos iniciado. " +
+        "Verificação a cada 5 minutos."
+    );
 }
 
 

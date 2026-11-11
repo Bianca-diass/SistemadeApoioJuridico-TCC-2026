@@ -1,18 +1,31 @@
 /* ==========================================
    LOGIN-CLIENTE.CSS
+   Mesmo visual da tela inicial
 ========================================== */
 
-body{
+:root{
+    --azul-escuro:#0f1f33;
+    --azul-botao:#234367;
+    --azul-hover:#234367;
+    --dourado:#d4a95a;
+    --card:#eceff3;
+    --texto-sub:#5f6b7a;
+}
 
+body{
     margin:0;
     padding:0;
-    font-family:'Poppins',sans-serif;
-    background:linear-gradient(135deg);
+    font-family:'Inter',Arial,sans-serif;
+    min-height:100vh;
     display:flex;
     justify-content:center;
     align-items:center;
-    min-height:100vh;
-
+    color:var(--azul-escuro);
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 30%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+    background-size:40px 40px, 40px 40px, 100% 100%;
 }
 
 
@@ -21,29 +34,39 @@ body{
 ========================== */
 
 .login-container{
-
     width:100%;
     display:flex;
     justify-content:center;
     align-items:center;
-    padding:20px;
-
+    padding:50px 20px 24px;
 }
 
 
 /* ==========================
-   CARD LOGIN
+   CARD
 ========================== */
 
 .login-box{
-
+    position:relative;
     width:100%;
-    max-width:420px;
-    background:white;
+    max-width:430px;
+    background:var(--card);
+    padding:60px 40px 36px;
     border-radius:18px;
-    padding:40px;
-    box-shadow:0 12px 35px rgba(0,0,0,.30);
+    box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
 
+/* linha dourada no topo */
+.login-box::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:90px;
+    height:3px;
+    background:var(--dourado);
+    border-radius:0 0 4px 4px;
 }
 
 
@@ -52,37 +75,36 @@ body{
 ========================== */
 
 .logo{
-
     text-align:center;
-    margin-bottom:35px;
-
+    margin-bottom:30px;
 }
 
+.logo i{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:64px;
+    height:64px;
+    margin:-92px auto 20px;
+    border-radius:50%;
+    background:var(--azul-escuro);
+    border:2px solid rgba(212,169,90,.35);
+    color:var(--dourado);
+    font-size:26px;
+    box-shadow:0 6px 18px rgba(0,0,0,.3);
+}
 
 .logo h1{
-
-    font-size:30px;
-    color:#676779;
-    margin-bottom:10px;
-
+    font-family:'Playfair Display',Georgia,serif;
+    font-size:29px;
+    color:var(--azul-escuro);
+    margin:0 0 10px;
 }
-
-
-.icone-login-cliente{
-
-    display:block;
-    font-size:60px;
-    color:#54813B;
-    margin:0 auto 10px auto;
-    background:none;
-
-}
-
 
 .logo p{
-
-    color:#676779;
-
+    color:var(--texto-sub);
+    font-size:14px;
+    margin:0;
 }
 
 
@@ -91,112 +113,99 @@ body{
 ========================== */
 
 .campo{
-
-    margin-bottom:22px;
-
+    margin-bottom:20px;
 }
-
 
 .campo label{
-
     display:block;
     margin-bottom:8px;
+    font-size:14px;
     font-weight:600;
-    color:#374151;
-
+    color:var(--azul-escuro);
 }
-
 
 .campo input{
-
     width:100%;
+    box-sizing:border-box;
     padding:14px;
-    border:1px solid #D1D5DB;
+    background:#fff;
+    border:1px solid #cfd6df;
     border-radius:10px;
+    font-family:inherit;
     font-size:15px;
+    color:var(--azul-escuro);
     transition:.3s;
-
 }
 
+.campo input::placeholder{
+    color:#9aa5b3;
+}
 
 .campo input:focus{
-
     outline:none;
-    border-color:#676779;
-    box-shadow:0 0 0 3px rgba(37,99,235,.15);
-
+    border-color:var(--dourado);
+    box-shadow:0 0 0 3px rgba(212,169,90,.25);
 }
 
-
-/* ==========================
-   AUTOFILL (remove o fundo colorido do Chrome)
-========================== */
-
+/* tira o fundo azul/amarelo do preenchimento automático */
 .campo input:-webkit-autofill,
 .campo input:-webkit-autofill:hover,
 .campo input:-webkit-autofill:focus{
-
-    -webkit-box-shadow:0 0 0 1000px white inset !important;
-    -webkit-text-fill-color:#374151 !important;
+    -webkit-box-shadow:0 0 0 1000px #fff inset !important;
+    -webkit-text-fill-color:var(--azul-escuro) !important;
     transition:background-color 5000s ease-in-out 0s;
-
 }
 
 
 /* ==========================
-   BOTÃO
+   BOTÃO PRINCIPAL
 ========================== */
 
 .login-box button{
-
     width:100%;
     padding:15px;
-    background:#54813B;
-    color:white;
+    background:var(--azul-botao);
+    color:#fff;
     border:none;
     border-radius:10px;
-    font-size:16px;
-    font-weight:600;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
     cursor:pointer;
-    transition:.3s;
-
+    transition:transform .2s, box-shadow .2s, filter .2s;
 }
 
+.login-box button i{
+    color:var(--dourado);
+    margin-right:6px;
+}
 
 .login-box button:hover{
-
-    background:#54813B;
-    color:white;
-
+    background:var(--azul-botao);
+    transform:translateY(-2px);
+    filter:brightness(1.15);
+    box-shadow:0 8px 18px rgba(15,31,51,.35);
 }
 
 
 /* ==========================
-   ESQUECI SENHA
+   LINKS
 ========================== */
 
 .links{
-
     display:flex;
     justify-content:space-between;
     margin-top:18px;
-
+    font-size:14px;
 }
-
 
 .links a{
-
+    color:var(--azul-botao);
     text-decoration:none;
-    color:#2563EB;
-    font-size:14px;
-
 }
 
-
 .links a:hover{
-
     text-decoration:underline;
-
 }
 
 
@@ -205,27 +214,39 @@ body{
 ========================== */
 
 .rodape{
-
+    margin-top:26px;
+    padding-top:22px;
+    border-top:1px solid #d3d8df;
     text-align:center;
-    margin-top:30px;
-    color:#6B7280;
-
+    color:var(--texto-sub);
+    font-size:14px;
 }
 
+.rodape p{
+    margin:0 0 12px;
+}
 
 .rodape a{
-
-    color:#54813B;
+    color:var(--azul-botao);
+    font-weight:700;
     text-decoration:none;
-    font-weight:600;
-
 }
 
-
 .rodape a:hover{
+    color:var(--dourado);
+}
 
-    text-decoration:underline;
+/* botão "Criar Conta" (secundário, só contorno) */
+.login-box .rodape button{
+    background:transparent;
+    color:var(--azul-escuro);
+    border:1.5px solid var(--azul-escuro);
+}
 
+.login-box .rodape button:hover{
+    background:var(--azul-escuro);
+    color:#fff;
+    filter:none;
 }
 
 
@@ -233,19 +254,14 @@ body{
    RESPONSIVO
 ========================== */
 
-@media(max-width:500px){
+@media(max-width:480px){
 
     .login-box{
-
-        padding:30px 20px;
-
+        padding:60px 22px 28px;
     }
 
-
     .logo h1{
-
         font-size:25px;
-
     }
 
 }

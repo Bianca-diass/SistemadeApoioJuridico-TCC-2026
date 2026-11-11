@@ -1,0 +1,196 @@
+/* ===== Tela inicial - Sistema de Apoio Jurídico Digital ===== */
+
+:root {
+    --azul-escuro: #0f1f33;
+    --azul-botao: #234367;
+    --azul-fundo: #14304d;
+    --dourado: #d4a95a;
+    --card: #eceff3;
+    --texto-sub: #5f6b7a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body.home-body {
+    font-family: 'Inter', Arial, sans-serif;
+    min-height: 100vh;
+    color: var(--azul-escuro);
+    /* fundo azul com brilho + grade sutil */
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 30%, #1a3d63 0%, var(--azul-fundo) 40%, #0b1828 100%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+}
+
+.home {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+/* ===== Card ===== */
+.card-home {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    background: var(--card);
+    padding: 70px 36px 32px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* linha dourada no topo do card */
+.card-home::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 3px;
+    background: var(--dourado);
+    border-radius: 0 0 4px 4px;
+}
+
+/* ===== Logo ===== */
+.logo-circulo {
+    width: 64px;
+    height: 64px;
+    margin: -38px auto 22px;
+    border-radius: 50%;
+    background: var(--azul-escuro);
+    border: 2px solid rgba(212, 169, 90, 0.35);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--dourado);
+    font-size: 26px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Textos ===== */
+h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 29px;
+    line-height: 1.2;
+    color: var(--azul-escuro);
+    margin-bottom: 14px;
+}
+
+.subtitulo {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--texto-sub);
+    margin-bottom: 28px;
+}
+
+/* ===== Botões ===== */
+.botoes {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+.botao {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    text-decoration: none;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 13px 20px;
+    border-radius: 9px;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.botao i {
+    color: var(--dourado);
+}
+
+.advogado {
+    background: var(--azul-escuro);
+}
+
+.cliente {
+    background: var(--azul-botao);
+}
+
+.botao:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15, 31, 51, 0.35);
+}
+
+/* ===== Divisor ===== */
+.divisor {
+    height: 1px;
+    background: #d3d8df;
+    margin: 28px 0 22px;
+}
+
+/* ===== Mini cards de recursos ===== */
+.recursos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.recurso {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 6px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.recurso i {
+    font-size: 15px;
+    color: var(--azul-escuro);
+}
+
+.recurso i.dourado {
+    color: var(--dourado);
+}
+
+.recurso span {
+    font-size: 10px;
+    font-weight: 500;
+    color: #3b4756;
+}
+
+/* ===== Celular ===== */
+@media (max-width: 480px) {
+    .card-home {
+        padding: 70px 22px 26px;
+    }
+
+    h1 {
+        font-size: 25px;
+    }
+
+    .botoes {
+        gap: 8px;
+    }
+
+    .botao {
+        font-size: 11px;
+        padding: 12px 8px;
+        gap: 6px;
+    }
+}

@@ -2,98 +2,56 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <title>Cliente - Detalhes</title>
 
-    <title>Informações do Cliente</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <!-- CSS PRINCIPAL -->
-
-    <link
-        rel="stylesheet"
-        href="../../css/style-advogado/cliente-detalhes.css"
-    >
-
-
-    <!-- FONT AWESOME -->
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
-
+    <link rel="stylesheet" href="../../css/style-advogado/cliente-detalhes.css">
 </head>
-
 
 <body>
 
-
-<div class="container">
-
-
     <main class="conteudo">
 
-
-        <!-- ==========================================
-             CABEÇALHO
-        ========================================== -->
+        <!-- CABEÇALHO -->
 
         <header class="cabecalhoCliente">
 
-            <div>
+            <h1 id="tituloCliente">Cliente</h1>
 
-                <h1 id="tituloCliente">
-                    Informações do Cliente
-                </h1>
-
-                <p>
-                    Visualize os dados cadastrais do cliente.
-                </p>
-
-            </div>
+            <p>Visualize os dados cadastrais do cliente.</p>
 
         </header>
 
 
-        <!-- ==========================================
-             CARD DO CLIENTE
-        ========================================== -->
+        <!-- INFORMAÇÕES (preenchidas pelo JavaScript) -->
 
-        <section
-            id="areaCliente"
-            class="cardInformacoes"
-        >
+        <section class="cardInformacoes" id="areaCliente">
 
             <div class="carregando">
 
                 <i class="fas fa-spinner fa-spin"></i>
 
-                <span>
-                    Carregando informações...
-                </span>
+                <span>Carregando dados do cliente...</span>
 
             </div>
 
         </section>
 
 
-        <!-- ==========================================
-             BOTÕES
-        ========================================== -->
+        <!-- BOTÕES -->
 
         <div class="botoesCliente">
 
-
-            <a
-                href="clientes-adv.html"
-                class="botaoVoltar"
-            >
+            <a href="javascript:history.back()" class="botaoVoltar">
 
                 <i class="fas fa-arrow-left"></i>
 
@@ -101,12 +59,7 @@
 
             </a>
 
-
-            <a
-                href="#"
-                id="botaoEditar"
-                class="botaoEditar"
-            >
+            <a href="#" class="botaoEditar" id="botaoEditar">
 
                 <i class="fas fa-pen"></i>
 
@@ -114,25 +67,14 @@
 
             </a>
 
-
         </div>
-
 
     </main>
 
-
-</div>
-
-
-<!-- ==========================================
-     JAVASCRIPT
-========================================== -->
-
-<script
-    type="module"
-    src="../../js/pages/advogado/cliente-detalhes-adv.js"
-></script>
-
+    <script
+        type="module"
+        src="../../js/pages/advogado/cliente-detalhes-adv.js">
+    </script>
 
 </body>
 

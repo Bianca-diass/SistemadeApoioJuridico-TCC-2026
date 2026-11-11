@@ -1,42 +1,16 @@
 import {
-    initializeApp,
-    getApp,
-    getApps
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-
-import {
-    getAuth,
     createUserWithEmailAndPassword,
     updateProfile,
     signOut
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-    getFirestore,
     doc,
     setDoc,
     serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ==========================================
-// CONFIGURAÇÃO DO FIREBASE
-// ==========================================
-
-const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_BUCKET",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
-};
-
-const app = getApps().length
-    ? getApp()
-    : initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { auth, db } from "../../config/firebaseConfig.js";
 
 // ==========================================
 // ELEMENTOS DO HTML
@@ -304,8 +278,6 @@ async function cadastrarCliente(evento) {
                 "erro"
             );
         } else if (usuarioCriado && perfilSalvo) {
-            // O perfil já foi salvo. Se apenas a saída da
-            // sessão falhou, não repita a criação da conta.
             mostrarMensagem(
                 "Seu cadastro foi salvo. Não foi possível encerrar a sessão automaticamente. Acesse o login após sair da conta atual.",
                 "erro"

@@ -1,17 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
 
 :root {
-    --tinta: #111111;
-    --branco: #FAFAF8;
-    --acento: #7A2333;
-    --acento-fundo: #F3E6E8;
-    --cinza: #6B6B6B;
-    --cinza-claro: #9C9C94;
-    --linha: #DEDBD3;
+    --fundo-1: #0a1a30;
+    --fundo-2: #14375f;
+    --dourado: #d9a441;
+    --dourado-claro: #f0c36a;
+    --dourado-fundo: rgba(217, 164, 65, 0.14);
+    --texto: #f2f5fa;
+    --suave: #9fb2cc;
+    --vidro: rgba(255, 255, 255, 0.06);
+    --borda: rgba(255, 255, 255, 0.12);
+    --raio: 20px;
 
-    --display: 'Space Grotesk', sans-serif;
+    --display: 'Playfair Display', serif;
     --corpo: 'Inter', sans-serif;
-    --mono: 'JetBrains Mono', monospace;
 }
 
 * {
@@ -20,185 +22,196 @@
     box-sizing: border-box;
 }
 
+body {
+    min-height: 100vh;
+    font-family: var(--corpo);
+    color: var(--texto);
+    -webkit-font-smoothing: antialiased;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 40px 40px,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 40px 40px,
+        radial-gradient(ellipse at 20% 0%, var(--fundo-2), var(--fundo-1) 70%),
+        var(--fundo-1);
+}
+
 .conteudo {
-    padding: 56px 32px 80px;
+    padding: 56px 24px 80px;
     max-width: 980px;
     margin: 0 auto;
     width: 100%;
-    font-family: var(--corpo);
-    color: var(--tinta);
-    -webkit-font-smoothing: antialiased;
 }
 
+/* ---------- Cabeçalho ---------- */
+
 .cabecalhoCliente {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 24px;
-    margin-bottom: 40px;
-    padding-bottom: 28px;
-    border-bottom: 3px solid var(--tinta);
+    margin-bottom: 32px;
 }
 
 .cabecalhoCliente h1 {
     font-family: var(--display);
-    font-size: 34px;
+    font-size: clamp(30px, 5vw, 44px);
     font-weight: 700;
-    letter-spacing: -0.01em;
-    text-transform: uppercase;
-    color: var(--tinta);
+    line-height: 1.15;
+    color: var(--texto);
 }
 
 .cabecalhoCliente p {
-    color: var(--cinza);
     margin-top: 10px;
-    font-size: 14.5px;
+    font-size: 15px;
+    color: var(--suave);
 }
 
+/* ---------- Card ---------- */
+
 .cardInformacoes {
-    background: var(--branco);
-    border-radius: 0;
-    padding: 36px 0;
+    position: relative;
     width: 100%;
-    border-top: 1px solid var(--linha);
-    border-bottom: 1px solid var(--linha);
-    box-shadow: none;
+    padding: 36px;
+    border-radius: var(--raio);
+    background: var(--vidro);
+    border: 1px solid var(--borda);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.cardInformacoes::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 36px;
+    width: 64px;
+    height: 3px;
+    background: var(--dourado);
+    border-radius: 0 0 4px 4px;
 }
 
 .tituloCard {
-    display: grid;
-    grid-template-columns: 60px 44px 1fr;
+    display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 14px;
     margin-bottom: 28px;
 }
 
-.tituloCard::before {
-    content: "01";
-    font-family: var(--mono);
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--acento);
-    letter-spacing: 0.05em;
-}
-
 .tituloCard i {
-    width: 40px;
-    height: 40px;
-    border-radius: 0;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border: 1.5px solid var(--tinta);
-    color: var(--tinta);
+    border-radius: 12px;
+    background: var(--dourado-fundo);
+    color: var(--dourado);
     font-size: 16px;
 }
 
 .tituloCard h2 {
     font-family: var(--display);
-    font-size: 19px;
+    font-size: 24px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-    color: var(--tinta);
+    color: var(--texto);
 }
+
+/* ---------- Informações ---------- */
 
 .informacoesGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 22px 40px;
-    padding-left: 104px;
+    gap: 4px 40px;
 }
 
 .informacao {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--linha);
+    gap: 6px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .informacao label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--cinza);
+    letter-spacing: 0.1em;
+    color: var(--suave);
 }
 
 .informacao span {
     display: block;
-    min-height: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    font-family: var(--corpo);
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--tinta);
+    font-size: 16.5px;
+    font-weight: 500;
+    color: var(--texto);
+    word-break: break-word;
 }
 
 .informacao.nome {
     grid-column: 1 / -1;
 }
 
+.informacao.nome span {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--dourado-claro);
+}
+
+/* ---------- Botões ---------- */
+
 .botoesCliente {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     margin-top: 32px;
 }
 
 .botaoVoltar,
 .botaoEditar {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    border: none;
-    border-radius: 0;
-    padding: 13px 22px;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 12px;
     text-decoration: none;
     cursor: pointer;
     font-family: var(--corpo);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .botaoVoltar {
     background: transparent;
-    color: var(--tinta);
-    border: 1.5px solid var(--tinta);
+    color: var(--texto);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .botaoVoltar:hover {
-    background: var(--tinta);
-    color: var(--branco);
+    border-color: var(--dourado);
+    color: var(--dourado);
 }
 
 .botaoEditar {
-    background: var(--tinta);
-    color: var(--branco);
-    border: 1.5px solid var(--tinta);
+    border: none;
+    color: var(--fundo-1);
+    background: linear-gradient(135deg, var(--dourado-claro), var(--dourado));
+    box-shadow: 0 10px 24px rgba(217, 164, 65, 0.28);
 }
 
 .botaoEditar:hover {
-    background: var(--acento);
-    border-color: var(--acento);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(217, 164, 65, 0.4);
 }
 
 .botaoVoltar:focus-visible,
 .botaoEditar:focus-visible {
-    outline: 2px solid var(--acento);
+    outline: 2px solid var(--dourado);
     outline-offset: 3px;
 }
+
+/* ---------- Carregando e erro ---------- */
 
 .carregando {
     display: flex;
@@ -206,15 +219,15 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 90px 30px;
-    color: var(--cinza);
+    padding: 70px 30px;
+    color: var(--suave);
     font-size: 14px;
     text-align: center;
 }
 
 .carregando i {
-    font-size: 22px;
-    color: var(--tinta);
+    font-size: 24px;
+    color: var(--dourado);
 }
 
 .erro {
@@ -223,37 +236,30 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 70px 30px;
-    color: var(--acento);
+    padding: 60px 30px;
     text-align: center;
-    border-top: 3px solid var(--acento);
 }
 
 .erro i {
-    font-size: 28px;
+    font-size: 30px;
+    color: #ff8a8a;
 }
 
 .erro p {
-    font-family: var(--display);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--tinta);
+    font-size: 15px;
+    color: var(--texto);
 }
 
-@media (max-width: 800px) {
+/* ---------- Responsivo ---------- */
+
+@media (max-width: 700px) {
 
     .informacoesGrid {
         grid-template-columns: 1fr;
-        padding-left: 0;
     }
 
     .informacao.nome {
         grid-column: auto;
-    }
-
-    .tituloCard {
-        grid-template-columns: 40px 44px 1fr;
     }
 
 }
@@ -261,26 +267,19 @@
 @media (max-width: 600px) {
 
     .conteudo {
-        padding: 26px 18px;
-    }
-
-    .cabecalhoCliente {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 18px;
-    }
-
-    .cabecalhoCliente h1 {
-        font-size: 26px;
+        padding: 32px 16px 56px;
     }
 
     .cardInformacoes {
-        padding: 26px 0;
+        padding: 28px 22px;
+    }
+
+    .cardInformacoes::before {
+        left: 22px;
     }
 
     .botoesCliente {
-        flex-direction: column;
-        width: 100%;
+        flex-direction: column-reverse;
     }
 
     .botaoVoltar,

@@ -1,6 +1,17 @@
 /* ==========================================
    CADASTRO CLIENTE - ADVOGADO
+   Mesmo visual da tela inicial (azul-marinho + dourado)
 ========================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap");
+
+:root {
+    --azul-escuro: #0f1f33;
+    --azul: #234367;
+    --dourado: #d4a95a;
+    --card: #eceff3;
+    --suave: #5f6b7a;
+}
 
 * {
     margin: 0;
@@ -8,14 +19,16 @@
     box-sizing: border-box;
 }
 
-
-/* ==========================================
-   BODY
-========================================== */
-
 body {
-    background: #F4F6FB;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', Arial, sans-serif;
+    min-height: 100vh;
+    color: var(--azul-escuro);
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+    background-attachment: fixed;
 }
 
 
@@ -25,12 +38,9 @@ body {
 
 .conteudo {
     flex: 1;
-
     width: 100%;
     min-height: 100vh;
-
     padding: 35px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -38,142 +48,108 @@ body {
 
 
 /* ==========================================
-   SETA DE VOLTAR
-   IGUAL À DE RELATÓRIOS
+   SETA DE VOLTAR (desenhada com CSS)
 ========================================== */
 
 .btnVoltar {
     position: relative;
-
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
-
+    align-self: flex-start;
     width: 42px;
     height: 42px;
-
     margin-bottom: 15px;
-
-    background: #294970;
-
+    background: var(--azul-escuro);
+    border: 2px solid rgba(212, 169, 90, 0.45);
+    border-radius: 50%;
     color: transparent;
-
-    border-radius: 10px;
-
-    text-decoration: none;
-
     font-size: 0;
-
-    transition: 0.3s;
-
-    align-self: flex-start;
+    text-decoration: none;
+    transition: transform .3s, background .3s;
 }
 
-
-/* ==========================================
-   LINHA DA SETA
-========================================== */
-
+/* linha da seta */
 .btnVoltar::before {
     content: "";
-
     position: absolute;
-
-    width: 17px;
-    height: 1.5px;
-
-    background: #ffffff;
-
-    left: 13px;
-    top: 20px;
-
+    width: 16px;
+    height: 2px;
+    background: var(--dourado);
+    left: 11px;
+    top: 18px;
     border-radius: 2px;
 }
 
-
-/* ==========================================
-   PONTA DA SETA
-========================================== */
-
+/* ponta da seta */
 .btnVoltar::after {
     content: "";
-
     position: absolute;
-
     width: 8px;
     height: 8px;
-
-    border-left: 1.5px solid #ffffff;
-    border-bottom: 1.5px solid #ffffff;
-
-    left: 12px;
-    top: 16px;
-
+    border-left: 2px solid var(--dourado);
+    border-bottom: 2px solid var(--dourado);
+    left: 10px;
+    top: 14.5px;
     transform: rotate(45deg);
 }
 
-
-/* ==========================================
-   HOVER
-========================================== */
-
 .btnVoltar:hover {
-    background: #1F3858;
-
+    background: #16304d;
     transform: translateX(-3px);
 }
 
 
 /* ==========================================
-   TOPO
+   TOPO (sobre o fundo azul)
 ========================================== */
 
 .topoPagina {
-    margin-bottom: 30px;
-
+    margin-bottom: 28px;
     text-align: center;
 }
 
-
 .topoPagina h1 {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 35px;
-
-    color: #243b53;
+    color: #fff;
 }
 
-
 .topoPagina p {
-    color: #6b7280;
-
     margin-top: 8px;
-
-    font-size: 17px;
+    font-size: 16px;
+    color: #b8c4d3;
 }
 
 
 /* ==========================================
-   FORMULÁRIO
+   FORMULÁRIO (card claro)
 ========================================== */
 
 .cardFormulario {
-    background: white;
-
-    border-radius: 20px;
-
-    padding: 35px;
-
+    position: relative;
     width: 100%;
-
     max-width: 700px;
-
-    box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
-
+    padding: 38px 35px 35px;
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
     display: flex;
-
     flex-direction: column;
+    gap: 20px;
+}
 
-    gap: 22px;
+/* linha dourada no topo */
+.cardFormulario::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: var(--dourado);
 }
 
 
@@ -183,75 +159,51 @@ body {
 
 .grupo {
     display: flex;
-
     flex-direction: column;
-
     gap: 8px;
 }
 
-
 .grupo label {
     font-size: 14px;
-
     font-weight: 600;
-
-    color: #374151;
+    color: var(--azul-escuro);
 }
-
-
-/* ==========================================
-   INPUTS E SELECTS
-========================================== */
 
 .grupo input,
 .grupo select,
 .grupo textarea {
-    border: 1px solid #e2e8f0;
-
-    border-radius: 12px;
-
-    padding: 12px 15px;
-
+    padding: 13px 15px;
+    background: #fff;
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+    font-family: inherit;
     font-size: 15px;
-
-    font-family: 'Poppins', sans-serif;
-
-    color: #243b53;
-
+    color: var(--azul-escuro);
     outline: none;
-
-    transition: 0.2s;
-
-    background: #fbfcfe;
+    transition: border-color .2s, box-shadow .2s;
 }
-
 
 .grupo input:focus,
 .grupo select:focus,
 .grupo textarea:focus {
-    border-color: #294970;
-
-    background: white;
-
-    box-shadow:
-        0 0 0 3px rgba(41, 73, 112, 0.12);
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212, 169, 90, 0.25);
 }
-
 
 .grupo input::placeholder {
-    color: #9CA3AF;
+    color: #9aa5b3;
 }
 
+.grupo input:-webkit-autofill,
+.grupo input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+    -webkit-text-fill-color: var(--azul-escuro) !important;
+}
 
-/* ==========================================
-   SELECT DESABILITADO
-========================================== */
-
+/* select desabilitado (cidade antes de escolher o estado) */
 .grupo select:disabled {
-    background: #f1f3f7;
-
-    color: #9CA3AF;
-
+    background: #e3e7ed;
+    color: #9aa5b3;
     cursor: not-allowed;
 }
 
@@ -262,89 +214,54 @@ body {
 
 .botoes {
     display: flex;
-
     gap: 15px;
-
     margin-top: 10px;
 }
 
-
-/* ==========================================
-   SALVAR
-========================================== */
-
+/* salvar */
 .salvar {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 10px;
-
-    background: #294970;
-
-    color: white;
-
-    padding: 14px 22px;
-
-    border-radius: 12px;
-
-    border: none;
-
-    cursor: pointer;
-
-    font-size: 16px;
-
-    font-weight: 600;
-
-    font-family: 'Poppins', sans-serif;
-
-    transition: 0.3s;
-
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    transition: transform .2s, box-shadow .2s, filter .2s;
 }
 
+.salvar i { color: var(--dourado); }
 
 .salvar:hover {
-    background: #1F3858;
-
     transform: translateY(-2px);
-
-    box-shadow:
-        0 8px 18px rgba(41, 73, 112, 0.25);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15, 31, 51, 0.35);
 }
 
-
-/* ==========================================
-   LIMPAR
-========================================== */
-
+/* limpar (só contorno) */
 .cancelar {
-    background: #f1f3f7;
-
-    color: #374151;
-
-    padding: 14px 22px;
-
-    border-radius: 12px;
-
-    border: none;
-
+    padding: 14px 24px;
+    background: transparent;
+    color: var(--azul-escuro);
+    border: 1.5px solid var(--azul-escuro);
+    border-radius: 10px;
     cursor: pointer;
-
-    font-size: 16px;
-
-    font-weight: 600;
-
-    font-family: 'Poppins', sans-serif;
-
-    transition: 0.2s;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    transition: background .2s, color .2s;
 }
-
 
 .cancelar:hover {
-    background: #e5e7eb;
+    background: var(--azul-escuro);
+    color: #fff;
 }
 
 
@@ -353,59 +270,21 @@ body {
 ========================================== */
 
 @media (max-width: 768px) {
-
-    .conteudo {
-        padding: 20px;
-    }
-
+    .conteudo { padding: 20px; }
 
     .cardFormulario {
-        padding: 22px;
-
+        padding: 32px 22px 22px;
         max-width: 100%;
     }
 
+    .topoPagina h1 { font-size: 28px; }
 
-    .topoPagina h1 {
-        font-size: 28px;
-    }
-
-
-    .botoes {
-        flex-direction: column;
-    }
-
-
-    .btnVoltar {
-        margin-bottom: 12px;
-    }
-
+    .botoes { flex-direction: column; }
 }
 
-
-/* ==========================================
-   CELULAR PEQUENO
-========================================== */
-
 @media (max-width: 480px) {
-
-    .conteudo {
-        padding: 15px;
-    }
-
-
-    .topoPagina h1 {
-        font-size: 25px;
-    }
-
-
-    .topoPagina p {
-        font-size: 14px;
-    }
-
-
-    .cardFormulario {
-        padding: 18px;
-    }
-
+    .conteudo { padding: 15px; }
+    .topoPagina h1 { font-size: 25px; }
+    .topoPagina p { font-size: 14px; }
+    .cardFormulario { padding: 30px 18px 18px; }
 }

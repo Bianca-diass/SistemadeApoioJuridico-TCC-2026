@@ -1,6 +1,12 @@
-const { admin } = require("../config/firebase");
+const { supabaseAdmin } = require("../config/supabase");
 
+// Valida o token (access_token do Supabase) enviado no header
+// Authorization: Bearer <token> e preenche req.usuario.
+//
+// req.usuario.uid  = id do usuário no Supabase Auth
+//                    (é o valor gravado em auth_user_id nas tabelas)
 async function verificarToken(req, res, next) {
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -12,13 +18,32 @@ async function verificarToken(req, res, next) {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = await admin.auth().verifyIdToken(token);
 
-    req.usuario = decoded;
+    const { data, error } =
+      await supabaseAdmin.auth.getUser(token);
+
+    if (error || !data?.user) {
+
+      console.error(
+        "Erro ao validar token:",
+        error?.message
+      );
+
+      return res.status(401).json({
+        erro: "Token inválido ou expirado"
+      });
+    }
+
+    req.usuario = {
+      uid: data.user.id,
+      email: data.user.email
+    };
+
     next();
 
   } catch (error) {
-    console.error("Erro ao validar token:", error.code || error.message);
+
+    console.error("Erro ao validar token:", error.message);
 
     return res.status(401).json({
       erro: "Token inválido ou expirado"

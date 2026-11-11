@@ -1,105 +1,92 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Editar Cliente</title>
+    <title>Editar Cliente</title>
 
-<link rel="stylesheet" href="../../css/style.css">
-<link rel="stylesheet" href="../../css/style-advogado/editar-clientes-adv.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../../css/style-advogado/editar-clientes-adv.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 </head>
 
-
 <body>
-
 
 <div class="container">
 
+    <main class="conteudo">
 
-<main class="conteudo">
+        <a href="clientes-adv.html" class="btnVoltar" title="Voltar">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
 
+        <header class="topoPagina">
 
-<header class="topoPagina">
+            <h1>Editar Cliente</h1>
 
-<h1>Editar Cliente</h1>
+            <p>Atualize os dados do cliente.</p>
 
-<p>Atualize os dados do cliente.</p>
+        </header>
 
-</header>
+        <section class="cardConfiguracao">
 
+            <div class="grupo">
 
+                <label for="nome">Nome</label>
 
-<section class="cardConfiguracao">
+                <input id="nome" type="text" placeholder="Nome completo">
 
+            </div>
 
-<div class="grupo">
+            <div class="grupo">
 
-<label>Nome</label>
+                <label for="email">Email</label>
 
-<input id="nome" type="text">
+                <input id="email" type="email" placeholder="exemplo@email.com">
 
-</div>
+            </div>
 
+            <div class="grupo">
 
+                <label for="telefone">Telefone</label>
 
-<div class="grupo">
+                <input id="telefone" type="text" placeholder="(67) 99999-9999">
 
-<label>Email</label>
+            </div>
 
-<input id="email" type="email">
+            <button id="salvar" type="button">
 
-</div>
+                <i class="fa-solid fa-floppy-disk"></i>
+                Salvar Alterações
 
+            </button>
 
+        </section>
 
-<div class="grupo">
-
-<label>Telefone</label>
-
-<input id="telefone" type="text">
-
-</div>
-
-
-
-<button id="salvar">
-
-Salvar Alterações
-
-</button>
-
-
-</section>
-
-
-</main>
-
+    </main>
 
 </div>
-
-
 
 <script type="module">
-
 
 import { clienteController } 
 from "../../js/controllers/clienteController.js";
 
-
-
 const id = new URLSearchParams(window.location.search).get("id");
-
-
 
 const nome = document.getElementById("nome");
 const email = document.getElementById("email");
 const telefone = document.getElementById("telefone");
-
-
 
 try {
 
@@ -114,9 +101,7 @@ try {
     } else {
 
         nome.value = cliente.nome || "";
-
         email.value = cliente.email || "";
-
         telefone.value = cliente.telefone || "";
 
     }
@@ -129,41 +114,33 @@ try {
 
 }
 
+document.getElementById("salvar").onclick = async () => {
 
+    try {
 
-document.getElementById("salvar").onclick = async ()=>{
+        await clienteController.editarCliente(id, {
 
-try {
+            nome: nome.value,
+            email: email.value,
+            telefone: telefone.value
 
-    await clienteController.editarCliente(id,{
+        });
 
-    nome:nome.value,
+        alert("Cliente atualizado com sucesso.");
 
-    email:email.value,
+        window.location.href = "clientes-adv.html";
 
-    telefone:telefone.value
+    } catch (erro) {
 
-    });
+        console.error("Erro ao salvar cliente:", erro);
 
+        alert(erro.message || "Erro ao salvar as alterações.");
 
-
-    alert("Cliente atualizado com sucesso.");
-
-
-    window.location.href="clientes-adv.html"
-
-} catch (erro) {
-
-    console.error("Erro ao salvar cliente:", erro);
-
-    alert(erro.message || "Erro ao salvar as alterações.");
-
-}
+    }
 
 };
+
 </script>
 
-
 </body>
-
 </html>

@@ -1,8 +1,54 @@
-const { admin, db } = require("../config/firebase");
+const {
+    supabaseAdmin,
+    criarClienteAnonimo
+} = require("../config/supabase");
 
-const auth = admin.auth();
 
-const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY;
+// ==========================================================
+// FUNÇÕES AUXILIARES
+// ==========================================================
+
+async function buscarPerfilPorAuthId(authUserId) {
+
+    const { data: advogado, error: erroAdv } =
+        await supabaseAdmin
+            .from("advogados")
+            .select("*")
+            .eq("auth_user_id", authUserId)
+            .maybeSingle();
+
+    if (erroAdv) throw erroAdv;
+
+    if (advogado) {
+        return { tipo: "advogado", perfil: advogado };
+    }
+
+    const { data: cliente, error: erroCli } =
+        await supabaseAdmin
+            .from("clientes")
+            .select("*")
+            .eq("auth_user_id", authUserId)
+            .maybeSingle();
+
+    if (erroCli) throw erroCli;
+
+    if (cliente) {
+        return { tipo: "cliente", perfil: cliente };
+    }
+
+    return { tipo: null, perfil: null };
+}
+
+function emailJaCadastrado(error) {
+
+    const msg = (error?.message || "").toLowerCase();
+
+    return (
+        error?.code === "email_exists" ||
+        msg.includes("already been registered") ||
+        msg.includes("already registered")
+    );
+}
 
 
 // ==========================================================
@@ -15,42 +61,27 @@ exports.login = async (req, res) => {
 
         const { email, senha } = req.body;
 
-
         if (!email || !senha) {
-
             return res.status(400).json({
                 erro: "Email e senha são obrigatórios"
             });
-
         }
 
+        // Cliente descartável: o login não pode prender a sessão
+        // no supabaseAdmin.
+        const supabase = criarClienteAnonimo();
 
-        const resposta = await fetch(
-            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
-            {
-                method: "POST",
+        const { data, error } =
+            await supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password: senha
+            });
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    email,
-                    password: senha,
-                    returnSecureToken: true
-                })
-            }
-        );
-
-
-        const dados = await resposta.json();
-
-
-        if (!resposta.ok) {
+        if (error || !data?.session) {
 
             console.error(
-                "Erro Firebase Login:",
-                dados
+                "Erro Supabase Login:",
+                error?.message
             );
 
             return res.status(401).json({
@@ -58,98 +89,42 @@ exports.login = async (req, res) => {
             });
         }
 
+        const { tipo, perfil } =
+            await buscarPerfilPorAuthId(data.user.id);
 
-        // ==================================================
-        // VERIFICA SE É ADVOGADO
-        // ==================================================
-
-        const advogadoDoc = await db
-            .collection("advogados")
-            .doc(dados.localId)
-            .get();
-
-
-        let tipo = null;
-        let dadosPerfil = {};
-
-
-        if (advogadoDoc.exists) {
-
-            tipo = "advogado";
-
-            dadosPerfil = advogadoDoc.data();
-
-        } else {
-
-            // ==================================================
-            // VERIFICA SE É CLIENTE
-            // ==================================================
-
-            const clienteDoc = await db
-                .collection("clientes")
-                .doc(dados.localId)
-                .get();
-
-
-            if (clienteDoc.exists) {
-
-                tipo = "cliente";
-
-                dadosPerfil = clienteDoc.data();
-
-            }
+        if (!tipo) {
+            return res.status(403).json({
+                erro: "Perfil do usuário não encontrado."
+            });
         }
-
-
-        console.log(
-            "Novo token gerado no login."
-        );
-
 
         return res.json({
 
-            mensagem:
-                "Login realizado com sucesso",
+            mensagem: "Login realizado com sucesso",
 
             usuario: {
-
-                id: dados.localId,
-
-                email: dados.email,
-
+                email: data.user.email,
                 tipo,
-
-                ...dadosPerfil
-
+                ...perfil,
+                auth_user_id: data.user.id
             },
 
-            token: dados.idToken,
+            token: data.session.access_token,
 
-            refreshToken:
-                dados.refreshToken,
+            refreshToken: data.session.refresh_token,
 
-            expiresIn:
-                dados.expiresIn
-
+            expiresIn: data.session.expires_in
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERRO NO LOGIN:",
-            error
-        );
-
+        console.error("ERRO NO LOGIN:", error);
 
         return res.status(500).json({
             erro: "Erro ao processar login"
         });
-
     }
-
 };
-
 
 
 // ==========================================================
@@ -157,6 +132,8 @@ exports.login = async (req, res) => {
 // ==========================================================
 
 exports.register = async (req, res) => {
+
+    let authUserId = null;
 
     try {
 
@@ -170,87 +147,107 @@ exports.register = async (req, res) => {
             tipo
         } = req.body;
 
-
         if (!nome || !email || !senha) {
-
             return res.status(400).json({
-                erro:
-                    "Nome, email e senha são obrigatórios"
+                erro: "Nome, email e senha são obrigatórios"
             });
-
         }
 
+        if (String(senha).length < 6) {
+            return res.status(400).json({
+                erro: "A senha deve possuir pelo menos 6 caracteres"
+            });
+        }
 
-        const user = await auth.createUser({
+        const ehCliente = tipo === "cliente";
 
-            email,
+        const emailLimpo = String(email).trim().toLowerCase();
 
-            password: senha,
+        // 1) Cria o login no Supabase Auth
+        const { data: criado, error: erroAuth } =
+            await supabaseAdmin.auth.admin.createUser({
+                email: emailLimpo,
+                password: senha,
+                email_confirm: true,
+                user_metadata: { nome }
+            });
 
-            displayName: nome
+        if (erroAuth) {
 
-        });
+            if (emailJaCadastrado(erroAuth)) {
+                return res.status(400).json({
+                    erro: "Este email já está cadastrado"
+                });
+            }
 
+            throw erroAuth;
+        }
 
-        const colecao =
-            tipo === "cliente"
-                ? "clientes"
-                : "advogados";
+        authUserId = criado.user.id;
 
+        // 2) Cria o perfil (todos os campos NOT NULL vão preenchidos)
+        const tabela = ehCliente ? "clientes" : "advogados";
 
-        const dadosPerfil =
-            tipo === "cliente"
+        const dadosPerfil = {
+            nome: String(nome).trim(),
+            email: emailLimpo,
+            telefone: telefone ?? "",
+            cpf: cpf ?? "",
+            auth_user_id: authUserId
+        };
 
-                ? {
-                    nome,
-                    email,
-                    telefone: telefone || "",
-                    cpf: cpf || ""
-                }
+        if (!ehCliente) {
+            dadosPerfil.oab = oab ?? "";
 
-                : {
-                    nome,
-                    email,
-                    telefone: telefone || "",
-                    cpf: cpf || "",
-                    oab: oab || ""
-                };
+            // advogados.id tem FK para auth.users(id): o id do
+            // advogado precisa ser o mesmo id do login.
+            dadosPerfil.id = authUserId;
+        }
 
+        const { data: perfil, error: erroPerfil } =
+            await supabaseAdmin
+                .from(tabela)
+                .insert(dadosPerfil)
+                .select()
+                .single();
 
-        await db
-            .collection(colecao)
-            .doc(user.uid)
-            .set(dadosPerfil);
+        if (erroPerfil) {
 
+            // Desfaz o usuário do Auth para não deixar conta órfã
+            await supabaseAdmin.auth.admin.deleteUser(authUserId);
+
+            authUserId = null;
+
+            throw erroPerfil;
+        }
 
         return res.status(201).json({
 
-            mensagem:
-                tipo === "cliente"
-                    ? "Cliente cadastrado"
-                    : "Advogado cadastrado",
+            mensagem: ehCliente
+                ? "Cliente cadastrado"
+                : "Advogado cadastrado",
 
-            id: user.uid
-
+            id: perfil.id
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERRO NO CADASTRO:",
-            error
-        );
+        console.error("ERRO NO CADASTRO:", error);
 
+        // Garantia extra contra conta órfã
+        if (authUserId) {
+            try {
+                await supabaseAdmin.auth.admin.deleteUser(authUserId);
+            } catch (e) {
+                console.error("Falha ao desfazer usuário do Auth:", e);
+            }
+        }
 
         return res.status(400).json({
             erro: error.message
         });
-
     }
-
 };
-
 
 
 // ==========================================================
@@ -263,87 +260,43 @@ exports.me = async (req, res) => {
 
         const uid = req.usuario.uid;
 
+        const { data: advogado, error } =
+            await supabaseAdmin
+                .from("advogados")
+                .select("*")
+                .eq("auth_user_id", uid)
+                .maybeSingle();
 
-        const advogadoDoc = await db
-            .collection("advogados")
-            .doc(uid)
-            .get();
+        if (error) throw error;
 
-
-        if (!advogadoDoc.exists) {
-
+        if (!advogado) {
             return res.status(404).json({
-
-                erro:
-                    "Perfil de advogado não encontrado"
-
+                erro: "Perfil de advogado não encontrado"
             });
-
         }
-
-
-        const dados = advogadoDoc.data();
-
-
-        const usuarioFirebase =
-            await auth.getUser(uid);
-
 
         return res.json({
 
             usuario: {
-
-                id: uid,
-
-                nome:
-                    dados.nome ||
-                    usuarioFirebase.displayName ||
-                    "",
-
-                email:
-                    dados.email ||
-                    usuarioFirebase.email ||
-                    "",
-
-                telefone:
-                    dados.telefone ||
-                    "",
-
-                cpf:
-                    dados.cpf ||
-                    "",
-
-                oab:
-                    dados.oab ||
-                    "",
-
-                tipo:
-                    "advogado"
-
+                id: advogado.id,
+                nome: advogado.nome || "",
+                email: advogado.email || req.usuario.email || "",
+                telefone: advogado.telefone || "",
+                cpf: advogado.cpf || "",
+                oab: advogado.oab || "",
+                tipo: "advogado"
             }
-
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERRO AO BUSCAR PERFIL:",
-            error
-        );
-
+        console.error("ERRO AO BUSCAR PERFIL:", error);
 
         return res.status(500).json({
-
-            erro:
-                "Erro ao carregar perfil"
-
+            erro: "Erro ao carregar perfil"
         });
-
     }
-
 };
-
 
 
 // ==========================================================
@@ -356,158 +309,89 @@ exports.atualizarPerfil = async (req, res) => {
 
         const uid = req.usuario.uid;
 
-
-        const {
-            nome,
-            email,
-            telefone
-        } = req.body;
-
+        const { nome, email, telefone } = req.body;
 
         if (!nome || !email) {
-
             return res.status(400).json({
-
-                erro:
-                    "Nome e email são obrigatórios"
-
+                erro: "Nome e email são obrigatórios"
             });
-
         }
 
+        const emailLimpo = String(email).trim().toLowerCase();
 
-        // ==================================================
-        // VERIFICA SE O ADVOGADO EXISTE
-        // ==================================================
+        const { data: existente, error: erroBusca } =
+            await supabaseAdmin
+                .from("advogados")
+                .select("id")
+                .eq("auth_user_id", uid)
+                .maybeSingle();
 
-        const advogadoRef =
-            db
-                .collection("advogados")
-                .doc(uid);
+        if (erroBusca) throw erroBusca;
 
-
-        const advogadoDoc =
-            await advogadoRef.get();
-
-
-        if (!advogadoDoc.exists) {
-
+        if (!existente) {
             return res.status(404).json({
-
-                erro:
-                    "Advogado não encontrado"
-
+                erro: "Advogado não encontrado"
             });
-
         }
 
+        // Atualiza o login (Auth)
+        const { error: erroAuth } =
+            await supabaseAdmin.auth.admin.updateUserById(uid, {
+                email: emailLimpo,
+                user_metadata: { nome }
+            });
 
-        // ==================================================
-        // ATUALIZA FIREBASE AUTH
-        // ==================================================
+        if (erroAuth) {
 
-        await auth.updateUser(uid, {
+            if (emailJaCadastrado(erroAuth)) {
+                return res.status(400).json({
+                    erro: "Este email já está sendo utilizado"
+                });
+            }
 
-            displayName: nome,
+            if ((erroAuth.message || "").toLowerCase().includes("invalid")) {
+                return res.status(400).json({
+                    erro: "O email informado é inválido"
+                });
+            }
 
-            email: email
+            throw erroAuth;
+        }
 
-        });
+        // Atualiza o perfil
+        const { data: atualizado, error: erroPerfil } =
+            await supabaseAdmin
+                .from("advogados")
+                .update({
+                    nome: String(nome).trim(),
+                    email: emailLimpo,
+                    telefone: telefone ?? ""
+                })
+                .eq("id", existente.id)
+                .select()
+                .single();
 
-
-        // ==================================================
-        // ATUALIZA FIRESTORE
-        // ==================================================
-
-        await advogadoRef.update({
-
-            nome,
-
-            email,
-
-            telefone:
-                telefone || ""
-
-        });
-
-
-        // ==================================================
-        // BUSCA DADOS ATUALIZADOS
-        // ==================================================
-
-        const dadosAtualizados =
-            await advogadoRef.get();
-
+        if (erroPerfil) throw erroPerfil;
 
         return res.json({
 
-            mensagem:
-                "Perfil atualizado com sucesso",
+            mensagem: "Perfil atualizado com sucesso",
 
             usuario: {
-
-                id: uid,
-
                 tipo: "advogado",
-
-                ...dadosAtualizados.data()
-
+                ...atualizado
             }
-
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERRO AO ATUALIZAR PERFIL:",
-            error
-        );
-
-
-        // Email já utilizado
-        if (
-            error.code ===
-            "auth/email-already-exists"
-        ) {
-
-            return res.status(400).json({
-
-                erro:
-                    "Este email já está sendo utilizado"
-
-            });
-
-        }
-
-
-        // Email inválido
-        if (
-            error.code ===
-            "auth/invalid-email"
-        ) {
-
-            return res.status(400).json({
-
-                erro:
-                    "O email informado é inválido"
-
-            });
-
-        }
-
+        console.error("ERRO AO ATUALIZAR PERFIL:", error);
 
         return res.status(500).json({
-
-            erro:
-                "Erro ao atualizar perfil"
-
+            erro: "Erro ao atualizar perfil"
         });
-
     }
-
 };
-
 
 
 // ==========================================================
@@ -520,70 +404,37 @@ exports.alterarSenha = async (req, res) => {
 
         const uid = req.usuario.uid;
 
-
-        const {
-            novaSenha
-        } = req.body;
-
+        const { novaSenha } = req.body;
 
         if (!novaSenha) {
-
             return res.status(400).json({
-
-                erro:
-                    "Informe a nova senha"
-
+                erro: "Informe a nova senha"
             });
-
         }
-
 
         if (novaSenha.length < 6) {
-
             return res.status(400).json({
-
-                erro:
-                    "A senha deve possuir pelo menos 6 caracteres"
-
+                erro: "A senha deve possuir pelo menos 6 caracteres"
             });
-
         }
 
+        const { error } =
+            await supabaseAdmin.auth.admin.updateUserById(uid, {
+                password: novaSenha
+            });
 
-        // ==================================================
-        // ALTERA SENHA NO FIREBASE AUTH
-        // ==================================================
-
-        await auth.updateUser(uid, {
-
-            password: novaSenha
-
-        });
-
+        if (error) throw error;
 
         return res.json({
-
-            mensagem:
-                "Senha alterada com sucesso"
-
+            mensagem: "Senha alterada com sucesso"
         });
-
 
     } catch (error) {
 
-        console.error(
-            "ERRO AO ALTERAR SENHA:",
-            error
-        );
-
+        console.error("ERRO AO ALTERAR SENHA:", error);
 
         return res.status(500).json({
-
-            erro:
-                "Erro ao alterar senha"
-
+            erro: "Erro ao alterar senha"
         });
-
     }
-
 };

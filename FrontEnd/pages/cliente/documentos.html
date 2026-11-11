@@ -1,42 +1,149 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Documentos - Área do Cliente</title>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../css/style-cliente/cliente.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Documentos - Área do Cliente</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="../../css/style-cliente/documentos-cliente.css">
 </head>
+
 <body class="documentos-page">
-<aside>
-  <div class="brand">Área do Cliente</div>
-  <nav>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="agenda.html">Agenda</a>
-    <a href="documentos.html" class="on">Documentos</a>
-    <a href="configuracoes.html">Configurações</a>
-  </nav>
-  <div class="user"><div class="av">C</div><div>Cliente<small><a href="login.html">Sair</a></small></div></div>
-</aside>
-<main>
-  <header>
-    <h1>Documentos</h1>
-    <p class="sub">Acompanhe os documentos dos seus processos.</p>
-  </header>
 
-  <section class="card">
-    <div class="upload">
-      <p>Formatos aceitos: PDF, JPG e PNG, até 10 MB.</p>
-      <label class="btn" for="arquivo">Enviar documento</label>
-      <input type="file" id="arquivo" accept=".pdf,.jpg,.jpeg,.png">
+  <aside>
+    <div class="brand">
+      Área do Cliente
     </div>
-  </section>
 
-  <section class="card">
-    <div class="head"><h2>Meus documentos</h2></div>
-    <div id="docs"></div>
-  </section>
-</main>
-<script type="module" src="../../js/pages/cliente/documentos.js"></script>
+    <nav>
+      <a href="dashboard.html">
+        <i class="fa-solid fa-chart-line"></i>
+        Dashboard
+      </a>
+
+      <a href="agenda.html">
+        <i class="fa-regular fa-calendar"></i>
+        Agenda
+      </a>
+
+      <a href="documentos.html" class="on">
+        <i class="fa-regular fa-file-lines"></i>
+        Documentos
+      </a>
+
+      <a href="configuracoes.html">
+        <i class="fa-solid fa-gear"></i>
+        Configurações
+      </a>
+    </nav>
+
+    <div class="user">
+      <div class="av" id="inicialUsuario">C</div>
+
+      <div>
+        <span id="nomeUsuario">Cliente</span>
+
+        <small>
+          <a href="login.html" id="btnSair">Sair</a>
+        </small>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+
+    <header>
+      <h1>Documentos</h1>
+
+      <p class="sub">
+        Acompanhe e visualize os documentos dos seus processos.
+      </p>
+    </header>
+
+    <section class="card">
+
+      <div class="head">
+
+        <h2>Meus documentos</h2>
+
+        <div class="tools">
+
+          <div class="busca">
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+              type="search"
+              id="busca"
+              placeholder="Buscar por nome ou processo"
+            >
+          </div>
+
+          <select id="filtro">
+            <option value="todos">Todos os tipos</option>
+          </select>
+
+        </div>
+
+      </div>
+
+      <div class="resumo-documentos" id="resumoDocumentos"></div>
+
+      <div id="docs"></div>
+
+    </section>
+
+  </main>
+
+  <div class="modal" id="modal" hidden>
+
+    <div class="modal-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitulo">
+
+      <div class="modal-head">
+
+        <div class="modal-titulo">
+
+          <h3 id="modalTitulo">Documento</h3>
+
+          <span id="modalMeta"></span>
+
+        </div>
+
+        <div class="modal-acoes">
+
+          <button class="btn-sec" id="modalBaixar" type="button">
+            <i class="fa-solid fa-download"></i>
+            Baixar
+          </button>
+
+          <button class="btn-x"
+            id="modalFechar"
+            type="button"
+            aria-label="Fechar">
+
+            <i class="fa-solid fa-xmark"></i>
+
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="modal-corpo" id="modalCorpo"></div>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="../../js/pages/cliente/documentos.js"></script>
+
 </body>
 </html>

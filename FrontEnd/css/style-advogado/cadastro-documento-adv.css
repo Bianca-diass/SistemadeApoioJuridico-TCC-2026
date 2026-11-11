@@ -1,5 +1,8 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
 /* ==========================================
-   CADASTRO DE DOCUMENTO
+   CONFIGURAÇÕES GERAIS
 ========================================== */
 
 * {
@@ -8,16 +11,34 @@
     box-sizing: border-box;
 }
 
-
-/* ==========================================
-   BODY
-========================================== */
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
+:root {
+    --azul-escuro: #0f1f33;
+    --azul-botao: #234367;
+    --dourado: #d4a95a;
+    --fundo-card: #eceff3;
+    --texto: #3b4756;
+    --texto-suave: #5f6b7a;
+    --borda: #dde2e9;
+    --branco: #ffffff;
 }
 
+body {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--texto);
+
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+
+    background-size:
+        40px 40px,
+        40px 40px,
+        100% 100%;
+
+    background-attachment: fixed;
+}
 
 /* ==========================================
    CONTAINER
@@ -28,53 +49,42 @@ body {
     min-height: 100vh;
 }
 
-
-/* ==========================================
-   CONTEÚDO
-========================================== */
-
 .conteudo {
     width: 100%;
     max-width: 1000px;
-
     margin: 0 auto;
-
-    padding: 50px 30px;
+    padding: 40px 35px 60px;
 }
 
-
 /* ==========================================
-   SETA DE VOLTAR
+   BOTÃO VOLTAR
 ========================================== */
 
 .btnVoltar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
     width: 42px;
     height: 42px;
 
-    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    background: #294970;
-    color: white;
+    background: var(--azul-escuro);
+    border: 1px solid rgba(212,169,90,.5);
+    border-radius: 50%;
 
-    border-radius: 10px;
-
+    color: var(--dourado);
+    font-size: 25px;
     text-decoration: none;
 
-    font-size: 24px;
-    font-weight: bold;
-
-    transition: 0.3s;
+    margin-bottom: 28px;
+    transition: .3s;
 }
 
 .btnVoltar:hover {
-    background: #1f3858;
+    background: var(--dourado);
+    color: var(--azul-escuro);
     transform: translateX(-3px);
 }
-
 
 /* ==========================================
    CABEÇALHO
@@ -82,354 +92,248 @@ body {
 
 .topoPagina {
     margin-bottom: 30px;
-
-    text-align: center;
 }
-
 
 .topoPagina h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 35px;
+    font-weight: 700;
+    color: var(--branco);
     margin-bottom: 10px;
-
-    color: #294970;
-
-    font-size: 30px;
-
-    font-weight: bold;
 }
-
 
 .topoPagina p {
-    color: #777;
-
+    color: #b8c4d3;
     font-size: 15px;
+    line-height: 1.6;
 }
-
 
 /* ==========================================
    CARD DO FORMULÁRIO
 ========================================== */
 
 .formulario {
-    background: white;
+    position: relative;
+    overflow: hidden;
 
-    padding: 40px;
+    width: 100%;
+    padding: 38px;
 
+    background: var(--fundo-card);
     border-radius: 17px;
 
-    box-shadow:
-        0 5px 15px rgba(0, 0, 0, 0.33);
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
 }
 
+.formulario::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 90px;
+    height: 3px;
+
+    background: var(--dourado);
+    border-radius: 0 0 5px 5px;
+}
 
 /* ==========================================
    FORMULÁRIO
 ========================================== */
 
 #formDocumento {
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 23px;
 }
-
 
 /* ==========================================
    CAMPOS
 ========================================== */
 
 .campo {
-    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
 }
-
 
 .campo label {
-    display: block;
-
-    margin-bottom: 8px;
-
-    color: #676779;
-
-    font-size: 15px;
-
-    font-weight: bold;
+    color: var(--azul-escuro);
+    font-size: 13px;
+    font-weight: 700;
 }
 
-
-/* ==========================================
-   INPUT
-========================================== */
-
-.campo input {
-    width: 100%;
-
-    height: 46px;
-
-    padding: 13px 15px;
-
-    border: 1px solid #d4d8df;
-
-    border-radius: 8px;
-
-    background: white;
-
-    color: #333;
-
-    font-family: Arial, sans-serif;
-
-    font-size: 14px;
-
-    outline: none;
-
-    transition: 0.2s;
-}
-
-
-/* ==========================================
-   SELECT
-========================================== */
-
-.campo select {
-    width: 100%;
-
-    height: 46px;
-
-    padding: 0 15px;
-
-    border: 1px solid #d4d8df;
-
-    border-radius: 8px;
-
-    background: white;
-
-    color: #333;
-
-    font-family: Arial, sans-serif;
-
-    font-size: 14px;
-
-    outline: none;
-
-    cursor: pointer;
-
-    transition: 0.2s;
-}
-
-
-/* ==========================================
-   TEXTAREA
-========================================== */
-
+.campo input,
+.campo select,
 .campo textarea {
     width: 100%;
+    min-height: 46px;
 
-    min-height: 120px;
+    padding: 12px 14px;
 
-    padding: 13px 15px;
+    background: var(--branco);
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
 
-    border: 1px solid #d4d8df;
-
-    border-radius: 8px;
-
-    background: white;
-
-    color: #333;
-
-    font-family: Arial, sans-serif;
-
-    font-size: 14px;
-
-    resize: vertical;
+    color: var(--texto);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
 
     outline: none;
-
-    transition: 0.2s;
+    transition: .25s;
 }
 
+.campo input::placeholder,
+.campo textarea::placeholder {
+    color: #929dab;
+}
 
-/* ==========================================
-   FOCO DOS CAMPOS
-========================================== */
+.campo select {
+    cursor: pointer;
+}
+
+.campo textarea {
+    min-height: 125px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* FOCO */
 
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
-
-    border-color: #294970;
-
-    box-shadow:
-        0 0 0 2px rgba(41, 73, 112, 0.12);
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
 }
 
+/* AUTOFILL */
+
+.campo input:-webkit-autofill,
+.campo input:-webkit-autofill:hover,
+.campo input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--texto);
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
 
 /* ==========================================
-   PLACEHOLDER
+   DESCRIÇÃO - LARGURA COMPLETA
 ========================================== */
 
-.campo input::placeholder,
-.campo textarea::placeholder {
-    color: #999;
+.campo:has(#descricao) {
+    grid-column: span 2;
 }
 
-
 /* ==========================================
-   BOTÕES
+   BOTÕES DO FORMULÁRIO
 ========================================== */
 
 .botoes-formulario {
+    grid-column: span 2;
 
     display: flex;
-
     justify-content: flex-end;
-
     align-items: center;
 
-    gap: 15px;
+    margin-top: 10px;
+    padding-top: 24px;
 
-    margin-top: 30px;
-
-    padding-top: 25px;
-
-    border-top: 1px solid #eeeeee;
+    border-top: 1px solid var(--borda);
 }
-
-
-/* ==========================================
-   BOTÃO CANCELAR
-========================================== */
-
-.botao-cancelar {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    height: 45px;
-
-    padding: 12px 25px;
-
-    border: 1px solid #294970;
-
-    border-radius: 8px;
-
-    background: white;
-
-    color: #294970;
-
-    text-decoration: none;
-
-    font-size: 14px;
-
-    font-weight: bold;
-
-    transition: 0.2s;
-}
-
-
-.botao-cancelar:hover {
-
-    background: #294970;
-
-    color: white;
-
-}
-
-
-/* ==========================================
-   BOTÃO SALVAR
-========================================== */
 
 .botao-salvar {
+    min-height: 46px;
+    padding: 0 25px;
 
-    display: flex;
-
+    display: inline-flex;
     align-items: center;
-
     justify-content: center;
+    gap: 10px;
 
-    gap: 7px;
+    background: var(--azul-botao);
+    border: 1px solid var(--azul-botao);
+    border-radius: 10px;
 
-    height: 45px;
-
-    padding: 12px 25px;
-
-    border: none;
-
-    border-radius: 8px;
-
-    background: #294970;
-
-    color: white;
-
-    font-family: Arial, sans-serif;
-
-    font-size: 14px;
-
-    font-weight: bold;
+    color: var(--branco);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
 
     cursor: pointer;
-
-    transition: 0.2s;
+    transition: .3s;
 }
-
-
-.botao-salvar:hover {
-
-    opacity: 0.9;
-
-}
-
-
-/* ==========================================
-   ÍCONE DO BOTÃO
-========================================== */
 
 .botao-salvar i {
-    font-size: 14px;
+    color: var(--dourado);
 }
 
+.botao-salvar:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15,31,51,.2);
+}
 
 /* ==========================================
-   RESPONSIVIDADE
+   RESPONSIVIDADE - TABLET
 ========================================== */
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
 
     .conteudo {
-
-        padding: 30px 20px;
-
+        padding: 35px 25px 50px;
     }
-
-
-    .topoPagina h1 {
-
-        font-size: 26px;
-
-    }
-
 
     .formulario {
-
-        padding: 25px;
-
+        padding: 30px;
     }
 
+    .topoPagina h1 {
+        font-size: 31px;
+    }
+
+}
+
+/* ==========================================
+   RESPONSIVIDADE - CELULAR
+========================================== */
+
+@media (max-width: 600px) {
+
+    .conteudo {
+        padding: 25px 16px 40px;
+    }
+
+    .topoPagina h1 {
+        font-size: 27px;
+    }
+
+    .topoPagina p {
+        font-size: 13px;
+    }
+
+    .formulario {
+        padding: 27px 20px;
+    }
+
+    #formDocumento {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .campo:has(#descricao) {
+        grid-column: span 1;
+    }
 
     .botoes-formulario {
-
-        flex-direction: column;
-
-        align-items: stretch;
-
+        grid-column: span 1;
     }
 
-
-    .botao-cancelar,
     .botao-salvar {
-
         width: 100%;
-
-        text-align: center;
-
     }
 
 }

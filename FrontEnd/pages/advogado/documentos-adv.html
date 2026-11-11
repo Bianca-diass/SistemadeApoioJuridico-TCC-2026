@@ -1,125 +1,390 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Documentos | Área do Advogado</title>
+
+    <!-- FONTES -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <!-- CSS DA PÁGINA -->
     <link rel="stylesheet" href="../../css/style-advogado/documentos-adv.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
 </head>
+
 <body>
 
 <main class="conteudo">
-    <a href="dashboard-adv.html" class="btnVoltar">
+
+    <!-- BOTÃO VOLTAR -->
+
+    <a href="dashboard-adv.html" class="btnVoltar" title="Voltar ao dashboard">
         <i class="fas fa-arrow-left"></i>
     </a>
 
+
+    <!-- TOPO -->
+
     <header class="topo">
-        <h1>Documentos</h1>
-        <p>Organize e gerencie os documentos dos seus clientes e processos.</p>
+
+        <div>
+
+            <h1>Documentos</h1>
+
+            <p>
+                Organize e gerencie os documentos dos seus clientes e processos.
+            </p>
+
+        </div>
+
+        <a href="cadastro-documento-adv.html" class="acao">
+            <i class="fas fa-plus"></i>
+            Novo documento
+        </a>
+
     </header>
 
+
+    <!-- RESUMO -->
+
     <section class="resumo">
+
         <div class="card">
-            <i class="fas fa-file-pdf"></i>
+
+            <i class="fas fa-file-lines"></i>
+
             <div>
+
                 <span>Total de documentos</span>
+
                 <strong id="totalDocumentos">0</strong>
+
             </div>
+
         </div>
+
 
         <div class="card">
-            <i class="fas fa-folder-open"></i>
+
+            <i class="fas fa-clock"></i>
+
             <div>
-                <span>Documentos encontrados</span>
-                <strong id="totalFiltrados">0</strong>
+
+                <span>Pendentes</span>
+
+                <strong id="totalPendentes">0</strong>
+
             </div>
+
         </div>
+
+
+        <div class="card">
+
+            <i class="fas fa-circle-check"></i>
+
+            <div>
+
+                <span>Aprovados</span>
+
+                <strong id="totalAprovados">0</strong>
+
+            </div>
+
+        </div>
+
     </section>
 
-    <section class="painel">
-        <h2><i class="fas fa-cloud-arrow-up"></i> Enviar documento</h2>
 
-        <form id="formDocumento">
-            <div class="campo">
-                <label for="nomeDocumento">Nome do documento</label>
-                <input type="text" id="nomeDocumento" required placeholder="Ex.: Contrato de prestação de serviços">
-            </div>
-
-            <div class="campo">
-                <label for="categoria">Categoria</label>
-                <select id="categoria" required>
-                    <option value="">Selecione uma categoria</option>
-                    <option value="Petição">Petição</option>
-                    <option value="Contrato">Contrato</option>
-                    <option value="Procuração">Procuração</option>
-                    <option value="Comprovante">Comprovante</option>
-                    <option value="Outros">Outros</option>
-                </select>
-            </div>
-
-            <div class="campo">
-                <label for="cliente">Nome do cliente</label>
-                <input type="text" id="cliente" required placeholder="Nome do cliente">
-            </div>
-
-            <div class="campo">
-                <label for="processo">Número do processo</label>
-                <input type="text" id="processo" placeholder="Número do processo">
-            </div>
-
-            <div class="campo">
-                <label for="arquivo">Arquivo PDF</label>
-                <input type="file" id="arquivo" accept=".pdf,application/pdf" required>
-                <small>Somente arquivos PDF de até 10 MB.</small>
-            </div>
-
-            <button type="submit">
-                <i class="fas fa-upload"></i> Adicionar documento
-            </button>
-            <p id="mensagem"></p>
-        </form>
-    </section>
+    <!-- PAINEL DE DOCUMENTOS -->
 
     <section class="painel">
-        <h2><i class="fas fa-folder"></i> Meus documentos</h2>
+
+        <h2>
+            <i class="fas fa-folder"></i>
+            Meus documentos
+        </h2>
+
+
+        <!-- FILTROS -->
 
         <div class="filtros">
-            <input type="search" id="pesquisa" placeholder="Pesquisar documento, cliente ou processo...">
 
-            <select id="filtroCategoria">
-                <option value="">Todas as categorias</option>
-                <option value="Petição">Petição</option>
-                <option value="Contrato">Contrato</option>
-                <option value="Procuração">Procuração</option>
-                <option value="Comprovante">Comprovante</option>
-                <option value="Outros">Outros</option>
+            <input
+                type="search"
+                id="pesquisarDocumento"
+                placeholder="Pesquisar por documento, tipo ou cliente..."
+            >
+
+            <select id="filtroCliente">
+
+                <option value="">
+                    Todos os clientes
+                </option>
+
             </select>
+
         </div>
 
+
+        <!-- TABELA -->
+
         <div class="tabela">
+
             <table>
+
                 <thead>
+
                     <tr>
                         <th>Documento</th>
-                        <th>Categoria</th>
+                        <th>Tipo</th>
                         <th>Cliente</th>
                         <th>Processo</th>
                         <th>Data</th>
+                        <th>Status</th>
                         <th>Ações</th>
                     </tr>
+
                 </thead>
+
                 <tbody id="listaDocumentos">
+
                     <tr>
-                        <td colspan="6" class="vazio">Nenhum documento cadastrado.</td>
+                        <td colspan="7" class="vazio">
+                            Carregando documentos...
+                        </td>
                     </tr>
+
                 </tbody>
+
             </table>
+
         </div>
+
     </section>
+
 </main>
 
-<script src="../../js/pages/advogado/documentos-adv.js"></script>
+
+<!-- ==========================================
+     MODAL: VISUALIZAR DOCUMENTO
+========================================== -->
+
+<div class="modal" id="modalDocumento">
+
+    <div class="modal-caixa">
+
+        <div class="modal-topo">
+
+            <h3>Detalhes do documento</h3>
+
+            <button
+                type="button"
+                id="fecharModal"
+                class="modal-fechar"
+                title="Fechar"
+            >
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <dl class="detalhes">
+
+            <dt>Título</dt>
+            <dd id="modalTitulo">-</dd>
+
+            <dt>Tipo</dt>
+            <dd id="modalTipo">-</dd>
+
+            <dt>Cliente</dt>
+            <dd id="modalCliente">-</dd>
+
+            <dt>Processo</dt>
+            <dd id="modalProcesso">-</dd>
+
+            <dt>Data de envio</dt>
+            <dd id="modalData">-</dd>
+
+            <dt>Status</dt>
+            <dd id="modalStatus">-</dd>
+
+            <dt>Descrição</dt>
+            <dd id="modalDescricao">-</dd>
+
+        </dl>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     MODAL: EDITAR DOCUMENTO
+========================================== -->
+
+<div class="modal" id="modalEditar">
+
+    <div class="modal-caixa">
+
+        <div class="modal-topo">
+
+            <h3>Editar documento</h3>
+
+        </div>
+
+
+        <form id="formEditarDocumento">
+
+            <input type="hidden" id="editarId">
+
+
+            <div class="campo">
+
+                <label for="editarTitulo">Título</label>
+
+                <input
+                    type="text"
+                    id="editarTitulo"
+                    required
+                >
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarTipo">Tipo</label>
+
+                <select id="editarTipo" required>
+
+                    <option value="Contrato">Contrato</option>
+                    <option value="Procuração">Procuração</option>
+                    <option value="RG">RG</option>
+                    <option value="CPF">CPF</option>
+                    <option value="Comprovante">Comprovante</option>
+                    <option value="Petição">Petição</option>
+                    <option value="Outros">Outros</option>
+
+                </select>
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarCliente">Cliente</label>
+
+                <input
+                    type="text"
+                    id="editarCliente"
+                    readonly
+                >
+
+                <small>
+                    O cliente não pode ser alterado depois do cadastro.
+                </small>
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarProcesso">Processo</label>
+
+                <input
+                    type="text"
+                    id="editarProcesso"
+                    placeholder="Número do processo (opcional)"
+                >
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarData">Data de envio</label>
+
+                <input
+                    type="date"
+                    id="editarData"
+                    required
+                >
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarStatus">Status</label>
+
+                <select id="editarStatus" required>
+
+                    <option value="Pendente">Pendente</option>
+                    <option value="Aprovado">Aprovado</option>
+                    <option value="Rejeitado">Rejeitado</option>
+
+                </select>
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="editarDescricao">Descrição</label>
+
+                <textarea
+                    id="editarDescricao"
+                    rows="3"
+                ></textarea>
+
+            </div>
+
+
+            <!-- BOTÕES -->
+
+            <div class="modal-acoes">
+
+                <button
+                    type="button"
+                    id="cancelarEdicao"
+                    class="secundario"
+                >
+                    Cancelar
+                </button>
+
+                <button type="submit">
+                    Salvar alterações
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+
+<script
+    type="module"
+    src="../../js/pages/advogado/documentos.js">
+</script>
+
 </body>
 </html>

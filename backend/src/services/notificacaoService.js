@@ -1,30 +1,9 @@
-// ==========================================================
-// backend/src/services/notificacaoService.js
-//
-// Serviço responsável por criar notificações automáticas
-// no Firestore (coleção "notificacoes"), usadas para
-// cumprir o requisito:
-//
-// RF007 - O sistema deve enviar notificações automáticas
-// sobre prazos, audiências e atualizações de processos.
-//
-// O front-end já escuta essa coleção em tempo real através
-// de js/services/notificacaoService.js (onSnapshot), então
-// qualquer notificação criada aqui aparece na hora no
-// Dashboard, sem precisar recarregar a página.
-// ==========================================================
 
-const { db } = require("../config/firebase");
-
+const { supabaseAdmin } = require("../config/supabase");
 
 // ==========================================================
-// CRIAR UMA NOTIFICAÇÃO
+// CRIAR UMA NOTIFICAÇÃO NO SUPABASE
 // ==========================================================
-//
-// tipo:     "processo" | "prazo" | "audiencia" | "sistema"
-// titulo:   texto curto (aparece em destaque)
-// mensagem: texto complementar
-// clienteId / processoId / compromissoId: referências opcionais
 
 async function criarNotificacao({
     tipo = "sistema",
@@ -34,42 +13,41 @@ async function criarNotificacao({
     processoId = null,
     compromissoId = null
 }) {
-
     try {
+        const agora = new Date().toISOString();
 
-        await db.collection("notificacoes").add({
+        const { error } = await supabaseAdmin
+            .from("notificacoes")
+            .insert({
+                tipo,
+                titulo,
+                mensagem,
 
-            tipo,
-            titulo,
-            mensagem,
+                cliente_id: clienteId,
+                processo_id: processoId,
+                compromisso_id: compromissoId,
 
-            clienteId,
-            processoId,
-            compromissoId,
+                lida: false,
+                status: "Não Lida",
 
-            lida: false,
-            status: "Não Lida",
+                data_envio: agora,
+                criado_em: agora
+            });
 
-            dataEnvio: new Date(),
-            criadoEm: new Date()
-
-        });
+        if (error) {
+            throw error;
+        }
 
     } catch (error) {
-
-        // Uma falha ao notificar não pode derrubar a operação
-        // principal (cadastro/edição de processo ou compromisso),
-        // então só registramos o erro no console.
+        // Uma falha na notificação não deve interromper
+        // o cadastro ou a atualização principal.
 
         console.error(
             "Erro ao criar notificação automática:",
-            error
+            error.message
         );
-
     }
-
 }
-
 
 module.exports = {
     criarNotificacao

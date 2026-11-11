@@ -1,596 +1,125 @@
-console.log("========================================");
-console.log("🚨 VISUALIZAR-PROCESSO.JS FOI CARREGADO 🚨");
-console.log("========================================");
-
-
 import { listarProcessos } from "../../services/processoService.js";
 
-
-// ======================================================
 // ELEMENTOS
-// ======================================================
+const carregando = document.getElementById("carregando");
+const dadosProcesso = document.getElementById("dadosProcesso");
+const mensagemErro = document.getElementById("mensagemErro");
+const btnVoltar = document.getElementById("btnVoltar");
 
-const carregando =
-    document.getElementById("carregando");
+// ID DA URL
+const parametros = new URLSearchParams(window.location.search);
+const idProcesso = parametros.get("id");
 
-const dadosProcesso =
-    document.getElementById("dadosProcesso");
-
-const mensagemErro =
-    document.getElementById("mensagemErro");
-
-const btnVoltar =
-    document.getElementById("btnVoltar");
-
-
-// ======================================================
-// VERIFICAR ELEMENTOS
-// ======================================================
-
-console.log(
-    "Elemento carregando:",
-    carregando
-);
-
-console.log(
-    "Elemento dadosProcesso:",
-    dadosProcesso
-);
-
-console.log(
-    "Elemento mensagemErro:",
-    mensagemErro
-);
-
-console.log(
-    "Elemento btnVoltar:",
-    btnVoltar
-);
-
-
-// ======================================================
-// PEGAR ID DA URL
-// ======================================================
-
-const parametros =
-    new URLSearchParams(
-        window.location.search
-    );
-
-const idProcesso =
-    parametros.get("id");
-
-
-console.log(
-    "URL:",
-    window.location.href
-);
-
-console.log(
-    "ID DO PROCESSO:",
-    idProcesso
-);
-
-
-// ======================================================
 // BOTÃO VOLTAR
-// ======================================================
+btnVoltar?.addEventListener("click", () => {
+    window.location.href = "processos-adv.html";
+});
 
-if (btnVoltar) {
-
-    btnVoltar.addEventListener(
-        "click",
-        function () {
-
-            window.location.href =
-                "processos-adv.html";
-
-        }
-    );
-
+// PADRONIZAR NOMES DOS CAMPOS VINDOS DA API
+function padronizarProcesso(p) {
+    return {
+        ...p,
+        numeroProcesso: p.numeroProcesso ?? p.numero_processo ?? "",
+        ultimaMovimentacao: p.ultimaMovimentacao ?? p.ultima_movimentacao ?? "",
+        tipoManifestacao: p.tipoManifestacao ?? p.tipo_manifestacao ?? ""
+    };
 }
 
-
-// ======================================================
 // FORMATAR DATA
-// ======================================================
-
 function formatarData(data) {
+    if (!data) return "-";
 
-    if (!data) {
+    const valor = String(data);
+    const partes = valor.substring(0, 10).split("-");
 
-        return "-";
-
-    }
-
-
-    const valor =
-        String(data);
-
-
-    const partes =
-        valor.split("-");
-
-
-    if (partes.length === 3) {
-
+    if (partes.length === 3 && partes[0].length === 4) {
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
-
     }
-
 
     return valor;
-
 }
 
+// VERIFICAR INTIMAÇÃO
+function possuiIntimacao(valor) {
+    return valor === true ||
+        valor === 1 ||
+        ["true", "1", "sim", "pendente"].includes(
+            String(valor ?? "").trim().toLowerCase()
+        );
+}
 
-// ======================================================
+// DEFINIR TEXTO EM UM ELEMENTO
+function definirTexto(id, texto) {
+    const elemento = document.getElementById(id);
+    if (elemento) elemento.textContent = texto;
+}
+
 // MOSTRAR ERRO
-// ======================================================
-
 function mostrarErro(mensagem) {
+    console.error("ERRO:", mensagem);
 
-    console.error(
-        "========================================"
-    );
-
-    console.error(
-        "ERRO:",
-        mensagem
-    );
-
-    console.error(
-        "========================================"
-    );
-
-
-    if (carregando) {
-
-        carregando.style.display =
-            "none";
-
-    }
-
-
-    if (dadosProcesso) {
-
-        dadosProcesso.style.display =
-            "none";
-
-    }
-
+    if (carregando) carregando.style.display = "none";
+    if (dadosProcesso) dadosProcesso.style.display = "none";
 
     if (mensagemErro) {
+        mensagemErro.style.display = "flex";
 
-        mensagemErro.style.display =
-            "flex";
-
-
-        const texto =
-            mensagemErro.querySelector("p");
-
-
-        if (texto) {
-
-            texto.textContent =
-                mensagem;
-
-        }
-
+        const texto = mensagemErro.querySelector("p");
+        if (texto) texto.textContent = mensagem;
     }
-
 }
 
-
-// ======================================================
 // MOSTRAR PROCESSO
-// ======================================================
+function mostrarProcesso(dados) {
+    const processo = padronizarProcesso(dados);
 
-function mostrarProcesso(processo) {
-
-    console.log(
-        "========================================"
+    definirTexto("numeroProcesso", processo.numeroProcesso || "-");
+    definirTexto("cliente", processo.cliente || "-");
+    definirTexto("vara", processo.vara || "-");
+    definirTexto("tribunal", processo.tribunal || processo.comarca || "-");
+    definirTexto("status", processo.status || "-");
+    definirTexto("manifestacao", processo.tipoManifestacao || "Nenhuma");
+    definirTexto("ultimaMovimentacao", processo.ultimaMovimentacao || "-");
+    definirTexto(
+        "intimacao",
+        possuiIntimacao(processo.intimacao) ? "Nova intimação" : "Sem pendências"
     );
-
-    console.log(
-        "PROCESSO ENCONTRADO:"
-    );
-
-    console.log(
-        processo
-    );
-
-    console.log(
-        "========================================"
-    );
-
-
-    // ==================================================
-    // NÚMERO
-    // ==================================================
-
-    const numeroProcesso =
-        document.getElementById(
-            "numeroProcesso"
-        );
-
-
-    if (numeroProcesso) {
-
-        numeroProcesso.textContent =
-            processo.numeroProcesso || "-";
-
-    }
-
-
-    // ==================================================
-    // CLIENTE
-    // ==================================================
-
-    const cliente =
-        document.getElementById(
-            "cliente"
-        );
-
-
-    if (cliente) {
-
-        cliente.textContent =
-            processo.cliente || "-";
-
-    }
-
-
-    // ==================================================
-    // VARA
-    // ==================================================
-
-    const vara =
-        document.getElementById(
-            "vara"
-        );
-
-
-    if (vara) {
-
-        vara.textContent =
-            processo.vara || "-";
-
-    }
-
-
-    // ==================================================
-    // TRIBUNAL
-    // ==================================================
-
-    const tribunal =
-        document.getElementById(
-            "tribunal"
-        );
-
-
-    if (tribunal) {
-
-        tribunal.textContent =
-            processo.tribunal || processo.comarca || "-";
-
-    }
-
-
-    // ==================================================
-    // STATUS
-    // ==================================================
-
-    const status =
-        document.getElementById(
-            "status"
-        );
-
-
-    if (status) {
-
-        status.textContent =
-            processo.status || "-";
-
-    }
-
-
-    // ==================================================
-    // MANIFESTAÇÃO
-    // ==================================================
-
-    const manifestacao =
-        document.getElementById(
-            "manifestacao"
-        );
-
-
-    if (manifestacao) {
-
-        manifestacao.textContent =
-            processo.tipoManifestacao ||
-            "Nenhuma";
-
-    }
-
-
-    // ==================================================
-    // ÚLTIMA MOVIMENTAÇÃO
-    // ==================================================
-
-    const ultimaMovimentacao =
-        document.getElementById(
-            "ultimaMovimentacao"
-        );
-
-
-    if (ultimaMovimentacao) {
-
-        ultimaMovimentacao.textContent =
-            processo.ultimaMovimentacao ||
-            "-";
-
-    }
-
-
-    // ==================================================
-    // INTIMAÇÃO
-    // ==================================================
-
-    const intimacao =
-        document.getElementById(
-            "intimacao"
-        );
-
-
-    if (intimacao) {
-
-        intimacao.textContent =
-            processo.intimacao === true
-                ? "Nova intimação"
-                : "Sem pendências";
-
-    }
-
-
-    // ==================================================
-    // PRAZO
-    // ==================================================
-
-    const prazo =
-        document.getElementById(
-            "prazo"
-        );
-
-
-    if (prazo) {
-
-        prazo.textContent =
-            processo.prazo
-                ? formatarData(
-                    processo.prazo
-                )
-                : "-";
-
-    }
-
-
-    // ==================================================
-    // MOSTRAR CONTEÚDO
-    // ==================================================
-
-    if (carregando) {
-
-        carregando.style.display =
-            "none";
-
-    }
-
-
-    if (mensagemErro) {
-
-        mensagemErro.style.display =
-            "none";
-
-    }
-
-
-    if (dadosProcesso) {
-
-        dadosProcesso.style.display =
-            "block";
-
-    }
-
-
-    console.log(
-        "Dados do processo exibidos na tela."
-    );
-
+    definirTexto("prazo", formatarData(processo.prazo));
+
+    if (carregando) carregando.style.display = "none";
+    if (mensagemErro) mensagemErro.style.display = "none";
+    if (dadosProcesso) dadosProcesso.style.display = "block";
 }
 
-
-// ======================================================
 // CARREGAR PROCESSO
-// ======================================================
-
 async function carregarProcesso() {
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "INICIANDO CARREGAMENTO DO PROCESSO"
-    );
-
-    console.log(
-        "========================================"
-    );
-
-
     try {
-
-        // ==================================================
-        // VERIFICAR ID
-        // ==================================================
-
         if (!idProcesso) {
-
-            mostrarErro(
-                "Processo não informado."
-            );
-
+            mostrarErro("Processo não informado.");
             return;
-
         }
 
-
-        console.log(
-            "ID recebido pela URL:",
-            idProcesso
-        );
-
-
-        // ==================================================
-        // BUSCAR PROCESSOS
-        // ==================================================
-
-        console.log(
-            "Chamando listarProcessos()..."
-        );
-
-
-        const processos =
-            await listarProcessos();
-
-
-        console.log(
-            "listarProcessos() terminou."
-        );
-
-
-        console.log(
-            "Processos recebidos:",
-            processos
-        );
-
-
-        // ==================================================
-        // VERIFICAR ARRAY
-        // ==================================================
+        const processos = await listarProcessos();
 
         if (!Array.isArray(processos)) {
-
-            mostrarErro(
-                "Não foi possível obter a lista de processos."
-            );
-
+            mostrarErro("Não foi possível obter a lista de processos.");
             return;
-
         }
 
-
-        console.log(
-            "Quantidade de processos:",
-            processos.length
+        const processoEncontrado = processos.find(
+            processo => String(processo.id) === String(idProcesso)
         );
-
-
-        // ==================================================
-        // PROCURAR PROCESSO
-        // ==================================================
-
-        let processoEncontrado = null;
-
-
-        for (
-            const processo of processos
-        ) {
-
-            console.log(
-                "Comparando ID:",
-                processo.id,
-                "com:",
-                idProcesso
-            );
-
-
-            if (
-                String(processo.id) ===
-                String(idProcesso)
-            ) {
-
-                processoEncontrado =
-                    processo;
-
-                break;
-
-            }
-
-        }
-
-
-        // ==================================================
-        // VERIFICAR PROCESSO
-        // ==================================================
 
         if (!processoEncontrado) {
-
-            mostrarErro(
-                "Processo não encontrado."
-            );
-
+            mostrarErro("Processo não encontrado.");
             return;
-
         }
 
-
-        // ==================================================
-        // MOSTRAR
-        // ==================================================
-
-        mostrarProcesso(
-            processoEncontrado
-        );
-
-
+        mostrarProcesso(processoEncontrado);
     } catch (erro) {
-
-        console.error(
-            "========================================"
-        );
-
-        console.error(
-            "ERRO AO CARREGAR PROCESSO"
-        );
-
-        console.error(
-            erro
-        );
-
-        console.error(
-            "========================================"
-        );
-
-
-        mostrarErro(
-            erro.message ||
-            "Não foi possível carregar o processo."
-        );
-
+        console.error("Erro ao carregar processo:", erro);
+        mostrarErro(erro.message || "Não foi possível carregar o processo.");
     }
-
 }
-
-
-// ======================================================
-// INICIAR
-// ======================================================
-
-console.log(
-    "Chamando carregarProcesso()..."
-);
-
 
 carregarProcesso();

@@ -1,274 +1,876 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
+/* ==========================================
+   CONFIGURAÇÕES GERAIS
+========================================== */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f3f6fb;
-    color: #35445a;
+:root {
+    --azul-escuro: #0f1f33;
+    --azul-botao: #234367;
+    --dourado: #d4a95a;
+    --fundo-card: #eceff3;
+    --texto: #3b4756;
+    --texto-suave: #5f6b7a;
+    --borda: #dde2e9;
+    --branco: #ffffff;
 }
+
+body {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--texto);
+
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+
+    background-size:
+        40px 40px,
+        40px 40px,
+        100% 100%;
+
+    background-attachment: fixed;
+}
+
+/* ==========================================
+   CONTEÚDO
+========================================== */
 
 .conteudo {
-    max-width: 1050px;
     width: 100%;
-    margin: auto;
-    padding: 25px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 45px 60px;
 }
+
+/* ==========================================
+   BOTÃO VOLTAR
+========================================== */
 
 .btnVoltar {
-    display: inline-flex;
+    width: 42px;
+    height: 42px;
+
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
-    background: #294970;
-    color: white;
+
+    background: var(--azul-escuro);
+    border: 1px solid rgba(212,169,90,.5);
+    border-radius: 50%;
+
+    color: var(--dourado);
     text-decoration: none;
-    margin-bottom: 18px;
+    font-size: 17px;
+
+    transition: .3s;
+    margin-bottom: 28px;
 }
 
+.btnVoltar:hover {
+    background: var(--dourado);
+    color: var(--azul-escuro);
+    transform: translateX(-3px);
+}
+
+/* ==========================================
+   TOPO
+========================================== */
+
 .topo {
-    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+
+    margin-bottom: 38px;
 }
 
 .topo h1 {
-    color: #294970;
-    font-size: 27px;
-    margin-bottom: 6px;
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    color: var(--branco);
+    margin-bottom: 9px;
 }
 
 .topo p {
-    color: #778397;
-    font-size: 13px;
-    line-height: 1.5;
+    color: #b8c4d3;
+    font-size: 14px;
+    line-height: 1.6;
 }
+
+/* ==========================================
+   BOTÃO NOVO DOCUMENTO
+========================================== */
+
+.acao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 14px 22px;
+
+    background: var(--azul-botao);
+    border: 1px solid rgba(212,169,90,.35);
+    border-radius: 10px;
+
+    color: var(--branco);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    transition: .3s;
+}
+
+.acao i {
+    color: var(--dourado);
+}
+
+.acao:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
+
+/* ==========================================
+   RESUMO / CARDS
+========================================== */
 
 .resumo {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+
+    margin-bottom: 35px;
 }
 
 .card {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 135px;
+    padding: 25px;
+
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 18px;
-    background: white;
-    border: 1px solid #e6ecf4;
-    border-radius: 12px;
+    gap: 19px;
+
+    background: var(--fundo-card);
+    border-radius: 17px;
+
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
+    transition: .3s;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 90px;
+    height: 3px;
+
+    background: var(--dourado);
+    border-radius: 0 0 5px 5px;
+}
+
+.card:hover {
+    transform: translateY(-4px);
 }
 
 .card > i {
+    flex-shrink: 0;
+
+    width: 54px;
+    height: 54px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 43px;
-    height: 43px;
-    border-radius: 10px;
-    background: #edf3fa;
-    color: #294970;
-    font-size: 20px;
+
+    background: var(--azul-escuro);
+    border-radius: 50%;
+
+    color: var(--dourado);
+    font-size: 21px;
 }
 
 .card span {
     display: block;
-    color: #778397;
+    color: var(--texto-suave);
     font-size: 12px;
-    margin-bottom: 5px;
+    font-weight: 600;
+    margin-bottom: 7px;
 }
 
 .card strong {
-    color: #294970;
-    font-size: 23px;
+    display: block;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    color: var(--azul-escuro);
 }
 
+/* ==========================================
+   PAINEL PRINCIPAL
+========================================== */
+
 .painel {
-    background: white;
-    border: 1px solid #e6ecf4;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(35, 60, 90, .04);
+    position: relative;
+    overflow: hidden;
+
+    width: 100%;
+    padding: 30px;
+
+    background: var(--fundo-card);
+    border-radius: 17px;
+
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
+}
+
+.painel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 90px;
+    height: 3px;
+
+    background: var(--dourado);
+    border-radius: 0 0 5px 5px;
 }
 
 .painel h2 {
-    color: #294970;
-    font-size: 18px;
-    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: var(--azul-escuro);
+
+    margin-bottom: 25px;
 }
 
 .painel h2 i {
-    margin-right: 7px;
+    color: var(--dourado);
+    font-size: 21px;
+}
+
+/* ==========================================
+   FILTROS
+========================================== */
+
+.filtros {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 15px;
+
+    margin-bottom: 22px;
+}
+
+.filtros input,
+.filtros select {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 14px;
+
+    background: var(--branco);
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+
+    color: var(--texto);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+
+    outline: none;
+    transition: .25s;
+}
+
+.filtros input::placeholder {
+    color: #929dab;
+}
+
+.filtros input:focus,
+.filtros select:focus {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
+}
+
+.filtros select {
+    cursor: pointer;
+}
+
+/* ==========================================
+   TABELA
+========================================== */
+
+.tabela {
+    width: 100%;
+    overflow-x: auto;
+
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+}
+
+.tabela table {
+    width: 100%;
+    min-width: 850px;
+
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tabela thead {
+    background: var(--azul-escuro);
+}
+
+.tabela th {
+    padding: 16px 13px;
+
+    color: var(--branco);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.tabela th:first-child {
+    border-radius: 10px 0 0 0;
+}
+
+.tabela th:last-child {
+    border-radius: 0 10px 0 0;
+}
+
+.tabela td {
+    padding: 15px 13px;
+
+    color: var(--texto);
+    font-size: 12px;
+
+    border-bottom: 1px solid #edf0f4;
+    vertical-align: middle;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tabela tbody tr {
+    background: var(--branco);
+    transition: .2s;
+}
+
+.tabela tbody tr:hover {
+    background: #f4f6fa;
+}
+
+.tabela tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Larguras das colunas */
+
+.tabela th:nth-child(1),
+.tabela td:nth-child(1) {
+    width: 19%;
+}
+
+.tabela th:nth-child(2),
+.tabela td:nth-child(2) {
+    width: 12%;
+}
+
+.tabela th:nth-child(3),
+.tabela td:nth-child(3) {
+    width: 15%;
+}
+
+.tabela th:nth-child(4),
+.tabela td:nth-child(4) {
+    width: 17%;
+}
+
+.tabela th:nth-child(5),
+.tabela td:nth-child(5) {
+    width: 11%;
+}
+
+.tabela th:nth-child(6),
+.tabela td:nth-child(6) {
+    width: 12%;
+}
+
+.tabela th:nth-child(7),
+.tabela td:nth-child(7) {
+    width: 14%;
+}
+
+/* ==========================================
+   MENSAGEM DE TABELA VAZIA
+========================================== */
+
+.tabela td.vazio {
+    padding: 35px 20px;
+    text-align: center;
+
+    color: var(--texto-suave);
+    font-size: 13px;
+}
+
+/* ==========================================
+   STATUS
+========================================== */
+
+.status,
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 11px;
+    border-radius: 20px;
+
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-pendente,
+.pendente {
+    background: #fff3dc;
+    color: #b26a00;
+}
+
+.status-aprovado,
+.aprovado {
+    background: #e3f4e5;
+    color: #1e7a3c;
+}
+
+.status-rejeitado,
+.rejeitado {
+    background: #fdeaea;
+    color: #c0392b;
+}
+
+.status-azul {
+    background: #e3effc;
+    color: #1565c0;
+}
+
+/* ==========================================
+   BOTÕES DE AÇÃO DA TABELA
+========================================== */
+
+.tabela td button,
+.tabela td a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    margin: 2px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+
+    background: var(--azul-escuro);
+    color: var(--dourado);
+
+    font-size: 12px;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.tabela td button:hover,
+.tabela td a:hover {
+    background: var(--dourado);
+    color: var(--azul-escuro);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   MODAIS
+========================================== */
+
+.modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(5,14,25,.75);
+    backdrop-filter: blur(5px);
+}
+
+/* Classes de abertura, caso utilizadas pelo JS */
+
+.modal.ativo,
+.modal.aberto,
+.modal.show {
+    display: flex;
+}
+
+.modal[style*="display: flex"],
+.modal[style*="display: block"] {
+    display: flex;
+}
+
+/* ==========================================
+   CAIXA DO MODAL
+========================================== */
+
+.modal-caixa {
+    position: relative;
+    overflow-y: auto;
+
+    width: 100%;
+    max-width: 570px;
+    max-height: 90vh;
+
+    padding: 30px;
+
+    background: var(--fundo-card);
+    border-radius: 17px;
+
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
+    animation: aparecer .25s ease;
+}
+
+.modal-caixa::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 90px;
+    height: 3px;
+
+    background: var(--dourado);
+    border-radius: 0 0 5px 5px;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   CABEÇALHO DO MODAL
+========================================== */
+
+.modal-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+
+    padding-bottom: 20px;
+    margin-bottom: 23px;
+
+    border-bottom: 1px solid var(--borda);
+}
+
+.modal-topo h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--azul-escuro);
+}
+
+.modal-fechar {
+    width: 35px;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--azul-escuro);
+    border: none;
+    border-radius: 50%;
+
+    color: var(--dourado);
+    font-size: 16px;
+
+    cursor: pointer;
+    transition: .2s;
+}
+
+.modal-fechar:hover {
+    background: var(--dourado);
+    color: var(--azul-escuro);
+    transform: rotate(90deg);
+}
+
+/* ==========================================
+   DETALHES DO DOCUMENTO
+========================================== */
+
+.detalhes {
+    display: grid;
+    grid-template-columns: 135px minmax(0, 1fr);
+    gap: 15px 12px;
+}
+
+.detalhes dt {
+    color: var(--azul-escuro);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.detalhes dd {
+    min-width: 0;
+
+    color: var(--texto);
+    font-size: 13px;
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================
+   FORMULÁRIO DE EDIÇÃO
+========================================== */
+
+#formEditarDocumento {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .campo {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    margin-bottom: 15px;
+    gap: 8px;
+
+    min-width: 0;
 }
 
 .campo label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #536176;
+    color: var(--azul-escuro);
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .campo input,
 .campo select,
-.filtros input,
-.filtros select {
+.campo textarea {
     width: 100%;
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid #d8e0eb;
-    border-radius: 7px;
-    background: white;
-    color: #35445a;
-    font-family: inherit;
+    min-height: 43px;
+
+    padding: 11px 13px;
+
+    background: var(--branco);
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+
+    color: var(--texto);
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
+
     outline: none;
+    transition: .25s;
+}
+
+.campo textarea {
+    min-height: 95px;
+    resize: vertical;
 }
 
 .campo input:focus,
 .campo select:focus,
-.filtros input:focus,
-.filtros select:focus {
-    border-color: #294970;
+.campo textarea:focus {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
+}
+
+.campo input[readonly] {
+    background: #e3e7ed;
+    color: var(--texto-suave);
+    cursor: not-allowed;
 }
 
 .campo small {
-    color: #778397;
-    font-size: 11px;
+    color: var(--texto-suave);
+    font-size: 10px;
+    line-height: 1.5;
 }
 
-button,
-.acao {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 9px 12px;
-    border: none;
-    border-radius: 7px;
-    background: #294970;
-    color: white;
-    font-family: inherit;
-    font-size: 12px;
-    text-decoration: none;
-    cursor: pointer;
+/* Campos que ocupam toda a largura */
+
+.campo:has(#editarDescricao) {
+    grid-column: span 2;
 }
 
-button:hover,
-.acao:hover {
-    background: #1d3554;
-}
+/* ==========================================
+   BOTÕES DO MODAL
+========================================== */
 
-.filtros {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 12px;
-    margin-bottom: 17px;
-}
+.modal-acoes {
+    grid-column: span 2;
 
-.tabela {
-    width: 100%;
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    white-space: nowrap;
-}
-
-th {
-    padding: 12px;
-    text-align: left;
-    background: #294970;
-    color: white;
-    font-size: 12px;
-}
-
-th:first-child {
-    border-radius: 7px 0 0 7px;
-}
-
-th:last-child {
-    border-radius: 0 7px 7px 0;
-}
-
-td {
-    padding: 12px;
-    border-bottom: 1px solid #edf1f6;
-    font-size: 12px;
-    color: #536176;
-}
-
-.vazio {
-    text-align: center;
-    padding: 22px;
-    color: #778397;
-}
-
-.acoes {
     display: flex;
-    gap: 6px;
+    justify-content: flex-end;
+    gap: 12px;
+
+    margin-top: 10px;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--borda);
 }
 
-.acao.excluir {
-    background: #c03939;
+.modal-acoes button {
+    min-height: 43px;
+    padding: 0 20px;
+
+    border-radius: 10px;
+
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: .3s;
 }
 
-.acao.excluir:hover {
-    background: #a52e2e;
+/* BOTÃO SECUNDÁRIO */
+
+.modal-acoes .secundario {
+    background: transparent;
+    border: 1.5px solid var(--azul-escuro);
+    color: var(--azul-escuro);
 }
 
-#mensagem {
-    margin-top: 12px;
-    font-size: 13px;
+.modal-acoes .secundario:hover {
+    background: var(--azul-escuro);
+    color: var(--branco);
 }
 
-@media (max-width: 600px) {
+/* BOTÃO PRINCIPAL */
+
+.modal-acoes button[type="submit"] {
+    background: var(--azul-botao);
+    border: 1px solid var(--azul-botao);
+    color: var(--branco);
+}
+
+.modal-acoes button[type="submit"]:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+}
+
+/* ==========================================
+   RESPONSIVIDADE - TABLET
+========================================== */
+
+@media (max-width: 900px) {
+
     .conteudo {
-        padding: 16px;
-    }
-
-    .topo h1 {
-        font-size: 24px;
+        padding: 35px 28px 50px;
     }
 
     .resumo {
-        gap: 10px;
+        gap: 15px;
     }
 
     .card {
-        padding: 12px;
-        gap: 9px;
+        padding: 20px;
+        gap: 13px;
     }
 
     .card > i {
-        width: 34px;
-        height: 34px;
-        font-size: 16px;
-    }
-
-    .card span {
-        font-size: 11px;
+        width: 46px;
+        height: 46px;
+        font-size: 18px;
     }
 
     .card strong {
-        font-size: 20px;
+        font-size: 29px;
     }
 
     .painel {
-        padding: 15px;
+        padding: 25px;
+    }
+
+}
+
+/* ==========================================
+   RESPONSIVIDADE - CELULAR
+========================================== */
+
+@media (max-width: 600px) {
+
+    .conteudo {
+        padding: 25px 16px 40px;
+    }
+
+    .topo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .topo h1 {
+        font-size: 29px;
+    }
+
+    .topo p {
+        font-size: 13px;
+    }
+
+    .acao {
+        width: 100%;
+    }
+
+    .resumo {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .card {
+        min-height: 110px;
+    }
+
+    .painel {
+        padding: 23px 16px;
+    }
+
+    .painel h2 {
+        font-size: 21px;
     }
 
     .filtros {
@@ -276,12 +878,46 @@ td {
     }
 
     .tabela {
-        overflow-x: auto;
+        border-radius: 10px;
     }
-}
 
-@media (max-width: 350px) {
-    .resumo {
+    .modal {
+        padding: 12px;
+    }
+
+    .modal-caixa {
+        padding: 25px 19px;
+    }
+
+    .modal-topo h3 {
+        font-size: 19px;
+    }
+
+    .detalhes {
+        grid-template-columns: 105px minmax(0, 1fr);
+        gap: 13px 8px;
+    }
+
+    .detalhes dt,
+    .detalhes dd {
+        font-size: 11px;
+    }
+
+    #formEditarDocumento {
         grid-template-columns: 1fr;
     }
+
+    .campo:has(#editarDescricao) {
+        grid-column: span 1;
+    }
+
+    .modal-acoes {
+        grid-column: span 1;
+        flex-direction: column-reverse;
+    }
+
+    .modal-acoes button {
+        width: 100%;
+    }
+
 }

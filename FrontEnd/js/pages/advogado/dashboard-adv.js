@@ -1,16 +1,3 @@
-// ==========================================================
-// js/pages/advogado/dashboard-adv.js
-//
-// Dashboard do Advogado com atualização automática
-// (Últimos Processos e Próximos Compromissos "em tempo real")
-//
-// Como este projeto usa uma API REST (Express + JWT) e não
-// leitura direta do Firestore no navegador, a forma correta
-// de manter os dados "em tempo real" aqui é fazer POLLING:
-// buscar os dados de novo no backend em intervalos curtos,
-// sem precisar recarregar a página.
-// ==========================================================
-
 import { getToken } from "../../services/authService.js";
 import { listarProcessos } from "../../services/processoService.js";
 import { listarCompromissos } from "../../services/agendaService.js";
@@ -21,44 +8,27 @@ import { listarNotificacoes, marcarComoLida } from "../../services/notificacaoSe
 // CONFIGURAÇÃO
 // ==========================================================
 
-// Intervalo entre as atualizações automáticas (em milissegundos)
 const INTERVALO_ATUALIZACAO = 8000; // 8 segundos
-
-// Quantos itens mostrar em cada painel do dashboard
 const LIMITE_PROCESSOS = 5;
 const LIMITE_COMPROMISSOS = 5;
+const LIMITE_NOTIFICACOES = 8;
 
 
 // ==========================================================
 // ELEMENTOS
 // ==========================================================
 
-const listaProcessosEl =
-    document.getElementById("listaProcessos");
+const listaProcessosEl = document.getElementById("listaProcessos");
+const listaAgendaEl = document.getElementById("listaAgenda");
+const listaNotificacoesEl = document.getElementById("listaNotificacoes");
 
-const listaAgendaEl =
-    document.getElementById("listaAgenda");
+const totalProcessosEl = document.getElementById("totalProcessos");
+const totalAgendaEl = document.getElementById("totalAgenda");
+const totalNotificacoesEl = document.getElementById("totalNotificacoes");
 
-const totalProcessosEl =
-    document.getElementById("totalProcessos");
-
-const totalAgendaEl =
-    document.getElementById("totalAgenda");
-
-const statusProcessosEl =
-    document.getElementById("statusProcessos");
-
-const statusAgendaEl =
-    document.getElementById("statusAgenda");
-
-const listaNotificacoesEl =
-    document.getElementById("listaNotificacoes");
-
-const totalNotificacoesEl =
-    document.getElementById("totalNotificacoes");
-
-const statusNotificacoesEl =
-    document.getElementById("statusNotificacoes");
+const statusProcessosEl = document.getElementById("statusProcessos");
+const statusAgendaEl = document.getElementById("statusAgenda");
+const statusNotificacoesEl = document.getElementById("statusNotificacoes");
 
 
 // ==========================================================
@@ -66,108 +36,145 @@ const statusNotificacoesEl =
 // ==========================================================
 
 if (!getToken()) {
-
     window.location.href = "login-adv.html";
-
 }
 
 
 // ==========================================================
-// CONTROLE DE ESTADO
+// ESTADO
 // ==========================================================
 
 let carregandoProcessos = false;
 let carregandoAgenda = false;
+let carregandoNotificacoes = false;
 
-let idIntervaloProcessos = null;
-let idIntervaloAgenda = null;
+let idIntervalo = null;
 
 
 // ==========================================================
-// FUNÇÕES AUXILIARES
+// UTILIDADES
 // ==========================================================
 
-// Mostra o horário da última atualização em um "status"
-function marcarAtualizado(elementoStatus) {
-
-    if (!elementoStatus) return;
-
-    const agora = new Date();
-
-    const hora = agora.toLocaleTimeString(
-        "pt-BR",
-        { hour: "2-digit", minute: "2-digit", second: "2-digit" }
-    );
-
-    elementoStatus.textContent = `Atualizado às ${hora}`;
-    elementoStatus.classList.remove("erro", "pausado");
-
+function escaparHTML(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[c]);
 }
 
-function marcarErro(elementoStatus, mensagem) {
+function marcarAtualizado(el) {
+    if (!el) return;
 
-    if (!elementoStatus) return;
+    const hora = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
 
-    elementoStatus.textContent = mensagem || "Erro ao atualizar";
-    elementoStatus.classList.add("erro");
-    elementoStatus.classList.remove("pausado");
-
+    el.textContent = `Atualizado às ${hora}`;
+    el.classList.remove("erro", "pausado");
 }
 
-function marcarPausado(elementoStatus) {
+function marcarErro(el, mensagem) {
+    if (!el) return;
 
-    if (!elementoStatus) return;
-
-    elementoStatus.textContent = "Atualização pausada (aba em segundo plano)";
-    elementoStatus.classList.add("pausado");
-    elementoStatus.classList.remove("erro");
-
+    el.textContent = mensagem || "Erro ao atualizar";
+    el.classList.add("erro");
+    el.classList.remove("pausado");
 }
 
-// Tenta converter datas em vários formatos (Timestamp do Firestore,
-// string "yyyy-mm-dd" ou objeto Date) para um objeto Date válido
+function marcarPausado(el) {
+    if (!el) return;
+
+    el.textContent = "Atualização pausada (aba em segundo plano)";
+    el.classList.add("pausado");
+    el.classList.remove("erro");
+}
+
+// Converte vários formatos de data para Date
 function converterParaData(valor) {
-
     if (!valor) return null;
 
-    // Timestamp do Firestore (SDK do navegador, via onSnapshot)
     if (typeof valor === "object" && typeof valor.toDate === "function") {
-
         return valor.toDate();
-
     }
 
-    // Timestamp vindo em JSON puro (via API REST): { _seconds, _nanoseconds }
     if (typeof valor === "object" && "_seconds" in valor) {
-
         return new Date(valor._seconds * 1000);
-
     }
 
-    // Data simples "AAAA-MM-DD" (vinda do <input type="date">):
-    // precisa ser lida como data LOCAL. Com new Date("2026-10-14")
-    // o navegador usa meia-noite UTC, que no Brasil é o dia anterior
-    // às 21h - e compromissos de hoje sumiam da lista.
     if (typeof valor === "string") {
-
-        const partes = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        // "AAAA-MM-DD" ou "AAAA-MM-DDTHH:mm..." : lê como data LOCAL
+        const partes = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
 
         if (partes) {
-
             return new Date(
                 Number(partes[1]),
                 Number(partes[2]) - 1,
                 Number(partes[3])
             );
-
         }
-
     }
 
     const data = new Date(valor);
-
     return isNaN(data.getTime()) ? null : data;
+}
 
+// "2026-10-31" ou "2026-10-31T00:00:00Z" -> "31/10/2026"
+function formatarData(valor) {
+    if (!valor) return "-";
+
+    const partes = String(valor).substring(0, 10).split("-");
+
+    if (partes.length === 3 && partes[0].length === 4) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    return String(valor);
+}
+
+function possuiIntimacao(valor) {
+    return valor === true ||
+        valor === 1 ||
+        ["true", "1", "sim", "pendente"].includes(
+            String(valor ?? "").trim().toLowerCase()
+        );
+}
+
+
+// ==========================================================
+// PADRONIZAR CAMPOS VINDOS DA API (snake_case -> camelCase)
+// ==========================================================
+
+function padronizarProcesso(p) {
+    return {
+        ...p,
+        numeroProcesso: p.numeroProcesso ?? p.numero_processo ?? "",
+        ultimaMovimentacao: p.ultimaMovimentacao ?? p.ultima_movimentacao ?? "",
+        tipoManifestacao: p.tipoManifestacao ?? p.tipo_manifestacao ?? "",
+        criadoEm: p.criadoEm ?? p.criado_em ?? p.created_at ?? p.createdAt ?? null
+    };
+}
+
+function padronizarCompromisso(c) {
+    return {
+        ...c,
+        horario: String(c.horario ?? c.hora ?? "").substring(0, 5),
+        data: c.data ? String(c.data).substring(0, 10) : "",
+        dataPrazo: c.dataPrazo ?? c.data_prazo ?? "",
+        horaPrazo: String(c.horaPrazo ?? c.hora_prazo ?? "").substring(0, 5),
+        processo: c.processo ?? c.numero_processo ?? c.numeroProcesso ?? ""
+    };
+}
+
+function padronizarNotificacao(n) {
+    return {
+        ...n,
+        dataEnvio: n.dataEnvio ?? n.data_envio ?? n.criado_em ?? n.created_at ?? null
+    };
 }
 
 
@@ -176,15 +183,11 @@ function converterParaData(valor) {
 // ==========================================================
 
 async function carregarProcessos({ mostrarCarregando = false } = {}) {
-
     if (carregandoProcessos) return;
-
     carregandoProcessos = true;
 
     try {
-
         if (mostrarCarregando && listaProcessosEl) {
-
             listaProcessosEl.innerHTML = `
                 <tr>
                     <td colspan="8" style="text-align:center; padding:24px;">
@@ -192,31 +195,20 @@ async function carregarProcessos({ mostrarCarregando = false } = {}) {
                     </td>
                 </tr>
             `;
-
         }
 
         const dados = await listarProcessos();
+        const processos = (Array.isArray(dados) ? dados : []).map(padronizarProcesso);
 
-        const processos = Array.isArray(dados) ? dados : [];
-
-        if (totalProcessosEl) {
-
-            totalProcessosEl.textContent = processos.length;
-
-        }
+        if (totalProcessosEl) totalProcessosEl.textContent = processos.length;
 
         renderizarUltimosProcessos(processos);
-
         marcarAtualizado(statusProcessosEl);
-
     } catch (erro) {
-
         console.error("Erro ao carregar processos:", erro);
-
         marcarErro(statusProcessosEl, "Não foi possível atualizar os processos.");
 
         if (listaProcessosEl && listaProcessosEl.children.length === 0) {
-
             listaProcessosEl.innerHTML = `
                 <tr>
                     <td colspan="8" style="text-align:center; padding:24px; color:#c0392b;">
@@ -224,23 +216,16 @@ async function carregarProcessos({ mostrarCarregando = false } = {}) {
                     </td>
                 </tr>
             `;
-
         }
-
     } finally {
-
         carregandoProcessos = false;
-
     }
-
 }
 
 function renderizarUltimosProcessos(processos) {
-
     if (!listaProcessosEl) return;
 
     if (processos.length === 0) {
-
         listaProcessosEl.innerHTML = `
             <tr>
                 <td colspan="8" style="text-align:center; padding:24px;">
@@ -248,36 +233,35 @@ function renderizarUltimosProcessos(processos) {
                 </td>
             </tr>
         `;
-
         return;
-
     }
 
-    // Ordena pelo mais recente primeiro (criadoEm) e pega só os últimos N
     const ordenados = [...processos].sort((a, b) => {
-
         const dataA = converterParaData(a.criadoEm) || new Date(0);
         const dataB = converterParaData(b.criadoEm) || new Date(0);
-
         return dataB - dataA;
-
     });
 
-    const ultimos = ordenados.slice(0, LIMITE_PROCESSOS);
+    listaProcessosEl.innerHTML = ordenados
+        .slice(0, LIMITE_PROCESSOS)
+        .map(processo => {
+            const numero = escaparHTML(processo.numeroProcesso || "-");
+            const cliente = escaparHTML(processo.cliente || "-");
 
-    listaProcessosEl.innerHTML = ultimos.map((processo) => `
-        <tr>
-            <td title="${processo.numeroProcesso || "-"}">${processo.numeroProcesso || "-"}</td>
-            <td class="colTexto" title="${processo.cliente || "-"}">${processo.cliente || "-"}</td>
-            <td>${processo.tribunal || processo.comarca || "-"}</td>
-            <td>${processo.status || "-"}</td>
-            <td>${processo.tipoManifestacao || "Nenhuma"}</td>
-            <td>${processo.ultimaMovimentacao || "-"}</td>
-            <td>${processo.intimacao === true ? "Sim" : "Não"}</td>
-            <td>${processo.prazo || "-"}</td>
-        </tr>
-    `).join("");
-
+            return `
+                <tr>
+                    <td title="${numero}">${numero}</td>
+                    <td class="colTexto" title="${cliente}">${cliente}</td>
+                    <td>${escaparHTML(processo.tribunal || processo.comarca || "-")}</td>
+                    <td>${escaparHTML(processo.status || "-")}</td>
+                    <td>${escaparHTML(processo.tipoManifestacao || "Nenhuma")}</td>
+                    <td>${escaparHTML(processo.ultimaMovimentacao || "-")}</td>
+                    <td>${possuiIntimacao(processo.intimacao) ? "Sim" : "Não"}</td>
+                    <td>${escaparHTML(formatarData(processo.prazo))}</td>
+                </tr>
+            `;
+        })
+        .join("");
 }
 
 
@@ -286,207 +270,148 @@ function renderizarUltimosProcessos(processos) {
 // ==========================================================
 
 async function carregarProximosCompromissos({ mostrarCarregando = false } = {}) {
-
     if (carregandoAgenda) return;
-
     carregandoAgenda = true;
 
     try {
-
         if (mostrarCarregando && listaAgendaEl) {
-
-            listaAgendaEl.innerHTML = `
-                <li>Carregando compromissos...</li>
-            `;
-
+            listaAgendaEl.innerHTML = `<li>Carregando compromissos...</li>`;
         }
 
         const dados = await listarCompromissos();
+        const compromissos = (Array.isArray(dados) ? dados : []).map(padronizarCompromisso);
 
-        const compromissos = Array.isArray(dados) ? dados : [];
-
-        if (totalAgendaEl) {
-
-            totalAgendaEl.textContent = compromissos.length;
-
-        }
+        if (totalAgendaEl) totalAgendaEl.textContent = compromissos.length;
 
         renderizarProximosCompromissos(compromissos);
-
         marcarAtualizado(statusAgendaEl);
-
     } catch (erro) {
-
         console.error("Erro ao carregar compromissos:", erro);
-
         marcarErro(statusAgendaEl, "Não foi possível atualizar a agenda.");
 
         if (listaAgendaEl && listaAgendaEl.children.length === 0) {
-
             listaAgendaEl.innerHTML = `
-                <li style="color:#c0392b;">
-                    Erro ao carregar os compromissos.
-                </li>
+                <li style="color:#c0392b;">Erro ao carregar os compromissos.</li>
             `;
-
         }
-
     } finally {
-
         carregandoAgenda = false;
-
     }
-
 }
 
 function renderizarProximosCompromissos(compromissos) {
-
     if (!listaAgendaEl) return;
 
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    // Só mostra compromissos de hoje em diante, que não estejam
-    // concluídos nem cancelados
-    let ocultosPorStatus = 0;
-    let ocultosPorData = 0;
-
-    const futuros = compromissos.filter((compromisso) => {
-
+    // Remove só os concluídos e cancelados
+    const ativos = compromissos.filter(compromisso => {
         const status = String(compromisso.status || "").toLowerCase();
 
-        if (
+        return !(
             status === "concluído" ||
             status === "concluido" ||
             status === "cancelado" ||
             compromisso.concluido === true
-        ) {
-
-            ocultosPorStatus++;
-
-            return false;
-
-        }
-
-        const dataCompromisso = converterParaData(compromisso.data);
-
-        if (!dataCompromisso) return true; // sem data definida, mostra mesmo assim
-
-        if (dataCompromisso < hoje) {
-
-            ocultosPorData++;
-
-            return false;
-
-        }
-
-        return true;
-
+        );
     });
 
-    if (futuros.length === 0) {
-
-        const ocultos = ocultosPorStatus + ocultosPorData;
-
-        listaAgendaEl.innerHTML = `
-            <li>
-                Nenhum compromisso futuro cadastrado.
-                ${ocultos > 0 ? `<br><small>
-                    (${ocultos} compromisso(s) não aparece(m) aqui:
-                    ${ocultosPorStatus} concluído(s)/cancelado(s) e
-                    ${ocultosPorData} com data já passada.)
-                </small>` : ""}
-            </li>
-        `;
-
+    if (ativos.length === 0) {
+        listaAgendaEl.innerHTML = `<li>Nenhum compromisso pendente.</li>`;
         return;
-
     }
 
-    // Ordena por data + horário (mais próximo primeiro)
-    const ordenados = [...futuros].sort((a, b) => {
+    const dataHora = c => new Date(`${c.data || ""}T${c.horario || "00:00"}`);
 
-        const dataA = new Date(`${a.data || ""}T${a.horario || "00:00"}`);
-        const dataB = new Date(`${b.data || ""}T${b.horario || "00:00"}`);
+    const ehAtrasado = c => {
+        const d = converterParaData(c.data);
+        return d ? d < hoje : false;
+    };
 
-        return dataA - dataB;
+    // Futuros primeiro (mais próximo antes), depois os atrasados (mais recente antes)
+    const futuros = ativos
+        .filter(c => !ehAtrasado(c))
+        .sort((a, b) => dataHora(a) - dataHora(b));
 
-    });
+    const atrasados = ativos
+        .filter(ehAtrasado)
+        .sort((a, b) => dataHora(b) - dataHora(a));
 
-    const proximos = ordenados.slice(0, LIMITE_COMPROMISSOS);
+    const lista = [...futuros, ...atrasados].slice(0, LIMITE_COMPROMISSOS);
 
-    listaAgendaEl.innerHTML = proximos.map((compromisso) => {
-
-        const dataFormatada = compromisso.data
-            ? new Date(`${compromisso.data}T00:00:00`).toLocaleDateString("pt-BR")
-            : "Sem data";
-
-        const dataPrazoFormatada = compromisso.dataPrazo
-            ? new Date(`${compromisso.dataPrazo}T00:00:00`).toLocaleDateString("pt-BR")
-            : "";
+    listaAgendaEl.innerHTML = lista.map(compromisso => {
+        const atrasado = ehAtrasado(compromisso);
 
         return `
             <li class="itemCompromissoDash">
 
                 <div class="horaCompromissoDash">
-                    ${compromisso.horario || "--:--"}
+                    ${escaparHTML(compromisso.horario || "--:--")}
                 </div>
 
                 <div class="infoCompromissoDash">
 
-                    <h3>${compromisso.titulo || "Sem título"}</h3>
+                    <h3>
+                        ${escaparHTML(compromisso.titulo || "Sem título")}
+                        ${atrasado ? `
+                            <span style="
+                                background:#fdecea;
+                                color:#c0392b;
+                                border:1px solid #f5c6c0;
+                                border-radius:20px;
+                                padding:2px 10px;
+                                font-size:11px;
+                                font-weight:700;
+                                margin-left:8px;
+                                text-transform:uppercase;
+                            ">Atrasado</span>
+                        ` : ""}
+                    </h3>
 
                     ${compromisso.descricao ? `
-                        <p><strong>Descrição:</strong> ${compromisso.descricao}</p>
+                        <p><strong>Descrição:</strong> ${escaparHTML(compromisso.descricao)}</p>
                     ` : ""}
 
                     ${compromisso.tipo ? `
-                        <p><strong>Tipo:</strong> ${compromisso.tipo}</p>
+                        <p><strong>Tipo:</strong> ${escaparHTML(compromisso.tipo)}</p>
                     ` : ""}
 
                     ${compromisso.cliente ? `
-                        <p><strong>Cliente:</strong> ${compromisso.cliente}</p>
+                        <p><strong>Cliente:</strong> ${escaparHTML(compromisso.cliente)}</p>
                     ` : ""}
 
                     ${compromisso.processo ? `
-                        <p><strong>Processo:</strong> ${compromisso.processo}</p>
+                        <p><strong>Processo:</strong> ${escaparHTML(compromisso.processo)}</p>
                     ` : ""}
 
                     ${compromisso.local ? `
-                        <p><strong>Local:</strong> ${compromisso.local}</p>
+                        <p><strong>Local:</strong> ${escaparHTML(compromisso.local)}</p>
                     ` : ""}
 
-                    <p><strong>Data:</strong> ${dataFormatada}</p>
+                    <p><strong>Data:</strong> ${escaparHTML(formatarData(compromisso.data))}</p>
 
-                    ${dataPrazoFormatada ? `
-                        <p><strong>Data do prazo:</strong> ${dataPrazoFormatada}</p>
+                    ${compromisso.dataPrazo ? `
+                        <p><strong>Data do prazo:</strong> ${escaparHTML(formatarData(compromisso.dataPrazo))}</p>
                     ` : ""}
 
                     ${compromisso.horaPrazo ? `
-                        <p><strong>Horário limite:</strong> ${compromisso.horaPrazo}</p>
+                        <p><strong>Horário limite:</strong> ${escaparHTML(compromisso.horaPrazo)}</p>
                     ` : ""}
 
-                    <p><strong>Status:</strong> ${compromisso.status || "Agendado"}</p>
+                    <p><strong>Status:</strong> ${escaparHTML(compromisso.status || "Agendado")}</p>
 
                 </div>
 
             </li>
         `;
-
     }).join("");
-
 }
 
 
 // ==========================================================
-// NOTIFICAÇÕES AUTOMÁTICAS (RF007 - TEMPO REAL / onSnapshot)
+// NOTIFICAÇÕES (ATUALIZAÇÃO AUTOMÁTICA)
 // ==========================================================
-//
-// listarNotificacoes já é implementada com onSnapshot do
-// Firestore, então essa lista atualiza sozinha, na hora,
-// sempre que o backend criar uma notificação nova
-// (processo cadastrado/atualizado, audiência marcada,
-// prazo se aproximando, etc.) — sem precisar de polling.
 
 const ICONE_POR_TIPO = {
     processo: "📌",
@@ -495,128 +420,125 @@ const ICONE_POR_TIPO = {
     sistema: "🔔"
 };
 
-let cancelarNotificacoes = null;
+// Busca as notificações uma vez, aceitando as duas formas
+// do service: função que retorna Promise OU que usa callback.
+function buscarNotificacoesUmaVez() {
+    return new Promise((resolve, reject) => {
+        let resolvido = false;
+        let cancelar = null;
 
-function iniciarNotificacoesTempoReal() {
+        const finalizar = (lista) => {
+            if (resolvido) return;
+            resolvido = true;
 
-    if (!listaNotificacoesEl) return;
-
-    try {
-
-        cancelarNotificacoes = listarNotificacoes((notificacoes) => {
-
-            const lista = Array.isArray(notificacoes) ? notificacoes : [];
-
-            const naoLidas = lista.filter((item) => item.lida !== true);
-
-            if (totalNotificacoesEl) {
-
-                totalNotificacoesEl.textContent = naoLidas.length;
-
+            if (typeof cancelar === "function") {
+                try { cancelar(); } catch (_) { /* ignora */ }
             }
 
-            renderizarNotificacoes(lista);
+            resolve(Array.isArray(lista) ? lista : []);
+        };
 
-            marcarAtualizado(statusNotificacoesEl);
-
-        }, (erro) => {
-
-            console.error("Erro ao carregar notificações:", erro);
-
-            marcarErro(
-                statusNotificacoesEl,
-                "Não foi possível carregar as notificações."
+        try {
+            const retorno = listarNotificacoes(
+                (lista) => finalizar(lista),
+                (erro) => { if (!resolvido) { resolvido = true; reject(erro); } }
             );
 
-            if (listaNotificacoesEl.querySelector("li[data-id]") === null) {
-
-                listaNotificacoesEl.innerHTML = `
-                    <li>Erro ao carregar as notificações.</li>
-                `;
-
+            if (retorno && typeof retorno.then === "function") {
+                retorno.then(finalizar).catch((erro) => {
+                    if (!resolvido) { resolvido = true; reject(erro); }
+                });
+            } else if (typeof retorno === "function") {
+                cancelar = retorno;
+                if (resolvido) cancelar();
+            } else if (Array.isArray(retorno)) {
+                finalizar(retorno);
             }
+        } catch (erro) {
+            reject(erro);
+        }
+    });
+}
 
-        });
+async function carregarNotificacoes({ mostrarCarregando = false } = {}) {
+    if (!listaNotificacoesEl) return;
+    if (carregandoNotificacoes) return;
+    carregandoNotificacoes = true;
 
+    try {
+        if (mostrarCarregando) {
+            listaNotificacoesEl.innerHTML = `<li>Carregando notificações...</li>`;
+        }
+
+        const dados = await buscarNotificacoesUmaVez();
+        const lista = dados.map(padronizarNotificacao);
+
+        const naoLidas = lista.filter(item => item.lida !== true);
+
+        if (totalNotificacoesEl) totalNotificacoesEl.textContent = naoLidas.length;
+
+        renderizarNotificacoes(lista);
+        marcarAtualizado(statusNotificacoesEl);
     } catch (erro) {
+        console.error("Erro ao carregar notificações:", erro);
+        marcarErro(statusNotificacoesEl, "Não foi possível carregar as notificações.");
 
-        console.error("Erro ao observar notificações:", erro);
-
-        marcarErro(statusNotificacoesEl, "Não foi possível conectar às notificações.");
-
+        if (listaNotificacoesEl.querySelector("li[data-id]") === null) {
+            listaNotificacoesEl.innerHTML = `<li>Erro ao carregar as notificações.</li>`;
+        }
+    } finally {
+        carregandoNotificacoes = false;
     }
-
 }
 
 function renderizarNotificacoes(notificacoes) {
+    if (!listaNotificacoesEl) return;
 
     if (notificacoes.length === 0) {
-
-        listaNotificacoesEl.innerHTML = `
-            <li>Nenhuma notificação por enquanto.</li>
-        `;
-
+        listaNotificacoesEl.innerHTML = `<li>Nenhuma notificação por enquanto.</li>`;
         return;
-
     }
 
-    // Mais recentes primeiro
     const ordenadas = [...notificacoes].sort((a, b) => {
-
         const dataA = converterParaData(a.dataEnvio) || new Date(0);
         const dataB = converterParaData(b.dataEnvio) || new Date(0);
-
         return dataB - dataA;
-
     });
 
-    const ultimas = ordenadas.slice(0, 8);
+    listaNotificacoesEl.innerHTML = ordenadas
+        .slice(0, LIMITE_NOTIFICACOES)
+        .map(item => {
+            const icone = ICONE_POR_TIPO[item.tipo] || ICONE_POR_TIPO.sistema;
+            const naoLida = item.lida !== true;
 
-    listaNotificacoesEl.innerHTML = ultimas.map((item) => {
-
-        const icone = ICONE_POR_TIPO[item.tipo] || ICONE_POR_TIPO.sistema;
-
-        const naoLida = item.lida !== true;
-
-        return `
-            <li
-                data-id="${item.id}"
-                class="notificacao ${naoLida ? "naoLida" : ""}"
-                style="cursor:pointer;"
-                title="Clique para marcar como lida"
-            >
-                ${icone}
-                <strong>${item.titulo || "Notificação"}:</strong>
-                ${item.mensagem || ""}
-            </li>
-        `;
-
-    }).join("");
-
-    // Clique em uma notificação -> marca como lida
-    listaNotificacoesEl
-        .querySelectorAll("li[data-id]")
-        .forEach((li) => {
-
-            li.addEventListener("click", async () => {
-
-                const id = li.dataset.id;
-
-                try {
-
-                    await marcarComoLida(id);
-
-                } catch (erro) {
-
-                    console.error("Erro ao marcar notificação como lida:", erro);
-
-                }
-
-            });
-
-        });
-
+            return `
+                <li
+                    data-id="${escaparHTML(item.id)}"
+                    class="notificacao ${naoLida ? "naoLida" : ""}"
+                    style="cursor:pointer;"
+                    title="Clique para marcar como lida"
+                >
+                    ${icone}
+                    <strong>${escaparHTML(item.titulo || "Notificação")}:</strong>
+                    ${escaparHTML(item.mensagem || "")}
+                </li>
+            `;
+        })
+        .join("");
 }
+
+// Clique em uma notificação -> marca como lida
+listaNotificacoesEl?.addEventListener("click", async (evento) => {
+    const li = evento.target.closest("li[data-id]");
+    if (!li) return;
+
+    try {
+        await marcarComoLida(li.dataset.id);
+        await carregarNotificacoes();
+    } catch (erro) {
+        console.error("Erro ao marcar notificação como lida:", erro);
+    }
+});
 
 
 // ==========================================================
@@ -624,70 +546,34 @@ function renderizarNotificacoes(notificacoes) {
 // ==========================================================
 
 function atualizarTudo({ mostrarCarregando = false } = {}) {
-
     carregarProcessos({ mostrarCarregando });
     carregarProximosCompromissos({ mostrarCarregando });
-
+    carregarNotificacoes({ mostrarCarregando });
 }
 
 function iniciarAtualizacaoAutomatica() {
-
     pararAtualizacaoAutomatica();
-
-    idIntervaloProcessos = setInterval(
-        () => carregarProcessos(),
-        INTERVALO_ATUALIZACAO
-    );
-
-    idIntervaloAgenda = setInterval(
-        () => carregarProximosCompromissos(),
-        INTERVALO_ATUALIZACAO
-    );
-
+    idIntervalo = setInterval(() => atualizarTudo(), INTERVALO_ATUALIZACAO);
 }
 
 function pararAtualizacaoAutomatica() {
-
-    if (idIntervaloProcessos) clearInterval(idIntervaloProcessos);
-    if (idIntervaloAgenda) clearInterval(idIntervaloAgenda);
-
-    idIntervaloProcessos = null;
-    idIntervaloAgenda = null;
-
+    if (idIntervalo) clearInterval(idIntervalo);
+    idIntervalo = null;
 }
 
-// Pausa o polling quando a aba está em segundo plano
-// (economiza requisições) e retoma + atualiza na hora
-// em que o usuário volta para a aba.
 document.addEventListener("visibilitychange", () => {
-
     if (document.hidden) {
-
         pararAtualizacaoAutomatica();
         marcarPausado(statusProcessosEl);
         marcarPausado(statusAgendaEl);
-
+        marcarPausado(statusNotificacoesEl);
     } else {
-
         atualizarTudo();
         iniciarAtualizacaoAutomatica();
-
     }
-
 });
 
-// Garante que os intervalos são encerrados ao sair da página
-window.addEventListener("beforeunload", () => {
-
-    pararAtualizacaoAutomatica();
-
-    if (typeof cancelarNotificacoes === "function") {
-
-        cancelarNotificacoes();
-
-    }
-
-});
+window.addEventListener("beforeunload", pararAtualizacaoAutomatica);
 
 
 // ==========================================================
@@ -696,4 +582,3 @@ window.addEventListener("beforeunload", () => {
 
 atualizarTudo({ mostrarCarregando: true });
 iniciarAtualizacaoAutomatica();
-iniciarNotificacoesTempoReal();
