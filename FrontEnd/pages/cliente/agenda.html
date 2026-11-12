@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -18,7 +17,6 @@
 
   <aside>
     <div class="brand">
-      <i class="fa-solid fa-scale-balanced"></i>
       Área do Cliente
     </div>
 
@@ -43,18 +41,6 @@
         Configurações
       </a>
     </nav>
-
-    <div class="user">
-      <div class="av" id="inicialUsuario">C</div>
-
-      <div>
-        <span id="nomeUsuario">Cliente</span>
-
-        <small>
-          <a href="login.html" id="btnSair">Sair</a>
-        </small>
-      </div>
-    </div>
   </aside>
 
   <main>
@@ -64,6 +50,35 @@
       <p class="sub" id="sub">Carregando seus compromissos...</p>
     </header>
 
+    <!-- Cards de resumo (preenchidos automaticamente pelo script) -->
+    <section class="resumo" id="resumo">
+
+      <div class="resumo-card">
+        <i class="fa-regular fa-clock"></i>
+        <div>
+          <small>Próximo compromisso</small>
+          <strong id="resProximo">—</strong>
+        </div>
+      </div>
+
+      <div class="resumo-card">
+        <i class="fa-regular fa-calendar-check"></i>
+        <div>
+          <small>Neste mês</small>
+          <strong id="resMes">0</strong>
+        </div>
+      </div>
+
+      <div class="resumo-card">
+        <i class="fa-regular fa-calendar"></i>
+        <div>
+          <small>Total de compromissos</small>
+          <strong id="resTotal">0</strong>
+        </div>
+      </div>
+
+    </section>
+
     <section class="card">
 
       <div class="head">
@@ -72,28 +87,183 @@
 
         <div class="tabs" id="abas">
 
-          <button type="button"
-            data-f="proximos"
-            aria-pressed="true">
+          <button type="button" data-f="proximos" aria-pressed="true">
             Próximos
           </button>
 
-          <button type="button"
-            data-f="anteriores"
-            aria-pressed="false">
+          <button type="button" data-f="anteriores" aria-pressed="false">
             Anteriores
           </button>
 
-          <button type="button"
-            data-f="todos"
-            aria-pressed="false">
+          <button type="button" data-f="todos" aria-pressed="false">
             Todos
           </button>
 
         </div>
       </div>
 
-      <div id="agenda"></div>
+      <div class="busca">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search"
+          id="buscaAgenda"
+          placeholder="Buscar compromisso..."
+          aria-label="Buscar compromisso">
+      </div>
+
+      <!-- ===== COMPROMISSOS =====
+           Para adicionar um novo, copie um bloco <button class="item ...">
+           e altere os data-* e o texto. -->
+      <div id="agenda">
+
+        <!-- Hoje -->
+        <button type="button" class="item s-agendado"
+          data-titulo="Reunião de acompanhamento"
+          data-data="2026-11-12"
+          data-hora="15:00"
+          data-local="Escritório - Sala de reuniões"
+          data-advogado="Seu advogado"
+          data-tipo="Reunião"
+          data-status="agendado">
+          <div class="data-bloco"><span class="dia">12</span><span class="mes">Nov</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Reunião de acompanhamento</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>15:00</span>
+              <span><i class="fa-solid fa-location-dot"></i>Escritório - Sala de reuniões</span>
+            </div>
+          </div>
+          <span class="badge">Agendado</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <button type="button" class="item s-agendado"
+          data-titulo="Audiência de conciliação"
+          data-data="2026-11-18"
+          data-hora="09:30"
+          data-local="Fórum - Sala 3"
+          data-advogado="Seu advogado"
+          data-tipo="Audiência"
+          data-status="agendado">
+          <div class="data-bloco"><span class="dia">18</span><span class="mes">Nov</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Audiência de conciliação</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>09:30</span>
+              <span><i class="fa-solid fa-location-dot"></i>Fórum - Sala 3</span>
+            </div>
+          </div>
+          <span class="badge">Agendado</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <button type="button" class="item s-agendado"
+          data-titulo="Assinatura de documentos"
+          data-data="2026-11-25"
+          data-hora="14:00"
+          data-local="Escritório"
+          data-advogado="Seu advogado"
+          data-tipo="Assinatura"
+          data-status="agendado">
+          <div class="data-bloco"><span class="dia">25</span><span class="mes">Nov</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Assinatura de documentos</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>14:00</span>
+              <span><i class="fa-solid fa-location-dot"></i>Escritório</span>
+            </div>
+          </div>
+          <span class="badge">Agendado</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <button type="button" class="item s-agendado"
+          data-titulo="Videochamada de acompanhamento"
+          data-data="2026-12-03"
+          data-hora="10:00"
+          data-local="Online (link enviado por e-mail)"
+          data-advogado="Seu advogado"
+          data-tipo="Videochamada"
+          data-status="agendado">
+          <div class="data-bloco"><span class="dia">03</span><span class="mes">Dez</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Videochamada de acompanhamento</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>10:00</span>
+              <span><i class="fa-solid fa-location-dot"></i>Online</span>
+            </div>
+          </div>
+          <span class="badge">Agendado</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <!-- Anteriores -->
+        <button type="button" class="item s-concluido"
+          data-titulo="Audiência de instrução"
+          data-data="2026-10-28"
+          data-hora="13:30"
+          data-local="Fórum - Sala 2"
+          data-advogado="Seu advogado"
+          data-tipo="Audiência"
+          data-status="concluido">
+          <div class="data-bloco"><span class="dia">28</span><span class="mes">Out</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Audiência de instrução</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>13:30</span>
+              <span><i class="fa-solid fa-location-dot"></i>Fórum - Sala 2</span>
+            </div>
+          </div>
+          <span class="badge concluido">Concluído</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <button type="button" class="item s-concluido"
+          data-titulo="Reunião inicial"
+          data-data="2026-10-15"
+          data-hora="16:00"
+          data-local="Escritório"
+          data-advogado="Seu advogado"
+          data-tipo="Reunião"
+          data-status="concluido">
+          <div class="data-bloco"><span class="dia">15</span><span class="mes">Out</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Reunião inicial</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>16:00</span>
+              <span><i class="fa-solid fa-location-dot"></i>Escritório</span>
+            </div>
+          </div>
+          <span class="badge concluido">Concluído</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+        <button type="button" class="item s-cancelado"
+          data-titulo="Consulta de retorno"
+          data-data="2026-10-05"
+          data-hora="11:00"
+          data-local="Escritório"
+          data-advogado="Seu advogado"
+          data-tipo="Consulta"
+          data-status="cancelado">
+          <div class="data-bloco"><span class="dia">05</span><span class="mes">Out</span></div>
+          <div class="item-info">
+            <div class="item-titulo">Consulta de retorno</div>
+            <div class="item-meta">
+              <span><i class="fa-regular fa-clock"></i>11:00</span>
+              <span><i class="fa-solid fa-location-dot"></i>Escritório</span>
+            </div>
+          </div>
+          <span class="badge cancelado">Cancelado</span>
+          <i class="fa-solid fa-chevron-right item-seta"></i>
+        </button>
+
+      </div>
+
+      <!-- Mensagem quando nenhum compromisso aparece -->
+      <p class="vazio" id="vazio" hidden>
+        <i class="fa-regular fa-calendar-xmark"></i>
+        Nenhum compromisso encontrado.
+      </p>
 
     </section>
 
@@ -123,8 +293,13 @@
 
       <div class="modal-corpo" id="modalCorpo"></div>
 
+      <button type="button" class="btn-calendario" id="btnCalendario">
+        <i class="fa-regular fa-calendar-plus"></i>
+        Adicionar ao meu calendário
+      </button>
+
       <p class="modal-aviso">
-        <i class="fa-regular fa-circle-info"></i>
+        <i class="fa-solid fa-circle-info"></i>
         Para remarcar ou cancelar, fale com o seu advogado.
       </p>
 
@@ -132,8 +307,204 @@
 
   </div>
 
-  <script type="module"
-    src="../../js/pages/cliente/agenda.js">
+  <script>
+    (function () {
+      var itens = Array.prototype.slice.call(document.querySelectorAll('#agenda .item'));
+      var abas = document.querySelectorAll('#abas button');
+      var busca = document.getElementById('buscaAgenda');
+      var vazio = document.getElementById('vazio');
+      var modal = document.getElementById('modal');
+      var modalTitulo = document.getElementById('modalTitulo');
+      var modalCorpo = document.getElementById('modalCorpo');
+      var itemAberto = null;
+      var filtro = 'proximos';
+
+      var hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      function paraData(str) {
+        var p = str.split('-');
+        return new Date(+p[0], +p[1] - 1, +p[2]);
+      }
+
+      function dataLonga(d) {
+        var t = d.toLocaleDateString('pt-BR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+        return t.charAt(0).toUpperCase() + t.slice(1);
+      }
+
+      function dataCurta(d) {
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+      }
+
+      function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+      }
+
+      /* ----- marca "Hoje" automaticamente ----- */
+      itens.forEach(function (el) {
+        var d = paraData(el.dataset.data);
+        el.dataset.ts = d.getTime();
+        if (el.dataset.status === 'agendado' && d.getTime() === hoje.getTime()) {
+          el.classList.remove('s-agendado');
+          el.classList.add('s-hoje');
+          var b = el.querySelector('.badge');
+          b.textContent = 'Hoje';
+          b.classList.add('hoje');
+        }
+      });
+
+      /* ----- resumo do topo ----- */
+      function atualizarResumo() {
+        var ativos = itens.filter(function (el) {
+          return el.dataset.status !== 'cancelado';
+        });
+
+        var futuros = ativos
+          .filter(function (el) { return +el.dataset.ts >= hoje.getTime(); })
+          .sort(function (a, b) {
+            return (+a.dataset.ts - +b.dataset.ts) || a.dataset.hora.localeCompare(b.dataset.hora);
+          });
+
+        var proximo = futuros[0];
+        document.getElementById('resProximo').textContent = proximo
+          ? dataCurta(new Date(+proximo.dataset.ts)) + ' às ' + proximo.dataset.hora
+          : 'Nenhum';
+
+        var noMes = ativos.filter(function (el) {
+          var d = new Date(+el.dataset.ts);
+          return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+        }).length;
+        document.getElementById('resMes').textContent = noMes;
+        document.getElementById('resTotal').textContent = itens.length;
+
+        var n = futuros.length;
+        document.getElementById('sub').textContent = n === 0
+          ? 'Você não tem compromissos futuros.'
+          : n === 1
+            ? 'Você tem 1 compromisso futuro.'
+            : 'Você tem ' + n + ' compromissos futuros.';
+      }
+
+      /* ----- filtro + busca ----- */
+      function aplicar() {
+        var termo = busca.value.trim().toLowerCase();
+        var visiveis = 0;
+
+        itens.forEach(function (el) {
+          var ts = +el.dataset.ts;
+          var okAba =
+            filtro === 'todos' ||
+            (filtro === 'proximos' && ts >= hoje.getTime()) ||
+            (filtro === 'anteriores' && ts < hoje.getTime());
+
+          var texto = (el.dataset.titulo + ' ' + el.dataset.local + ' ' + el.dataset.tipo).toLowerCase();
+          var okBusca = !termo || texto.indexOf(termo) !== -1;
+
+          var mostrar = okAba && okBusca;
+          el.hidden = !mostrar;
+          el.style.display = mostrar ? '' : 'none';
+          if (mostrar) visiveis++;
+        });
+
+        vazio.hidden = visiveis !== 0;
+      }
+
+      abas.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          filtro = btn.dataset.f;
+          abas.forEach(function (b) {
+            b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+          });
+          aplicar();
+        });
+      });
+
+      busca.addEventListener('input', aplicar);
+
+      /* ----- modal ----- */
+      function linha(icone, rotulo, valor) {
+        return '<div class="linha"><i class="' + icone + '"></i><div><small>' +
+          rotulo + '</small><span>' + esc(valor) + '</span></div></div>';
+      }
+
+      function abrir(el) {
+        itemAberto = el;
+        var d = paraData(el.dataset.data);
+        var rotuloStatus = el.querySelector('.badge').textContent;
+
+        modalTitulo.textContent = el.dataset.titulo;
+        modalCorpo.innerHTML =
+          linha('fa-regular fa-calendar', 'Data', dataLonga(d)) +
+          linha('fa-regular fa-clock', 'Horário', el.dataset.hora) +
+          linha('fa-solid fa-location-dot', 'Local', el.dataset.local) +
+          linha('fa-solid fa-user-tie', 'Advogado', el.dataset.advogado) +
+          linha('fa-solid fa-tag', 'Tipo', el.dataset.tipo) +
+          linha('fa-solid fa-circle-check', 'Situação', rotuloStatus);
+
+        modal.hidden = false;
+        document.getElementById('modalFechar').focus();
+      }
+
+      function fechar() {
+        modal.hidden = true;
+        if (itemAberto) itemAberto.focus();
+      }
+
+      itens.forEach(function (el) {
+        el.addEventListener('click', function () { abrir(el); });
+      });
+
+      document.getElementById('modalFechar').addEventListener('click', fechar);
+      modal.addEventListener('click', function (e) { if (e.target === modal) fechar(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) fechar();
+      });
+
+      /* ----- adicionar ao calendário (.ics) ----- */
+      document.getElementById('btnCalendario').addEventListener('click', function () {
+        if (!itemAberto) return;
+        var el = itemAberto;
+        var d = el.dataset.data.replace(/-/g, '');
+        var h = el.dataset.hora.split(':');
+        var ini = d + 'T' + h[0] + h[1] + '00';
+        var fimH = ('0' + ((+h[0] + 1) % 24)).slice(-2);
+        var fim = d + 'T' + fimH + h[1] + '00';
+
+        function t(s) { return String(s).replace(/([,;\\])/g, '\\$1'); }
+
+        var ics = [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//Area do Cliente//Agenda//PT',
+          'BEGIN:VEVENT',
+          'UID:' + el.dataset.data + '-' + el.dataset.hora.replace(':', '') + '@area-cliente',
+          'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z',
+          'DTSTART:' + ini,
+          'DTEND:' + fim,
+          'SUMMARY:' + t(el.dataset.titulo),
+          'LOCATION:' + t(el.dataset.local),
+          'DESCRIPTION:' + t(el.dataset.tipo + ' com ' + el.dataset.advogado),
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].join('\r\n');
+
+        var blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'compromisso.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      });
+
+      atualizarResumo();
+      aplicar();
+    })();
   </script>
 
 </body>

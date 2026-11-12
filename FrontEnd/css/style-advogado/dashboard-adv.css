@@ -235,7 +235,7 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto; /* colunas se ajustam ao conteúdo */
 }
 
 table th {
@@ -255,9 +255,25 @@ table td {
     border-bottom: 1px solid var(--borda);
     color: var(--suave);
     font-size: 13px;
+    white-space: normal;       /* sem cortar com "..." */
+    overflow-wrap: break-word;
+    vertical-align: middle;
+}
+
+/* Nº Processo (1), Status (4) e Prazo (8): sempre inteiros, em uma linha */
+table th:nth-child(1),
+table td:nth-child(1),
+table th:nth-child(4),
+table td:nth-child(4),
+table th:nth-child(8),
+table td:nth-child(8) {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+
+/* Cliente (2): aparece o nome completo, quebrando em linhas se precisar */
+table td:nth-child(2) {
+    white-space: normal;
+    min-width: 160px;
 }
 
 table td.colTexto {

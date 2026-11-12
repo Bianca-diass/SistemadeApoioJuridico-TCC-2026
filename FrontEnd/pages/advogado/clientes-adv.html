@@ -1,6 +1,7 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,36 +10,49 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="../../css/style-advogado/clientes-adv.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
 
 <div class="container">
+
     <main class="pagina-clientes">
 
+        <!-- CABEÇALHO -->
         <header class="cabecalho-clientes">
+
             <div class="titulo-pagina">
+
                 <a href="dashboard-adv.html" class="btnVoltar" title="Voltar ao painel">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
 
                 <h1>Clientes</h1>
+
                 <p>Gerencie todos os clientes cadastrados.</p>
+
             </div>
 
             <a href="cadastro-cliente-adv.html" class="botao-novo">
                 <i class="fa-solid fa-user-plus"></i>
                 Novo Cliente
             </a>
+
         </header>
 
+
+        <!-- INDICADORES -->
         <section class="cards-clientes">
 
+            <!-- TOTAL DE CLIENTES -->
             <article class="card-cliente">
+
                 <div class="icone-card azul">
                     <i class="fa-solid fa-users"></i>
                 </div>
@@ -47,9 +61,13 @@
                     <span>Total de clientes</span>
                     <h2 id="totalClientes">0</h2>
                 </div>
+
             </article>
 
+
+            <!-- CIDADES ATENDIDAS -->
             <article class="card-cliente">
+
                 <div class="icone-card vermelho">
                     <i class="fa-solid fa-location-dot"></i>
                 </div>
@@ -58,9 +76,13 @@
                     <span>Cidades atendidas</span>
                     <h2 id="totalCidades">0</h2>
                 </div>
+
             </article>
 
+
+            <!-- CLIENTES ATIVOS -->
             <article class="card-cliente">
+
                 <div class="icone-card verde">
                     <i class="fa-solid fa-user-check"></i>
                 </div>
@@ -69,13 +91,17 @@
                     <span>Clientes ativos</span>
                     <h2 id="clientesAtivos">0</h2>
                 </div>
+
             </article>
 
         </section>
 
+
+        <!-- FILTROS -->
         <section class="filtros-clientes">
 
             <div class="campo-busca">
+
                 <i class="fa-solid fa-magnifying-glass"></i>
 
                 <input
@@ -84,20 +110,33 @@
                     placeholder="Buscar por nome, telefone ou cidade..."
                     aria-label="Buscar clientes"
                 >
+
             </div>
 
-            <select id="filtroStatus" aria-label="Filtrar clientes por status">
+
+            <select
+                id="filtroStatus"
+                aria-label="Filtrar clientes por status"
+            >
+
                 <option value="">Todos os clientes</option>
+
                 <option value="ativo">Ativos</option>
+
                 <option value="inativo">Inativos</option>
+
             </select>
 
         </section>
 
+
+        <!-- TABELA DE CLIENTES -->
         <section class="tabela-clientes">
 
             <table>
+
                 <thead>
+
                     <tr>
                         <th>Nome</th>
                         <th>Telefone</th>
@@ -107,22 +146,30 @@
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
+
                 </thead>
 
+
                 <tbody id="listaClientes">
+
                     <tr>
                         <td colspan="7" class="mensagem-vazia">
                             Carregando clientes...
                         </td>
                     </tr>
+
                 </tbody>
+
             </table>
 
         </section>
 
     </main>
+
 </div>
 
+
+<!-- JAVASCRIPT -->
 <script type="module" src="../../js/pages/advogado/clientes.js"></script>
 
 </body>

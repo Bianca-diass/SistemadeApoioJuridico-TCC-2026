@@ -1,6 +1,6 @@
+
 import { documentoController } from "../../controllers/documentosController.js";
 import { listarClientes } from "../../services/clienteService.js";
-
 
 // ==========================================
 // ELEMENTOS
@@ -10,6 +10,13 @@ const form = document.getElementById("formDocumento");
 const selectCliente = document.getElementById("cliente");
 const botaoSalvar = form.querySelector(".botao-salvar");
 
+// Status permitidos
+const statusPermitidos = [
+    "Pendente",
+    "Aprovado",
+    "Rejeitado",
+    "Enviado"
+];
 
 // ==========================================
 // CARREGAR CLIENTES
@@ -54,7 +61,6 @@ async function carregarClientes() {
         selectCliente.innerHTML =
             `<option value="">Erro ao carregar clientes</option>`;
 
-        // Token vencido: o back-end responde "Token inválido ou expirado"
         if (/token/i.test(erro.message)) {
             alert("Sua sessão expirou. Faça login novamente.");
             window.location.href = "login-adv.html";
@@ -69,7 +75,6 @@ async function carregarClientes() {
     }
 
 }
-
 
 // ==========================================
 // CADASTRAR DOCUMENTO
@@ -87,6 +92,13 @@ form.addEventListener("submit", async (evento) => {
         return;
     }
 
+    const status = document.getElementById("status").value;
+
+    if (!statusPermitidos.includes(status)) {
+        alert("Selecione um status válido para o documento.");
+        return;
+    }
+
     const dados = {
         titulo: document.getElementById("titulo").value.trim(),
         tipo: document.getElementById("tipo").value,
@@ -94,11 +106,10 @@ form.addEventListener("submit", async (evento) => {
         clienteId: clienteSelecionado.value,
         processo: document.getElementById("processo").value.trim(),
         dataEnvio: document.getElementById("dataEnvio").value,
-        status: document.getElementById("status").value,
+        status: status,
         descricao: document.getElementById("descricao").value.trim()
     };
 
-    // Evita clicar duas vezes e cadastrar em duplicidade
     botaoSalvar.disabled = true;
 
     try {
@@ -121,9 +132,8 @@ form.addEventListener("submit", async (evento) => {
 
 });
 
-
 // ==========================================
-// DATA ATUAL NO CAMPO
+// DATA ATUAL
 // ==========================================
 
 function colocarDataAtual() {
@@ -134,15 +144,14 @@ function colocarDataAtual() {
     const mes = String(hoje.getMonth() + 1).padStart(2, "0");
     const dia = String(hoje.getDate()).padStart(2, "0");
 
-    document.getElementById("dataEnvio").value = `${ano}-${mes}-${dia}`;
+    document.getElementById("dataEnvio").value =
+        `${ano}-${mes}-${dia}`;
 
 }
-
 
 // ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 
 colocarDataAtual();
-
 carregarClientes();

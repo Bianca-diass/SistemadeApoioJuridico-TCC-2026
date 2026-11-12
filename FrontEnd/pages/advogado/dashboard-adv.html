@@ -232,7 +232,7 @@
 
                 <i class="fas fa-folder-open"></i>
 
-                Últimos Processos
+                Processos
 
             </h2>
 
@@ -424,34 +424,45 @@
              NOTIFICAÇÕES
         =========================================== -->
 
-        <section class="painel">
+            <section class="painel">
 
-            <h2>
+    <h2>
+        <i class="fas fa-bell"></i>
+        Notificações
+        <span class="statusAtualizacao">Atualizado</span>
+    </h2>
 
-                <i class="fas fa-bell"></i>
+    <ul id="listaNotificacoes">
 
-                Notificações
+        <li>
+            <strong>Novo documento disponível</strong>
+            <p>Um novo documento foi disponibilizado no seu processo.</p>
+            <small>11/11/2026 - 14:30</small>
+        </li>
 
-                <span id="statusNotificacoes" class="statusAtualizacao">
-                    Conectando...
-                </span>
+        <li>
+            <strong>Prazo próximo</strong>
+            <p>Você possui um prazo processual previsto para os próximos dias.</p>
+            <small>10/11/2026 - 09:15</small>
+        </li>
 
-            </h2>
+        <li>
+            <strong>Processo atualizado</strong>
+            <p>Houve uma atualização no andamento do seu processo.</p>
+            <small>08/11/2026 - 16:45</small>
+        </li>
 
+        <li>
+            <strong>Novo compromisso</strong>
+            <p>Um novo compromisso foi registrado na sua agenda.</p>
+            <small>06/11/2026 - 10:00</small>
+        </li>
 
-            <ul id="listaNotificacoes">
+    </ul>
 
-                <li>Carregando notificações...</li>
-
-            </ul>
-
-        </section>
-
-
+</section>
 
     </main>
-
-
 
     <!-- ==========================================
          JAVASCRIPT

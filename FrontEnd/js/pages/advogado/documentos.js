@@ -1,307 +1,583 @@
-// ============================================================
-// CONFIG: único bloco com suposições. Ajuste aqui se algo não bater.
-// ============================================================
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+
 const CONFIG = {
-  tokenKey: 'token',                              // chave do JWT no localStorage
-  listar: '/documentos',                          // GET: lista de documentos do cliente
-  enviar: '/documentos',                          // POST (multipart): envio
-  campoUpload: 'arquivo',                         // nome do campo no FormData
-  arquivo: (id) => `/documentos/${id}/arquivo`,   // GET: conteúdo do arquivo
-  login: 'login.html',
-  maxBytes: 10 * 1024 * 1024,
-  tiposOk: ['application/pdf', 'image/jpeg', 'image/png']
+    apiBase: "",
+    tokenKey: "token",
+    listar: "/documentos",
+    login: "login.html"
 };
+
+// ==========================================
+// ELEMENTOS HTML
+// ==========================================
 
 const el = {
-  docs: document.getElementById('docs'),
-  busca: document.getElementById('busca'),
-  filtro: document.getElementById('filtro'),
-  input: document.getElementById('arquivo'),
-  modal: document.getElementById('modal'),
-  titulo: document.getElementById('modalTitulo'),
-  meta: document.getElementById('modalMeta'),
-  corpo: document.getElementById('modalCorpo'),
-  baixar: document.getElementById('modalBaixar'),
-  fechar: document.getElementById('modalFechar'),
-  toast: document.getElementById('toast')
+    docs: document.getElementById("listaDocumentos"),
+    busca: document.getElementById("pesquisarDocumento"),
+    filtro: document.getElementById("filtroCliente"),
+
+    total: document.getElementById("totalDocumentos"),
+    pendentes: document.getElementById("totalPendentes"),
+    aprovados: document.getElementById("totalAprovados"),
+
+    modal: document.getElementById("modalDocumento"),
+    fecharModal: document.getElementById("fecharModal"),
+
+    modalTitulo: document.getElementById("modalTitulo"),
+    modalTipo: document.getElementById("modalTipo"),
+    modalCliente: document.getElementById("modalCliente"),
+    modalProcesso: document.getElementById("modalProcesso"),
+    modalData: document.getElementById("modalData"),
+    modalStatus: document.getElementById("modalStatus"),
+    modalDescricao: document.getElementById("modalDescricao"),
+
+    modalEditar: document.getElementById("modalEditar"),
+    formEditar: document.getElementById("formEditarDocumento"),
+
+    editarId: document.getElementById("editarId"),
+    editarTitulo: document.getElementById("editarTitulo"),
+    editarTipo: document.getElementById("editarTipo"),
+    editarCliente: document.getElementById("editarCliente"),
+    editarProcesso: document.getElementById("editarProcesso"),
+    editarData: document.getElementById("editarData"),
+    editarStatus: document.getElementById("editarStatus"),
+    editarDescricao: document.getElementById("editarDescricao"),
+
+    cancelarEdicao: document.getElementById("cancelarEdicao")
 };
 
-let documentos = [];
-let blobAtual = null; // { url, nome }
+// ==========================================
+// VARIÁVEIS
+// ==========================================
 
-// ---------- utilitários ----------
-function escaparHTML(t) {
-  return String(t ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+let documentos = [];
+
+// ==========================================
+// VERIFICAR ELEMENTOS
+// ==========================================
+
+if (!el.docs || !el.busca || !el.filtro) {
+    console.error("Elementos da tela de documentos não encontrados.");
 }
 
-function obterData(d) {
-  const valor = d.data_envio ?? d.dataEnvio ?? d.data_upload ?? d.dataUpload ??
-    d.data_criacao ?? d.dataCriacao ?? d.criado_em ?? d.criadoEm ??
-    d.created_at ?? d.createdAt ?? d.data ?? '';
-  return valor ? String(valor).substring(0, 10) : '';
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+function escaparHTML(valor) {
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 function formatarData(valor) {
-  if (!valor) return '—';
-  const [a, m, dia] = String(valor).substring(0, 10).split('-');
-  return (a && m && dia) ? `${dia}/${m}/${a}` : '—';
+    if (!valor) return "-";
+
+    const data = String(valor).substring(0, 10);
+    const partes = data.split("-");
+
+    if (partes.length !== 3) return "-";
+
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
-function mostrarToast(msg, tipo = 'ok') {
-  el.toast.textContent = msg;
-  el.toast.className = `toast ${tipo}`;
-  el.toast.hidden = false;
-  clearTimeout(mostrarToast.t);
-  mostrarToast.t = setTimeout(() => (el.toast.hidden = true), 3500);
+function obterDocumento(id) {
+    return documentos.find(doc => String(doc.id) === String(id));
 }
 
-// ---------- API ----------
+function mostrarErro(mensagem) {
+    alert(mensagem);
+}
+
+// ==========================================
+// CONEXÃO COM BACKEND
+// ==========================================
+
 async function fetchAuth(url, opcoes = {}) {
-  const token = localStorage.getItem(CONFIG.tokenKey);
-  const res = await fetch(url, {
-    ...opcoes,
-    headers: { ...(opcoes.headers || {}), Authorization: `Bearer ${token}` }
-  });
-  if (res.status === 401) {
-    mostrarToast('Sessão expirada. Faça login novamente.', 'erro');
-    setTimeout(() => (window.location.href = CONFIG.login), 1200);
-    throw new Error('401');
-  }
-  return res;
+
+    const token = localStorage.getItem(CONFIG.tokenKey);
+
+    if (!token) {
+        window.location.href = CONFIG.login;
+        throw new Error("Token não encontrado.");
+    }
+
+    const resposta = await fetch(CONFIG.apiBase + url, {
+        ...opcoes,
+
+        headers: {
+            ...(opcoes.headers || {}),
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (resposta.status === 401) {
+        localStorage.removeItem(CONFIG.tokenKey);
+        window.location.href = CONFIG.login;
+        throw new Error("Sessão expirada.");
+    }
+
+    return resposta;
 }
 
-// ---------- padronização (snake_case e camelCase) ----------
-function urlDireta(d) {
-  const u = d.url ?? d.url_arquivo ?? d.urlArquivo ?? d.caminho ?? d.caminho_arquivo ?? d.caminhoArquivo ?? '';
-  if (!u || /^[a-zA-Z]:|\\/.test(u)) return '';          // ignora caminho de disco
-  if (/^https?:\/\//i.test(u) || u.startsWith('/')) return u;
-  return `/${u}`;
-}
+async function lerResposta(resposta) {
+    const texto = await resposta.text();
 
-function padronizar(d, indice) {
-  return {
-    k: indice,
-    id: d.id,
-    nome: d.nome_arquivo ?? d.nomeArquivo ?? d.nome ?? d.titulo ?? 'Documento',
-    tipo: d.tipo ?? d.tipo_documento ?? d.tipoDocumento ?? '',
-    processo: d.numero_processo ?? d.numeroProcesso ?? d.processo ?? '',
-    status: String(d.status ?? 'Pendente'),
-    data: obterData(d),
-    url: urlDireta(d)
-  };
-}
+    if (!texto) return {};
 
-// ---------- listagem ----------
-async function carregar() {
-  el.docs.innerHTML = '<div class="vazio"><i class="fa-solid fa-spinner fa-spin"></i>Carregando...</div>';
-  try {
-    const res = await fetchAuth(CONFIG.listar);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const dados = await res.json();
-    const lista = Array.isArray(dados) ? dados : (dados.documentos ?? dados.data ?? []);
-    documentos = lista.map(padronizar);
-    montarFiltro();
-    renderizar();
-  } catch (e) {
-    if (e.message === '401') return;
-    el.docs.innerHTML = '<div class="erro"><i class="fa-solid fa-triangle-exclamation"></i>Não foi possível carregar os documentos.</div>';
-    console.error('Erro ao carregar documentos:', e);
-  }
-}
-
-function montarFiltro() {
-  const atual = el.filtro.value;
-  const tipos = [...new Set(documentos.map(d => d.tipo).filter(Boolean))].sort();
-  el.filtro.innerHTML = '<option value="todos">Todos os tipos</option>' +
-    tipos.map(t => `<option value="${escaparHTML(t)}">${escaparHTML(t)}</option>`).join('');
-  if (tipos.includes(atual)) el.filtro.value = atual;
-}
-
-function renderizar() {
-  const termo = el.busca.value.trim().toLowerCase();
-  const filtro = el.filtro.value;
-
-  const lista = documentos.filter(d => {
-    const okTipo = filtro === 'todos' || d.tipo === filtro;
-    const okBusca = !termo ||
-      d.nome.toLowerCase().includes(termo) ||
-      String(d.processo).toLowerCase().includes(termo);
-    return okTipo && okBusca;
-  });
-
-  if (!lista.length) {
-    el.docs.innerHTML = '<div class="vazio"><i class="fa-regular fa-folder-open"></i>Nenhum documento encontrado.</div>';
-    return;
-  }
-
-  el.docs.innerHTML = lista.map(d => {
-    const statusClasse = d.status.toLowerCase().replace(/\s+/g, '-');
-    const statusTexto = d.status.charAt(0).toUpperCase() + d.status.slice(1).toLowerCase();
-    const meta = [
-      `Enviado em ${formatarData(d.data)}`,
-      d.tipo && escaparHTML(d.tipo),
-      d.processo && `Processo ${escaparHTML(d.processo)}`
-    ].filter(Boolean).join(' · ');
-
-    return `
-      <article class="doc">
-        <div class="doc-info">
-          <div class="doc-nome">${escaparHTML(d.nome)}</div>
-          <div class="doc-meta">${meta}</div>
-        </div>
-        <div class="doc-dir">
-          <span class="badge ${escaparHTML(statusClasse)}">${escaparHTML(statusTexto)}</span>
-          <button class="btn-ver" data-acao="ver" data-k="${d.k}"><i class="fa-regular fa-eye"></i> Visualizar</button>
-          <button class="btn-ico" data-acao="baixar" data-k="${d.k}" title="Baixar" aria-label="Baixar"><i class="fa-solid fa-download"></i></button>
-        </div>
-      </article>`;
-  }).join('');
-}
-
-// ---------- arquivo (blob com token) ----------
-async function obterBlob(doc) {
-  const candidatas = [doc.url, doc.id != null ? CONFIG.arquivo(doc.id) : ''].filter(Boolean);
-  let ultimoErro = new Error('Sem origem do arquivo');
-  for (const url of candidatas) {
     try {
-      const res = await fetchAuth(url);
-      if (res.ok) return await res.blob();
-      ultimoErro = new Error(`HTTP ${res.status}`);
-    } catch (e) {
-      if (e.message === '401') throw e;
-      ultimoErro = e;
+        return JSON.parse(texto);
+    } catch {
+        return { erro: texto };
     }
-  }
-  throw ultimoErro;
 }
 
-function tipoDoBlob(blob, nome) {
-  const t = (blob.type || '').toLowerCase();
-  const ext = String(nome).split('.').pop().toLowerCase();
-  if (t.includes('pdf') || ext === 'pdf') return 'pdf';
-  if (t.startsWith('image/') || ['jpg', 'jpeg', 'png'].includes(ext)) return 'imagem';
-  return 'outro';
+// ==========================================
+// PADRONIZAR DOCUMENTOS
+// ==========================================
+
+function padronizarDocumento(doc) {
+
+    return {
+        id: doc.id,
+        titulo: doc.titulo || "Documento",
+        tipo: doc.tipo || "-",
+        cliente: doc.cliente || "Cliente não informado",
+        cliente_id: doc.cliente_id,
+        processo: doc.processo || "-",
+        data_envio: doc.data_envio || "",
+        status: doc.status || "Pendente",
+        descricao: doc.descricao || ""
+    };
 }
 
-function baixarUrl(url, nome) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nome;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
+// ==========================================
+// LISTAR DOCUMENTOS
+// ==========================================
 
-async function baixar(doc) {
-  try {
-    const blob = await obterBlob(doc);
-    const url = URL.createObjectURL(blob);
-    baixarUrl(url, doc.nome);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  } catch (e) {
-    if (e.message !== '401') mostrarToast('Arquivo indisponível para download.', 'erro');
-    console.error(e);
-  }
-}
+async function carregarDocumentos() {
 
-// ---------- modal ----------
-function limparBlob() {
-  if (blobAtual) {
-    URL.revokeObjectURL(blobAtual.url);
-    blobAtual = null;
-  }
-}
+    el.docs.innerHTML = `
+        <tr>
+            <td colspan="7" class="vazio">
+                Carregando documentos...
+            </td>
+        </tr>
+    `;
 
-async function abrirModal(doc) {
-  el.titulo.textContent = doc.nome;
-  el.meta.textContent = [doc.tipo, doc.processo && `Processo ${doc.processo}`, formatarData(doc.data)]
-    .filter(Boolean).join(' · ');
-  el.corpo.innerHTML = '<div class="modal-msg"><i class="fa-solid fa-spinner fa-spin"></i>Carregando documento...</div>';
-  el.modal.hidden = false;
-  document.body.style.overflow = 'hidden';
+    try {
 
-  try {
-    const blobOriginal = await obterBlob(doc);
-    const tipo = tipoDoBlob(blobOriginal, doc.nome);
-    const blob = tipo === 'pdf' && !/pdf/i.test(blobOriginal.type)
-      ? new Blob([blobOriginal], { type: 'application/pdf' })
-      : blobOriginal;
+        const resposta = await fetchAuth(CONFIG.listar);
 
-    limparBlob();
-    const url = URL.createObjectURL(blob);
-    blobAtual = { url, nome: doc.nome };
+        const resultado = await lerResposta(resposta);
 
-    if (tipo === 'pdf') {
-      el.corpo.innerHTML = `<iframe src="${url}" title="${escaparHTML(doc.nome)}"></iframe>`;
-    } else if (tipo === 'imagem') {
-      el.corpo.innerHTML = `<img src="${url}" alt="${escaparHTML(doc.nome)}">`;
-    } else {
-      el.corpo.innerHTML = '<div class="modal-msg"><i class="fa-regular fa-file"></i>Pré-visualização indisponível para este formato.<br>Use o botão Baixar.</div>';
+        if (!resposta.ok) {
+            throw new Error(
+                resultado.erro || "Erro ao buscar documentos."
+            );
+        }
+
+        const dados = Array.isArray(resultado)
+            ? resultado
+            : resultado.documentos || resultado.data || [];
+
+        documentos = dados.map(padronizarDocumento);
+
+        atualizarResumo();
+        montarFiltroClientes();
+        renderizarDocumentos();
+
+    } catch (erro) {
+
+        console.error("Erro ao carregar documentos:", erro);
+
+        el.docs.innerHTML = `
+            <tr>
+                <td colspan="7" class="vazio">
+                    Não foi possível carregar os documentos.
+                    <br>
+                    <button onclick="carregarDocumentos()">
+                        Tentar novamente
+                    </button>
+                </td>
+            </tr>
+        `;
     }
-  } catch (e) {
-    if (e.message === '401') return;
-    el.corpo.innerHTML = '<div class="modal-msg"><i class="fa-solid fa-triangle-exclamation"></i>Arquivo indisponível para este documento.</div>';
-    console.error('Erro ao abrir documento:', e);
-  }
+}
+
+// ==========================================
+// ATUALIZAR RESUMO
+// ==========================================
+
+function atualizarResumo() {
+
+    el.total.textContent = documentos.length;
+
+    el.pendentes.textContent = documentos.filter(
+        doc => doc.status.toLowerCase() === "pendente"
+    ).length;
+
+    el.aprovados.textContent = documentos.filter(
+        doc => doc.status.toLowerCase() === "aprovado"
+    ).length;
+}
+
+// ==========================================
+// FILTRO DE CLIENTES
+// ==========================================
+
+function montarFiltroClientes() {
+
+    const selecionado = el.filtro.value;
+
+    const clientes = [
+        ...new Set(
+            documentos.map(doc => doc.cliente).filter(Boolean)
+        )
+    ].sort();
+
+    el.filtro.innerHTML = `
+        <option value="">Todos os clientes</option>
+        ${clientes.map(cliente => `
+            <option value="${escaparHTML(cliente)}">
+                ${escaparHTML(cliente)}
+            </option>
+        `).join("")}
+    `;
+
+    if (clientes.includes(selecionado)) {
+        el.filtro.value = selecionado;
+    }
+}
+
+// ==========================================
+// RENDERIZAR TABELA
+// ==========================================
+
+function renderizarDocumentos() {
+
+    const termo = el.busca.value.trim().toLowerCase();
+    const clienteSelecionado = el.filtro.value;
+
+    const filtrados = documentos.filter(doc => {
+
+        const correspondeBusca =
+            doc.titulo.toLowerCase().includes(termo) ||
+            doc.tipo.toLowerCase().includes(termo) ||
+            doc.cliente.toLowerCase().includes(termo) ||
+            doc.processo.toLowerCase().includes(termo);
+
+        const correspondeCliente =
+            !clienteSelecionado ||
+            doc.cliente === clienteSelecionado;
+
+        return correspondeBusca && correspondeCliente;
+    });
+
+    if (filtrados.length === 0) {
+
+        el.docs.innerHTML = `
+            <tr>
+                <td colspan="7" class="vazio">
+                    Nenhum documento encontrado.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    el.docs.innerHTML = filtrados.map(doc => {
+
+        const statusClasse = doc.status
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+
+        return `
+            <tr>
+
+                <td>
+                    <strong>${escaparHTML(doc.titulo)}</strong>
+                </td>
+
+                <td>
+                    ${escaparHTML(doc.tipo)}
+                </td>
+
+                <td>
+                    ${escaparHTML(doc.cliente)}
+                </td>
+
+                <td>
+                    ${escaparHTML(doc.processo)}
+                </td>
+
+                <td>
+                    ${formatarData(doc.data_envio)}
+                </td>
+
+                <td>
+                    <span class="status ${escaparHTML(statusClasse)}">
+                        ${escaparHTML(doc.status)}
+                    </span>
+                </td>
+
+                <td class="acoes">
+
+                    <button
+                        type="button"
+                        title="Visualizar"
+                        onclick="visualizarDocumento('${escaparHTML(doc.id)}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        title="Editar"
+                        onclick="abrirEdicao('${escaparHTML(doc.id)}')">
+                        <i class="fas fa-pen"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        title="Excluir"
+                        onclick="excluirDocumento('${escaparHTML(doc.id)}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+
+                </td>
+
+            </tr>
+        `;
+
+    }).join("");
+}
+
+// ==========================================
+// VISUALIZAR DOCUMENTO
+// ==========================================
+
+function visualizarDocumento(id) {
+
+    const doc = obterDocumento(id);
+
+    if (!doc) return;
+
+    el.modalTitulo.textContent = doc.titulo;
+    el.modalTipo.textContent = doc.tipo;
+    el.modalCliente.textContent = doc.cliente;
+    el.modalProcesso.textContent = doc.processo;
+    el.modalData.textContent = formatarData(doc.data_envio);
+    el.modalStatus.textContent = doc.status;
+    el.modalDescricao.textContent = doc.descricao || "-";
+
+    el.modal.hidden = false;
 }
 
 function fecharModal() {
-  el.modal.hidden = true;
-  el.corpo.innerHTML = '';
-  document.body.style.overflow = '';
-  limparBlob();
+    el.modal.hidden = true;
 }
 
-// ---------- upload ----------
-async function enviar(arquivo) {
-  if (!CONFIG.tiposOk.includes(arquivo.type)) {
-    mostrarToast('Formato inválido. Envie PDF, JPG ou PNG.', 'erro');
-    return;
-  }
-  if (arquivo.size > CONFIG.maxBytes) {
-    mostrarToast('Arquivo maior que 10 MB.', 'erro');
-    return;
-  }
-  const fd = new FormData();
-  fd.append(CONFIG.campoUpload, arquivo);
+// ==========================================
+// ABRIR EDIÇÃO
+// ==========================================
 
-  try {
-    const res = await fetchAuth(CONFIG.enviar, { method: 'POST', body: fd });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    mostrarToast('Documento enviado com sucesso.');
-    await carregar();
-  } catch (e) {
-    if (e.message !== '401') mostrarToast('Falha ao enviar o documento.', 'erro');
-    console.error(e);
-  }
+function abrirEdicao(id) {
+
+    const doc = obterDocumento(id);
+
+    if (!doc) return;
+
+    el.editarId.value = doc.id;
+    el.editarTitulo.value = doc.titulo;
+    el.editarTipo.value = doc.tipo;
+    el.editarCliente.value = doc.cliente;
+    el.editarProcesso.value = doc.processo === "-" ? "" : doc.processo;
+    el.editarData.value = doc.data_envio.substring(0, 10);
+    el.editarStatus.value = doc.status;
+    el.editarDescricao.value = doc.descricao;
+
+    el.modalEditar.hidden = false;
 }
 
-// ---------- eventos ----------
-el.docs.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('button[data-acao]');
-  if (!btn) return;
-  const doc = documentos[Number(btn.dataset.k)];
-  if (!doc) return;
-  if (btn.dataset.acao === 'ver') abrirModal(doc);
-  if (btn.dataset.acao === 'baixar') baixar(doc);
+function fecharEdicao() {
+    el.modalEditar.hidden = true;
+}
+
+// ==========================================
+// SALVAR EDIÇÃO
+// ==========================================
+
+el.formEditar.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    const id = el.editarId.value;
+
+    const dados = {
+
+        titulo: el.editarTitulo.value.trim(),
+
+        tipo: el.editarTipo.value,
+
+        processo: el.editarProcesso.value.trim(),
+
+        data_envio: el.editarData.value,
+
+        status: el.editarStatus.value,
+
+        descricao: el.editarDescricao.value.trim()
+
+    };
+
+    try {
+
+        const resposta = await fetchAuth(
+            `/documentos/${encodeURIComponent(id)}`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(dados)
+            }
+        );
+
+        const resultado = await lerResposta(resposta);
+
+        if (!resposta.ok) {
+            throw new Error(
+                resultado.erro || "Não foi possível atualizar."
+            );
+        }
+
+        alert("Documento atualizado com sucesso!");
+
+        fecharEdicao();
+
+        await carregarDocumentos();
+
+    } catch (erro) {
+
+        console.error("Erro ao editar:", erro);
+
+        mostrarErro(erro.message);
+    }
 });
 
-el.busca.addEventListener('input', renderizar);
-el.filtro.addEventListener('change', renderizar);
+// ==========================================
+// EXCLUIR DOCUMENTO
+// ==========================================
 
-el.input.addEventListener('change', () => {
-  const arquivo = el.input.files[0];
-  if (arquivo) enviar(arquivo);
-  el.input.value = '';
+async function excluirDocumento(id) {
+
+    const doc = obterDocumento(id);
+
+    if (!doc) return;
+
+    const confirmar = confirm(
+        `Deseja realmente excluir o documento "${doc.titulo}"?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+
+        const resposta = await fetchAuth(
+            `/documentos/${encodeURIComponent(id)}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const resultado = await lerResposta(resposta);
+
+        if (!resposta.ok) {
+            throw new Error(
+                resultado.erro || "Não foi possível excluir."
+            );
+        }
+
+        alert("Documento excluído com sucesso!");
+
+        await carregarDocumentos();
+
+    } catch (erro) {
+
+        console.error("Erro ao excluir:", erro);
+
+        mostrarErro(erro.message);
+    }
+}
+
+// ==========================================
+// EVENTOS
+// ==========================================
+
+el.busca.addEventListener(
+    "input",
+    renderizarDocumentos
+);
+
+el.filtro.addEventListener(
+    "change",
+    renderizarDocumentos
+);
+
+el.fecharModal.addEventListener(
+    "click",
+    fecharModal
+);
+
+el.cancelarEdicao.addEventListener(
+    "click",
+    fecharEdicao
+);
+
+el.modal.addEventListener("click", (event) => {
+
+    if (event.target === el.modal) {
+        fecharModal();
+    }
+
 });
 
-el.baixar.addEventListener('click', () => {
-  if (blobAtual) baixarUrl(blobAtual.url, blobAtual.nome);
-});
-el.fechar.addEventListener('click', fecharModal);
-el.modal.addEventListener('click', (ev) => { if (ev.target === el.modal) fecharModal(); });
-document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !el.modal.hidden) fecharModal(); });
+el.modalEditar.addEventListener("click", (event) => {
 
-carregar();
+    if (event.target === el.modalEditar) {
+        fecharEdicao();
+    }
+
+});
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key === "Escape") {
+        fecharModal();
+        fecharEdicao();
+    }
+
+});
+
+// ==========================================
+// DISPONIBILIZAR FUNÇÕES
+// ==========================================
+
+window.carregarDocumentos = carregarDocumentos;
+window.visualizarDocumento = visualizarDocumento;
+window.abrirEdicao = abrirEdicao;
+window.excluirDocumento = excluirDocumento;
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+
+carregarDocumentos();

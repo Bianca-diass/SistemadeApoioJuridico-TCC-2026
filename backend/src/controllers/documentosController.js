@@ -11,7 +11,12 @@ const TIPOS_VALIDOS = [
   "Outros"
 ];
 
-const STATUS_VALIDOS = ["Pendente", "Aprovado", "Rejeitado"];
+const STATUS_VALIDOS = [
+  "Pendente",
+  "Aprovado",
+  "Rejeitado",
+  "Enviado"
+];
 
 // ==========================================
 // FUNÇÕES AUXILIARES
@@ -53,7 +58,7 @@ async function listarIdsClientesDoAdvogado(advogadoId) {
 
   if (error) throw error;
 
-  return (data || []).map((item) => item.cliente_id);
+  return (data || []).map(item => item.cliente_id);
 }
 
 async function verificarVinculo(advogadoId, clienteId) {
@@ -164,7 +169,7 @@ const cadastrarDocumento = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erro ao cadastrar documento:", error.message);
+    console.error("Erro ao cadastrar documento:", error);
 
     return res.status(500).json({
       erro: "Erro ao cadastrar documento."
@@ -180,44 +185,44 @@ const listarDocumentos = async (req, res) => {
   try {
     const advogado = await buscarAdvogado(req.usuario.uid);
 
-    let consulta = supabaseAdmin
-      .from("documentos")
-      .select("*");
-
-    if (advogado) {
-      const idsClientes = await listarIdsClientesDoAdvogado(
-        advogado.id
-      );
-
-      if (idsClientes.length === 0) {
-        return res.status(200).json([]);
-      }
-
-      consulta = consulta.in("cliente_id", idsClientes);
-    } else {
-      const clienteId = await buscarClienteId(req.usuario.uid);
-
-      if (!clienteId) {
-        return res.status(403).json({
-          erro: "Acesso negado."
-        });
-      }
-
-      consulta = consulta.eq("cliente_id", clienteId);
+    if (!advogado) {
+      return res.status(403).json({
+        erro: "Advogado não encontrado."
+      });
     }
 
-    const { data, error } = await consulta
+    const idsClientes = await listarIdsClientesDoAdvogado(
+      advogado.id
+    );
+
+    console.log("Advogado:", advogado.id);
+    console.log("Clientes vinculados:", idsClientes);
+
+    if (idsClientes.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("documentos")
+      .select("*")
+      .in("cliente_id", idsClientes)
       .order("data_envio", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro Supabase:", error);
+      throw error;
+    }
+
+    console.log("Documentos encontrados:", data.length);
 
     return res.status(200).json(data || []);
 
   } catch (error) {
-    console.error("Erro ao listar documentos:", error.message);
+    console.error("Erro ao listar documentos:", error);
 
     return res.status(500).json({
-      erro: "Erro ao listar documentos."
+      erro: "Erro ao listar documentos.",
+      detalhes: error.message
     });
   }
 };
@@ -257,6 +262,7 @@ const obterDocumento = async (req, res) => {
           erro: "Acesso negado."
         });
       }
+
     } else {
       const clienteId = await buscarClienteId(req.usuario.uid);
 
@@ -270,7 +276,7 @@ const obterDocumento = async (req, res) => {
     return res.status(200).json(documento);
 
   } catch (error) {
-    console.error("Erro ao buscar documento:", error.message);
+    console.error("Erro ao buscar documento:", error);
 
     return res.status(500).json({
       erro: "Erro ao buscar documento."
@@ -279,7 +285,7 @@ const obterDocumento = async (req, res) => {
 };
 
 // ==========================================
-// EDITAR DOCUMENTO (SOMENTE ADVOGADO)
+// EDITAR DOCUMENTO
 // ==========================================
 
 const editarDocumento = async (req, res) => {
@@ -363,7 +369,7 @@ const editarDocumento = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erro ao editar documento:", error.message);
+    console.error("Erro ao editar documento:", error);
 
     return res.status(500).json({
       erro: "Erro ao editar documento."
@@ -372,7 +378,7 @@ const editarDocumento = async (req, res) => {
 };
 
 // ==========================================
-// EXCLUIR DOCUMENTO (SOMENTE ADVOGADO)
+// EXCLUIR DOCUMENTO
 // ==========================================
 
 const excluirDocumento = async (req, res) => {
@@ -424,13 +430,17 @@ const excluirDocumento = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erro ao excluir documento:", error.message);
+    console.error("Erro ao excluir documento:", error);
 
     return res.status(500).json({
       erro: "Erro ao excluir documento."
     });
   }
 };
+
+// ==========================================
+// EXPORTAÇÕES
+// ==========================================
 
 module.exports = {
   cadastrarDocumento,

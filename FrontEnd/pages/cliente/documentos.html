@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -42,28 +41,13 @@
         Configurações
       </a>
     </nav>
-
-    <div class="user">
-      <div class="av" id="inicialUsuario">C</div>
-
-      <div>
-        <span id="nomeUsuario">Cliente</span>
-
-        <small>
-          <a href="login.html" id="btnSair">Sair</a>
-        </small>
-      </div>
-    </div>
   </aside>
 
   <main>
 
     <header>
       <h1>Documentos</h1>
-
-      <p class="sub">
-        Acompanhe e visualize os documentos dos seus processos.
-      </p>
+      <p class="sub">Acompanhe e visualize os documentos dos seus processos.</p>
     </header>
 
     <section class="card">
@@ -76,15 +60,14 @@
 
           <div class="busca">
             <i class="fa-solid fa-magnifying-glass"></i>
-
             <input
               type="search"
               id="busca"
               placeholder="Buscar por nome ou processo"
-            >
+              aria-label="Buscar documento">
           </div>
 
-          <select id="filtro">
+          <select id="filtro" aria-label="Filtrar por tipo">
             <option value="todos">Todos os tipos</option>
           </select>
 
@@ -94,7 +77,125 @@
 
       <div class="resumo-documentos" id="resumoDocumentos"></div>
 
-      <div id="docs"></div>
+      <!-- ===== DOCUMENTOS =====
+           Para adicionar um novo, copie um bloco <button class="doc-item"> e
+           altere os data-* e o texto.
+           data-conteudo: parágrafos separados por ||
+           data-arquivo (opcional): caminho de um PDF real para o botão Baixar -->
+      <div id="docs">
+
+        <button type="button" class="doc-item"
+          data-nome="Procuração"
+          data-tipo="Procuração"
+          data-processo="0001234-56.2026.8.12.0002"
+          data-data="2026-09-10"
+          data-tamanho="148 KB"
+          data-status="assinado"
+          data-conteudo="Pelo presente instrumento particular, o outorgante nomeia e constitui seu advogado para representá-lo em juízo ou fora dele.||Ficam outorgados os poderes da cláusula ad judicia et extra, para o foro em geral, em qualquer instância.||O presente mandato é válido até a conclusão do processo indicado.">
+          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
+          <div class="doc-info">
+            <div class="doc-nome">Procuração</div>
+            <div class="doc-meta">
+              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
+              <span><i class="fa-regular fa-calendar"></i>10/09/2026</span>
+              <span><i class="fa-solid fa-weight-hanging"></i>148 KB</span>
+            </div>
+          </div>
+          <span class="badge b-ok">Assinado</span>
+          <i class="fa-solid fa-chevron-right doc-seta"></i>
+        </button>
+
+        <button type="button" class="doc-item"
+          data-nome="Contrato de honorários"
+          data-tipo="Contrato"
+          data-processo="0001234-56.2026.8.12.0002"
+          data-data="2026-09-10"
+          data-tamanho="212 KB"
+          data-status="assinado"
+          data-conteudo="Contrato de prestação de serviços advocatícios firmado entre o escritório e o cliente.||O objeto do contrato é o acompanhamento do processo indicado, em todas as suas fases.||Os honorários e a forma de pagamento foram acordados entre as partes e constam neste instrumento.">
+          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
+          <div class="doc-info">
+            <div class="doc-nome">Contrato de honorários</div>
+            <div class="doc-meta">
+              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
+              <span><i class="fa-regular fa-calendar"></i>10/09/2026</span>
+              <span><i class="fa-solid fa-weight-hanging"></i>212 KB</span>
+            </div>
+          </div>
+          <span class="badge b-ok">Assinado</span>
+          <i class="fa-solid fa-chevron-right doc-seta"></i>
+        </button>
+
+        <button type="button" class="doc-item"
+          data-nome="Petição inicial"
+          data-tipo="Petição"
+          data-processo="0001234-56.2026.8.12.0002"
+          data-data="2026-09-22"
+          data-tamanho="386 KB"
+          data-status="disponivel"
+          data-conteudo="EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO.||O autor, já qualificado nos autos, vem respeitosamente à presença de Vossa Excelência propor a presente ação, pelos fatos e fundamentos a seguir expostos.||Ao final, requer a citação da parte contrária e a total procedência dos pedidos.">
+          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
+          <div class="doc-info">
+            <div class="doc-nome">Petição inicial</div>
+            <div class="doc-meta">
+              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
+              <span><i class="fa-regular fa-calendar"></i>22/09/2026</span>
+              <span><i class="fa-solid fa-weight-hanging"></i>386 KB</span>
+            </div>
+          </div>
+          <span class="badge">Disponível</span>
+          <i class="fa-solid fa-chevron-right doc-seta"></i>
+        </button>
+
+        <button type="button" class="doc-item"
+          data-nome="Ata da audiência de conciliação"
+          data-tipo="Ata"
+          data-processo="0001234-56.2026.8.12.0002"
+          data-data="2026-10-28"
+          data-tamanho="97 KB"
+          data-status="disponivel"
+          data-conteudo="Aos vinte e oito dias do mês de outubro, realizou-se a audiência de conciliação, com a presença das partes e de seus advogados.||Não havendo acordo, o processo seguirá seu curso regular, com a designação da próxima fase.">
+          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
+          <div class="doc-info">
+            <div class="doc-nome">Ata da audiência de conciliação</div>
+            <div class="doc-meta">
+              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
+              <span><i class="fa-regular fa-calendar"></i>28/10/2026</span>
+              <span><i class="fa-solid fa-weight-hanging"></i>97 KB</span>
+            </div>
+          </div>
+          <span class="badge">Disponível</span>
+          <i class="fa-solid fa-chevron-right doc-seta"></i>
+        </button>
+
+        <button type="button" class="doc-item"
+          data-nome="Comprovante de residência"
+          data-tipo="Comprovante"
+          data-processo="0001234-56.2026.8.12.0002"
+          data-data="2026-09-05"
+          data-tamanho="1,2 MB"
+          data-status="analise"
+          data-conteudo="Comprovante de residência enviado pelo cliente.||Este documento está em análise pelo escritório e será validado em breve.">
+          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
+          <div class="doc-info">
+            <div class="doc-nome">Comprovante de residência</div>
+            <div class="doc-meta">
+              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
+              <span><i class="fa-regular fa-calendar"></i>05/09/2026</span>
+              <span><i class="fa-solid fa-weight-hanging"></i>1,2 MB</span>
+            </div>
+          </div>
+          <span class="badge b-warn">Em análise</span>
+          <i class="fa-solid fa-chevron-right doc-seta"></i>
+        </button>
+
+      </div>
+
+      <!-- Mensagem quando nenhum documento aparece -->
+      <p class="vazio" id="vazio" hidden>
+        <i class="fa-regular fa-folder-open"></i>
+        Nenhum documento encontrado.
+      </p>
 
     </section>
 
@@ -110,27 +211,22 @@
       <div class="modal-head">
 
         <div class="modal-titulo">
-
           <h3 id="modalTitulo">Documento</h3>
-
           <span id="modalMeta"></span>
-
         </div>
 
         <div class="modal-acoes">
 
           <button class="btn-sec" id="modalBaixar" type="button">
             <i class="fa-solid fa-download"></i>
-            Baixar
+            <span>Baixar</span>
           </button>
 
           <button class="btn-x"
             id="modalFechar"
             type="button"
             aria-label="Fechar">
-
             <i class="fa-solid fa-xmark"></i>
-
           </button>
 
         </div>
@@ -143,7 +239,145 @@
 
   </div>
 
-  <script type="module" src="../../js/pages/cliente/documentos.js"></script>
+  <script>
+    (function () {
+      var docs = Array.prototype.slice.call(document.querySelectorAll('#docs .doc-item'));
+      var busca = document.getElementById('busca');
+      var filtro = document.getElementById('filtro');
+      var resumo = document.getElementById('resumoDocumentos');
+      var vazio = document.getElementById('vazio');
+      var modal = document.getElementById('modal');
+      var modalTitulo = document.getElementById('modalTitulo');
+      var modalMeta = document.getElementById('modalMeta');
+      var modalCorpo = document.getElementById('modalCorpo');
+      var aberto = null;
+
+      var STATUS = { assinado: 'Assinado', disponivel: 'Disponível', analise: 'Em análise' };
+
+      function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+      }
+
+      function dataBR(str) {
+        var p = str.split('-');
+        return p[2] + '/' + p[1] + '/' + p[0];
+      }
+
+      /* ----- monta o filtro de tipos automaticamente ----- */
+      var tipos = [];
+      docs.forEach(function (d) {
+        if (tipos.indexOf(d.dataset.tipo) === -1) tipos.push(d.dataset.tipo);
+      });
+      tipos.sort().forEach(function (t) {
+        var o = document.createElement('option');
+        o.value = t;
+        o.textContent = t;
+        filtro.appendChild(o);
+      });
+
+      /* ----- busca + filtro ----- */
+      function aplicar() {
+        var termo = busca.value.trim().toLowerCase();
+        var tipo = filtro.value;
+        var visiveis = 0;
+
+        docs.forEach(function (el) {
+          var texto = (el.dataset.nome + ' ' + el.dataset.processo + ' ' + el.dataset.tipo).toLowerCase();
+          var ok = (!termo || texto.indexOf(termo) !== -1) &&
+                   (tipo === 'todos' || el.dataset.tipo === tipo);
+          el.style.display = ok ? '' : 'none';
+          if (ok) visiveis++;
+        });
+
+        vazio.hidden = visiveis !== 0;
+        resumo.textContent = visiveis === 1
+          ? '1 documento encontrado'
+          : visiveis + ' documentos encontrados';
+      }
+
+      busca.addEventListener('input', aplicar);
+      filtro.addEventListener('change', aplicar);
+
+      /* ----- modal ----- */
+      function detalhe(rotulo, valor) {
+        return '<div class="detalhe-doc"><small>' + rotulo + '</small><strong>' +
+          esc(valor) + '</strong></div>';
+      }
+
+      function abrir(el) {
+        aberto = el;
+        var d = el.dataset;
+
+        modalTitulo.textContent = d.nome;
+        modalMeta.textContent = d.tipo + ' · ' + dataBR(d.data) + ' · ' + d.tamanho;
+
+        var paragrafos = (d.conteudo || '').split('||').map(function (p) {
+          return '<p>' + esc(p) + '</p>';
+        }).join('');
+
+        modalCorpo.innerHTML =
+          '<div class="preview-aviso">Pré-visualização simplificada. Use o botão Baixar para obter o arquivo.</div>' +
+          '<div class="detalhes-doc">' +
+            detalhe('Processo', d.processo) +
+            detalhe('Tipo', d.tipo) +
+            detalhe('Data', dataBR(d.data)) +
+            detalhe('Situação', STATUS[d.status] || d.status) +
+          '</div>' +
+          '<div class="documento-preview">' +
+            '<div class="preview-topo"><h4>' + esc(d.nome) + '</h4><p>Processo ' + esc(d.processo) + '</p></div>' +
+            '<div class="preview-conteudo">' + paragrafos + '</div>' +
+            '<div class="preview-assinatura">Escritório de advocacia</div>' +
+          '</div>';
+
+        modal.hidden = false;
+        document.getElementById('modalFechar').focus();
+      }
+
+      function fechar() {
+        modal.hidden = true;
+        if (aberto) aberto.focus();
+      }
+
+      docs.forEach(function (el) {
+        el.addEventListener('click', function () { abrir(el); });
+      });
+
+      document.getElementById('modalFechar').addEventListener('click', fechar);
+      modal.addEventListener('click', function (e) { if (e.target === modal) fechar(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) fechar();
+      });
+
+      /* ----- baixar ----- */
+      document.getElementById('modalBaixar').addEventListener('click', function () {
+        if (!aberto) return;
+        var d = aberto.dataset;
+        var a = document.createElement('a');
+
+        if (d.arquivo) {
+          a.href = d.arquivo;
+          a.download = '';
+        } else {
+          var texto = d.nome + '\nProcesso ' + d.processo + '\n\n' +
+            (d.conteudo || '').split('||').join('\n\n');
+          var blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+          a.href = URL.createObjectURL(blob);
+          a.download = d.nome.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.txt';
+        }
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (!d.arquivo) URL.revokeObjectURL(a.href);
+      });
+
+      aplicar();
+    })();
+  </script>
 
 </body>
 </html>
