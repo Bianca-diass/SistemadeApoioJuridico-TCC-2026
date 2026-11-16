@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -9,6 +10,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="../../css/style-advogado/cadastro-cliente.css">
@@ -27,7 +29,8 @@
 
         <a href="javascript:history.back()"
            class="btnVoltar"
-           title="Voltar">
+           title="Voltar"
+           aria-label="Voltar">
         </a>
 
 
@@ -46,9 +49,11 @@
 
         <form id="formCliente" class="cardFormulario">
 
+            <!-- TIPO DE CLIENTE -->
+
             <div class="grupo">
 
-                <label>Tipo de Cliente</label>
+                <label for="tipoPessoa">Tipo de Cliente</label>
 
                 <select id="tipoPessoa">
 
@@ -65,9 +70,11 @@
             </div>
 
 
+            <!-- NOME -->
+
             <div class="grupo">
 
-                <label>Nome Completo</label>
+                <label for="nome">Nome Completo</label>
 
                 <input
                     type="text"
@@ -78,9 +85,11 @@
             </div>
 
 
+            <!-- EMAIL -->
+
             <div class="grupo">
 
-                <label>Email</label>
+                <label for="email">Email</label>
 
                 <input
                     type="email"
@@ -90,9 +99,11 @@
             </div>
 
 
+            <!-- TELEFONE -->
+
             <div class="grupo">
 
-                <label>Telefone</label>
+                <label for="telefone">Telefone</label>
 
                 <input
                     type="text"
@@ -102,9 +113,11 @@
             </div>
 
 
+            <!-- CPF -->
+
             <div class="grupo" id="grupoCpf">
 
-                <label>CPF</label>
+                <label for="cpf">CPF</label>
 
                 <input
                     type="text"
@@ -114,9 +127,11 @@
             </div>
 
 
+            <!-- CNPJ -->
+
             <div class="grupo" id="grupoCnpj" style="display:none;">
 
-                <label>CNPJ</label>
+                <label for="cnpj">CNPJ</label>
 
                 <input
                     type="text"
@@ -126,9 +141,11 @@
             </div>
 
 
+            <!-- RG -->
+
             <div class="grupo">
 
-                <label>RG</label>
+                <label for="rg">RG</label>
 
                 <input
                     type="text"
@@ -138,9 +155,11 @@
             </div>
 
 
+            <!-- ENDEREÇO -->
+
             <div class="grupo">
 
-                <label>Endereço</label>
+                <label for="endereco">Endereço</label>
 
                 <input
                     type="text"
@@ -150,9 +169,11 @@
             </div>
 
 
+            <!-- ESTADO -->
+
             <div class="grupo">
 
-                <label>Estado</label>
+                <label for="estado">Estado</label>
 
                 <select id="estado" required>
 
@@ -193,9 +214,11 @@
             </div>
 
 
+            <!-- CIDADE -->
+
             <div class="grupo">
 
-                <label>Cidade</label>
+                <label for="cidade">Cidade</label>
 
                 <select id="cidade" required disabled>
 
@@ -239,6 +262,8 @@
 
 </div>
 
+
+<!-- JAVASCRIPT -->
 
 <script
     type="module"

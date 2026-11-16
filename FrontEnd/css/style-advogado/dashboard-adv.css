@@ -338,6 +338,33 @@ ul li:last-child { margin-bottom: 0; }
     opacity: 0.7;
 }
 
+/* ===== BOTÃO "MARCAR TODAS COMO LIDAS" ===== */
+
+.btnMarcarTodas {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--dourado);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--azul-escuro);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.btnMarcarTodas:hover {
+    background: rgba(212, 169, 90, 0.15);
+}
+
+.btnMarcarTodas[hidden] {
+    display: none;
+}
+
 /* ===== STATUS DE ATUALIZAÇÃO ===== */
 
 .statusAtualizacao {

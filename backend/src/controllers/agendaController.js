@@ -1,6 +1,6 @@
-
 const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
+const { resolverClienteId } = require("../utils/vinculoCliente");
 
 // ==========================================
 // CADASTRAR COMPROMISSO
@@ -28,25 +28,11 @@ const cadastrarCompromisso = async (req, res) => {
     } = req.body;
 
     const advogadoId = req.advogado.id;
-    const clienteIdFinal = clienteId || cliente_id || null;
 
-    // Confirma se o cliente está vinculado ao advogado.
-    if (clienteIdFinal) {
-      const { data: vinculo, error: erroVinculo } = await supabaseAdmin
-        .from("advogado_clientes")
-        .select("cliente_id")
-        .eq("advogado_id", advogadoId)
-        .eq("cliente_id", clienteIdFinal)
-        .maybeSingle();
-
-      if (erroVinculo) throw erroVinculo;
-
-      if (!vinculo) {
-        return res.status(403).json({
-          erro: "Este cliente não está vinculado ao seu cadastro."
-        });
-      }
-    }
+    const clienteIdFinal = await resolverClienteId(advogadoId, {
+      clienteId: clienteId || cliente_id,
+      nome: cliente
+    });
 
     const compromisso = {
       titulo: titulo || "",
@@ -181,21 +167,32 @@ const atualizarCompromisso = async (req, res) => {
       });
     }
 
-    if (atualizacao.cliente_id) {
-      const { data: vinculo, error: erroVinculo } = await supabaseAdmin
-        .from("advogado_clientes")
-        .select("cliente_id")
-        .eq("advogado_id", advogadoId)
-        .eq("cliente_id", atualizacao.cliente_id)
-        .maybeSingle();
+    const { data: atual, error: erroAtual } = await supabaseAdmin
+      .from("agenda")
+      .select("cliente, cliente_id")
+      .eq("id", id)
+      .eq("advogado_id", advogadoId)
+      .maybeSingle();
 
-      if (erroVinculo) throw erroVinculo;
+    if (erroAtual) throw erroAtual;
 
-      if (!vinculo) {
-        return res.status(403).json({
-          erro: "Este cliente não está vinculado ao seu cadastro."
-        });
-      }
+    if (!atual) {
+      return res.status(404).json({
+        erro: "Compromisso não encontrado."
+      });
+    }
+
+    if (
+      atualizacao.cliente !== undefined ||
+      atualizacao.cliente_id !== undefined ||
+      !atual.cliente_id
+    ) {
+      atualizacao.cliente_id = await resolverClienteId(advogadoId, {
+        clienteId: atualizacao.cliente_id,
+        nome: atualizacao.cliente !== undefined
+          ? atualizacao.cliente
+          : atual.cliente
+      });
     }
 
     const { data, error } = await supabaseAdmin

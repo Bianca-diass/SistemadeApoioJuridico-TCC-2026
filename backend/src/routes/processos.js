@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+
 const verificarToken = require("../middlewares/authMiddleware");
 const exigirAdvogado = require("../middlewares/exigirAdvogado");
 
@@ -10,8 +11,16 @@ const {
   excluirProcesso
 } = require("../controllers/processoController");
 
-router.use(verificarToken); // exige login
-router.use(exigirAdvogado); // e exige que o usuário seja advogado
+const {
+  listarProcessosCliente
+} = require("../controllers/clienteDashboardController");
+
+// Cliente autenticado: consulta somente os próprios processos.
+router.get("/cliente", verificarToken, listarProcessosCliente);
+
+// Demais operações continuam exclusivas do advogado.
+router.use(verificarToken);
+router.use(exigirAdvogado);
 
 router.post("/", cadastrarProcesso);
 router.get("/", listarProcessos);

@@ -1,6 +1,7 @@
+
 /* ==========================================
    CADASTRO CLIENTE - ADVOGADO
-   Mesmo visual da tela inicial (azul-marinho + dourado)
+   Azul-marinho + dourado
 ========================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap");
@@ -23,10 +24,12 @@ body {
     font-family: 'Inter', Arial, sans-serif;
     min-height: 100vh;
     color: var(--azul-escuro);
+
     background:
         linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
         radial-gradient(circle at 50% 20%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
+
     background-size: 40px 40px, 40px 40px, 100% 100%;
     background-attachment: fixed;
 }
@@ -36,11 +39,17 @@ body {
    CONTEÚDO
 ========================================== */
 
+.container {
+    width: 100%;
+    min-height: 100vh;
+}
+
 .conteudo {
     flex: 1;
     width: 100%;
     min-height: 100vh;
     padding: 35px;
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -48,49 +57,72 @@ body {
 
 
 /* ==========================================
-   SETA DE VOLTAR (desenhada com CSS)
+   BOTÃO VOLTAR
 ========================================== */
 
 .btnVoltar {
     position: relative;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     align-self: flex-start;
-    width: 42px;
-    height: 42px;
+
+    /* TAMANHO REDUZIDO */
+    width: 36px;
+    height: 36px;
+
+    /* POSIÇÃO MAIS À DIREITA */
+    margin-left: 20px;
     margin-bottom: 15px;
+
     background: var(--azul-escuro);
+
     border: 2px solid rgba(212, 169, 90, 0.45);
     border-radius: 50%;
+
     color: transparent;
     font-size: 0;
     text-decoration: none;
+
     transition: transform .3s, background .3s;
 }
 
-/* linha da seta */
+/* Linha da seta */
+
 .btnVoltar::before {
     content: "";
+
     position: absolute;
-    width: 16px;
+
+    width: 14px;
     height: 2px;
+
     background: var(--dourado);
-    left: 11px;
-    top: 18px;
+
+    left: 9px;
+    top: 15px;
+
     border-radius: 2px;
 }
 
-/* ponta da seta */
+/* Ponta da seta */
+
 .btnVoltar::after {
     content: "";
+
     position: absolute;
-    width: 8px;
-    height: 8px;
+
+    width: 7px;
+    height: 7px;
+
     border-left: 2px solid var(--dourado);
     border-bottom: 2px solid var(--dourado);
-    left: 10px;
-    top: 14.5px;
+
+    left: 9px;
+    top: 11px;
+
     transform: rotate(45deg);
 }
 
@@ -101,7 +133,7 @@ body {
 
 
 /* ==========================================
-   TOPO (sobre o fundo azul)
+   CABEÇALHO
 ========================================== */
 
 .topoPagina {
@@ -123,32 +155,45 @@ body {
 
 
 /* ==========================================
-   FORMULÁRIO (card claro)
+   FORMULÁRIO
 ========================================== */
 
 .cardFormulario {
     position: relative;
+
     width: 100%;
-    max-width: 700px;
+    max-width: 600px;
+
     padding: 38px 35px 35px;
+
     background: var(--card);
+
     border-radius: 18px;
+
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-/* linha dourada no topo */
+/* Linha dourada no topo */
+
 .cardFormulario::before {
     content: "";
+
     position: absolute;
+
     top: 0;
     left: 50%;
+
     transform: translateX(-50%);
+
     width: 90px;
     height: 3px;
+
     border-radius: 0 0 4px 4px;
+
     background: var(--dourado);
 }
 
@@ -172,14 +217,22 @@ body {
 .grupo input,
 .grupo select,
 .grupo textarea {
+    width: 100%;
+
     padding: 13px 15px;
+
     background: #fff;
+
     border: 1px solid #cfd6df;
     border-radius: 10px;
+
     font-family: inherit;
     font-size: 15px;
+
     color: var(--azul-escuro);
+
     outline: none;
+
     transition: border-color .2s, box-shadow .2s;
 }
 
@@ -187,6 +240,7 @@ body {
 .grupo select:focus,
 .grupo textarea:focus {
     border-color: var(--dourado);
+
     box-shadow: 0 0 0 3px rgba(212, 169, 90, 0.25);
 }
 
@@ -194,13 +248,16 @@ body {
     color: #9aa5b3;
 }
 
+/* Preenchimento automático */
+
 .grupo input:-webkit-autofill,
 .grupo input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
     -webkit-text-fill-color: var(--azul-escuro) !important;
 }
 
-/* select desabilitado (cidade antes de escolher o estado) */
+/* Select desabilitado */
+
 .grupo select:disabled {
     background: #e3e7ed;
     color: #9aa5b3;
@@ -218,44 +275,62 @@ body {
     margin-top: 10px;
 }
 
-/* salvar */
+/* SALVAR */
+
 .salvar {
     flex: 1;
+
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+
     padding: 14px 22px;
+
     background: var(--azul);
     color: #fff;
+
     border: none;
     border-radius: 10px;
+
     cursor: pointer;
+
     font-family: inherit;
     font-size: 15px;
     font-weight: 700;
+
     transition: transform .2s, box-shadow .2s, filter .2s;
 }
 
-.salvar i { color: var(--dourado); }
+.salvar i {
+    color: var(--dourado);
+}
 
 .salvar:hover {
     transform: translateY(-2px);
+
     filter: brightness(1.15);
+
     box-shadow: 0 8px 18px rgba(15, 31, 51, 0.35);
 }
 
-/* limpar (só contorno) */
+/* CANCELAR / LIMPAR */
+
 .cancelar {
     padding: 14px 24px;
+
     background: transparent;
     color: var(--azul-escuro);
+
     border: 1.5px solid var(--azul-escuro);
     border-radius: 10px;
+
     cursor: pointer;
+
     font-family: inherit;
     font-size: 15px;
     font-weight: 700;
+
     transition: background .2s, color .2s;
 }
 
@@ -270,21 +345,53 @@ body {
 ========================================== */
 
 @media (max-width: 768px) {
-    .conteudo { padding: 20px; }
+
+    .conteudo {
+        padding: 20px;
+    }
+
+    .btnVoltar {
+        margin-left: 10px;
+    }
 
     .cardFormulario {
         padding: 32px 22px 22px;
         max-width: 100%;
     }
 
-    .topoPagina h1 { font-size: 28px; }
+    .topoPagina h1 {
+        font-size: 28px;
+    }
 
-    .botoes { flex-direction: column; }
+    .botoes {
+        flex-direction: column;
+    }
 }
 
+
+/* ==========================================
+   CELULARES
+========================================== */
+
 @media (max-width: 480px) {
-    .conteudo { padding: 15px; }
-    .topoPagina h1 { font-size: 25px; }
-    .topoPagina p { font-size: 14px; }
-    .cardFormulario { padding: 30px 18px 18px; }
+
+    .conteudo {
+        padding: 15px;
+    }
+
+    .btnVoltar {
+        margin-left: 8px;
+    }
+
+    .topoPagina h1 {
+        font-size: 25px;
+    }
+
+    .topoPagina p {
+        font-size: 14px;
+    }
+
+    .cardFormulario {
+        padding: 30px 18px 18px;
+    }
 }

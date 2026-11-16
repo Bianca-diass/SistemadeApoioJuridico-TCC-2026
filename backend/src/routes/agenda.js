@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -12,6 +11,14 @@ const {
   excluirCompromisso
 } = require("../controllers/agendaController");
 
+const {
+  listarAgendaCliente
+} = require("../controllers/clienteDadosController");
+
+// Rota do cliente (antes da proteção exclusiva do advogado)
+router.get("/cliente", verificarToken, listarAgendaCliente);
+
+// Demais rotas: somente advogado
 router.use(verificarToken);
 router.use(exigirAdvogado);
 

@@ -1,5 +1,6 @@
-
 const { supabaseAdmin } = require("../config/supabase");
+const { emitir } = require("../services/eventosService");
+const { vincularLegado } = require("../utils/clienteResolver");
 
 // Identifica se o usuário autenticado é advogado ou cliente.
 async function buscarPerfil(usuarioId) {
@@ -73,6 +74,36 @@ async function validarReferencias(clienteId, processoId, compromissoId) {
   return true;
 }
 
+// Reúne tudo o que pertence ao advogado: clientes vinculados,
+// processos e compromissos dele. Assim, a notificação aparece mesmo
+// quando foi gerada por um processo/compromisso sem cliente_id.
+async function buscarEscopoAdvogado(advogadoId) {
+  const [vinculos, processos, agenda] = await Promise.all([
+    supabaseAdmin
+      .from("advogado_clientes")
+      .select("cliente_id")
+      .eq("advogado_id", advogadoId),
+    supabaseAdmin
+      .from("processos")
+      .select("id")
+      .eq("advogado_id", advogadoId),
+    supabaseAdmin
+      .from("agenda")
+      .select("id")
+      .eq("advogado_id", advogadoId)
+  ]);
+
+  if (vinculos.error) throw vinculos.error;
+  if (processos.error) throw processos.error;
+  if (agenda.error) throw agenda.error;
+
+  return {
+    clientesIds: (vinculos.data || []).map(v => v.cliente_id),
+    processosIds: (processos.data || []).map(p => p.id),
+    compromissosIds: (agenda.data || []).map(a => a.id)
+  };
+}
+
 // Lista somente as notificações permitidas para o usuário.
 async function listarNotificacoes(req, res) {
   try {
@@ -90,22 +121,32 @@ async function listarNotificacoes(req, res) {
       .order("data_envio", { ascending: false });
 
     if (usuario.tipo === "cliente") {
-      consulta = consulta.eq("cliente_id", usuario.perfil.id);
+      await vincularLegado(usuario.perfil);
+
+      consulta = consulta.eq("cliente_id", usuario.perfil.id).limit(100);
     } else {
-      const { data: vinculos, error } = await supabaseAdmin
-        .from("advogado_clientes")
-        .select("cliente_id")
-        .eq("advogado_id", usuario.perfil.id);
+      const { clientesIds, processosIds, compromissosIds } =
+        await buscarEscopoAdvogado(usuario.perfil.id);
 
-      if (error) throw error;
+      const filtros = [];
 
-      const clientesIds = (vinculos || []).map(v => v.cliente_id);
+      if (clientesIds.length > 0) {
+        filtros.push(`cliente_id.in.(${clientesIds.join(",")})`);
+      }
 
-      if (clientesIds.length === 0) {
+      if (processosIds.length > 0) {
+        filtros.push(`processo_id.in.(${processosIds.join(",")})`);
+      }
+
+      if (compromissosIds.length > 0) {
+        filtros.push(`compromisso_id.in.(${compromissosIds.join(",")})`);
+      }
+
+      if (filtros.length === 0) {
         return res.status(200).json([]);
       }
 
-      consulta = consulta.in("cliente_id", clientesIds);
+      consulta = consulta.or(filtros.join(",")).limit(100);
     }
 
     const { data, error } = await consulta;
@@ -222,6 +263,8 @@ async function criarNotificacao(req, res) {
       .single();
 
     if (error) throw error;
+
+    emitir(clienteIdFinal, "notificacoes");
 
     return res.status(201).json(data);
   } catch (error) {

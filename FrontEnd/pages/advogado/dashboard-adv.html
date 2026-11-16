@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Área do Advogado</title>
+    <title>Dashboard | Área do Advogado</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -422,45 +422,30 @@
 
         <!-- ==========================================
              NOTIFICAÇÕES
+             (preenchidas pelo dashboard-adv.js)
         =========================================== -->
 
-            <section class="painel">
+        <section class="painel">
 
-    <h2>
-        <i class="fas fa-bell"></i>
-        Notificações
-        <span class="statusAtualizacao">Atualizado</span>
-    </h2>
+            <h2>
+                <i class="fas fa-bell"></i>
+                Notificações
+            </h2>
 
-    <ul id="listaNotificacoes">
+            <span id="statusNotificacoes" class="statusAtualizacao">
+                Atualizando...
+            </span>
 
-        <li>
-            <strong>Novo documento disponível</strong>
-            <p>Um novo documento foi disponibilizado no seu processo.</p>
-            <small>11/11/2026 - 14:30</small>
-        </li>
+            <button type="button" id="btnMarcarTodasLidas" class="btnMarcarTodas" hidden>
+                <i class="fas fa-check-double"></i>
+                Marcar todas como lidas
+            </button>
 
-        <li>
-            <strong>Prazo próximo</strong>
-            <p>Você possui um prazo processual previsto para os próximos dias.</p>
-            <small>10/11/2026 - 09:15</small>
-        </li>
+            <ul id="listaNotificacoes">
+                <li>Carregando notificações...</li>
+            </ul>
 
-        <li>
-            <strong>Processo atualizado</strong>
-            <p>Houve uma atualização no andamento do seu processo.</p>
-            <small>08/11/2026 - 16:45</small>
-        </li>
-
-        <li>
-            <strong>Novo compromisso</strong>
-            <p>Um novo compromisso foi registrado na sua agenda.</p>
-            <small>06/11/2026 - 10:00</small>
-        </li>
-
-    </ul>
-
-</section>
+        </section>
 
     </main>
 

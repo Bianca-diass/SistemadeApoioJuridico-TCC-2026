@@ -1,7 +1,7 @@
-
 import { getToken } from "../../services/authService.js";
 import { listarProcessos } from "../../services/processoService.js";
 import { listarCompromissos } from "../../services/agendaService.js";
+import { listarTodasNotificacoes } from "../../services/notificacaoService.js";
 
 // ==========================================================
 // CONFIGURAÇÃO
@@ -27,6 +27,7 @@ const totalNotificacoesEl = document.getElementById("totalNotificacoes");
 const statusProcessosEl = document.getElementById("statusProcessos");
 const statusAgendaEl = document.getElementById("statusAgenda");
 const statusNotificacoesEl = document.getElementById("statusNotificacoes");
+const btnMarcarTodasEl = document.getElementById("btnMarcarTodasLidas");
 
 // ==========================================================
 // PROTEÇÃO DE ROTA
@@ -42,6 +43,8 @@ if (!getToken()) {
 
 let carregandoProcessos = false;
 let carregandoAgenda = false;
+let carregandoNotificacoes = false;
+let notificacoesAtuais = [];
 let idIntervalo = null;
 
 // ==========================================================
@@ -389,112 +392,161 @@ function renderizarProximosCompromissos(compromissos) {
 }
 
 // ==========================================================
-// NOTIFICAÇÕES FICTÍCIAS
+// NOTIFICAÇÕES (DADOS REAIS DO BACKEND)
 // ==========================================================
+// O backend (GET /notificacoes) devolve as notificações dos
+// clientes vinculados ao advogado logado: novo processo,
+// processo atualizado, compromisso cadastrado, prazos e
+// audiências se aproximando.
+//
+// O campo "lida" do banco pertence ao CLIENTE (é ele quem lê no
+// dashboard dele). Por isso, o "lida" do advogado é guardado
+// apenas neste navegador (localStorage), sem mexer no cliente.
 
-const notificacoesFicticias = [
-    {
-        id: 1,
-        tipo: "processo",
-        titulo: "Processo atualizado",
-        mensagem: "Houve uma atualização no andamento do seu processo.",
-        dataEnvio: "2026-11-11T14:30:00",
-        lida: false
-    },
-    {
-        id: 2,
-        tipo: "prazo",
-        titulo: "Prazo próximo",
-        mensagem: "Você possui um prazo processual previsto para os próximos dias.",
-        dataEnvio: "2026-11-10T09:15:00",
-        lida: false
-    },
-    {
-        id: 3,
-        tipo: "sistema",
-        titulo: "Novo documento disponível",
-        mensagem: "Um novo documento foi disponibilizado para consulta.",
-        dataEnvio: "2026-11-09T16:45:00",
-        lida: false
-    },
-    {
-        id: 4,
-        tipo: "audiencia",
-        titulo: "Novo compromisso",
-        mensagem: "Um novo compromisso foi registrado na sua agenda.",
-        dataEnvio: "2026-11-08T10:00:00",
-        lida: true
-    }
-];
+const CHAVE_LIDAS = "notificacoesLidasAdvogado";
 
 const ICONE_POR_TIPO = {
     processo: "📌",
     prazo: "⏰",
     audiencia: "📅",
+    documento: "📄",
     sistema: "🔔"
 };
 
-function carregarNotificacoes() {
-    if (!listaNotificacoesEl) return;
-
-    const naoLidas = notificacoesFicticias.filter(item => !item.lida);
-
-    if (totalNotificacoesEl) {
-        totalNotificacoesEl.textContent = naoLidas.length;
+function lerLidasLocal() {
+    try {
+        const salvo = JSON.parse(localStorage.getItem(CHAVE_LIDAS) || "[]");
+        return new Set(Array.isArray(salvo) ? salvo.map(String) : []);
+    } catch {
+        return new Set();
     }
-
-    renderizarNotificacoes(notificacoesFicticias);
-    marcarAtualizado(statusNotificacoesEl);
 }
 
-function renderizarNotificacoes(notificacoes) {
+function salvarLidasLocal(conjunto) {
+    try {
+        // guarda só os últimos 500 ids para a lista não crescer sem parar
+        localStorage.setItem(
+            CHAVE_LIDAS,
+            JSON.stringify([...conjunto].slice(-500))
+        );
+    } catch (erro) {
+        console.warn("Não foi possível salvar as notificações lidas:", erro);
+    }
+}
+
+function padronizarNotificacao(n) {
+    return {
+        id: String(n.id),
+        tipo: String(n.tipo || "sistema").toLowerCase(),
+        titulo: n.titulo || "Notificação",
+        mensagem: n.mensagem || "",
+        dataEnvio: n.dataEnvio ?? n.data_envio ?? n.criado_em ?? n.criadoEm ?? null
+    };
+}
+
+function formatarDataHora(valor) {
+    const data = valor ? new Date(valor) : null;
+
+    if (!data || isNaN(data.getTime())) return "";
+
+    return data.toLocaleString("pt-BR");
+}
+
+async function carregarNotificacoes({ mostrarCarregando = false } = {}) {
+    if (!listaNotificacoesEl || carregandoNotificacoes) return;
+    carregandoNotificacoes = true;
+
+    try {
+        if (mostrarCarregando) {
+            listaNotificacoesEl.innerHTML = `<li>Carregando notificações...</li>`;
+        }
+
+        const dados = await listarTodasNotificacoes();
+
+        notificacoesAtuais = (Array.isArray(dados) ? dados : [])
+            .map(padronizarNotificacao);
+
+        renderizarNotificacoes();
+        marcarAtualizado(statusNotificacoesEl);
+
+    } catch (erro) {
+        console.error("Erro ao carregar notificações:", erro);
+        marcarErro(statusNotificacoesEl, "Não foi possível atualizar as notificações.");
+
+        // só mostra o erro na lista se ainda não havia nada carregado
+        if (notificacoesAtuais.length === 0) {
+            listaNotificacoesEl.innerHTML = `
+                <li style="color:#c0392b;">Erro ao carregar as notificações.</li>
+            `;
+        }
+    } finally {
+        carregandoNotificacoes = false;
+    }
+}
+
+function renderizarNotificacoes() {
     if (!listaNotificacoesEl) return;
 
-    if (notificacoes.length === 0) {
+    const lidas = lerLidasLocal();
+    const naoLidas = notificacoesAtuais.filter(n => !lidas.has(n.id));
+
+    if (totalNotificacoesEl) totalNotificacoesEl.textContent = naoLidas.length;
+    if (btnMarcarTodasEl) btnMarcarTodasEl.hidden = naoLidas.length === 0;
+
+    if (notificacoesAtuais.length === 0) {
         listaNotificacoesEl.innerHTML = `<li>Nenhuma notificação por enquanto.</li>`;
         return;
     }
 
-    const ordenadas = [...notificacoes].sort((a, b) => {
-        return new Date(b.dataEnvio) - new Date(a.dataEnvio);
+    const ordenadas = [...notificacoesAtuais].sort((a, b) => {
+        return new Date(b.dataEnvio || 0) - new Date(a.dataEnvio || 0);
     });
 
     listaNotificacoesEl.innerHTML = ordenadas
         .slice(0, LIMITE_NOTIFICACOES)
         .map(item => {
+            const lida = lidas.has(item.id);
             const icone = ICONE_POR_TIPO[item.tipo] || "🔔";
-            const data = new Date(item.dataEnvio).toLocaleString("pt-BR");
+            const data = formatarDataHora(item.dataEnvio);
 
             return `
                 <li
-                    data-id="${item.id}"
-                    class="notificacao ${!item.lida ? "naoLida" : ""}"
-                    style="cursor:pointer;"
-                    title="${item.lida ? "Notificação lida" : "Clique para marcar como lida"}"
+                    data-id="${escaparHTML(item.id)}"
+                    class="notificacao ${lida ? "" : "naoLida"}"
+                    style="cursor:${lida ? "default" : "pointer"};"
+                    title="${lida ? "Notificação lida" : "Clique para marcar como lida"}"
                 >
                     ${icone}
                     <strong>${escaparHTML(item.titulo)}:</strong>
                     ${escaparHTML(item.mensagem)}
-                    <small>${data}</small>
+                    ${data ? `<small>${escaparHTML(data)}</small>` : ""}
                 </li>
             `;
         })
         .join("");
 }
 
-// Marcar notificação como lida ao clicar
+// Clicar em uma notificação marca como lida
 listaNotificacoesEl?.addEventListener("click", evento => {
     const li = evento.target.closest("li[data-id]");
     if (!li) return;
 
-    const notificacao = notificacoesFicticias.find(
-        item => item.id == li.dataset.id
-    );
+    const lidas = lerLidasLocal();
+    if (lidas.has(li.dataset.id)) return;
 
-    if (!notificacao || notificacao.lida) return;
+    lidas.add(li.dataset.id);
+    salvarLidasLocal(lidas);
+    renderizarNotificacoes();
+});
 
-    notificacao.lida = true;
-    carregarNotificacoes();
+// Botão "Marcar todas como lidas"
+btnMarcarTodasEl?.addEventListener("click", () => {
+    const lidas = lerLidasLocal();
+
+    notificacoesAtuais.forEach(n => lidas.add(n.id));
+
+    salvarLidasLocal(lidas);
+    renderizarNotificacoes();
 });
 
 // ==========================================================
@@ -504,7 +556,7 @@ listaNotificacoesEl?.addEventListener("click", evento => {
 function atualizarTudo({ mostrarCarregando = false } = {}) {
     carregarProcessos({ mostrarCarregando });
     carregarProximosCompromissos({ mostrarCarregando });
-    carregarNotificacoes();
+    carregarNotificacoes({ mostrarCarregando });
 }
 
 function iniciarAtualizacaoAutomatica() {

@@ -1,9 +1,5 @@
-
 const { supabaseAdmin } = require("../config/supabase");
-
-// ==========================================================
-// CRIAR UMA NOTIFICAÇÃO NO SUPABASE
-// ==========================================================
+const { emitir } = require("./eventosService");
 
 async function criarNotificacao({
     tipo = "sistema",
@@ -38,10 +34,9 @@ async function criarNotificacao({
             throw error;
         }
 
-    } catch (error) {
-        // Uma falha na notificação não deve interromper
-        // o cadastro ou a atualização principal.
+        emitir(clienteId, "notificacoes");
 
+    } catch (error) {
         console.error(
             "Erro ao criar notificação automática:",
             error.message

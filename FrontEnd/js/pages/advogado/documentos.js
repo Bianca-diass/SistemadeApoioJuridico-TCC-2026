@@ -1,4 +1,3 @@
-
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
@@ -374,8 +373,12 @@ function visualizarDocumento(id) {
     el.modalCliente.textContent = doc.cliente;
     el.modalProcesso.textContent = doc.processo;
     el.modalData.textContent = formatarData(doc.data_envio);
+    el.modalDescricao.textContent = doc.descricao || "Sem descrição.";
+
     el.modalStatus.textContent = doc.status;
-    el.modalDescricao.textContent = doc.descricao || "-";
+    el.modalStatus.className = "status " + doc.status
+        .toLowerCase()
+        .replace(/\s+/g, "-");
 
     el.modal.hidden = false;
 }

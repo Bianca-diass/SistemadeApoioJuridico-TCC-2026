@@ -1,478 +1,188 @@
+import { getToken } from "../../services/authService.js";
+import {
+  MESES,
+  escaparHTML,
+  texto,
+  pegar,
+  formatarData,
+  formatarHora,
+  momentoDoCompromisso,
+  compromissosFuturos,
+  compromissosAnteriores,
+  observarCompromissos
+} from "../../services/compromissosCliente.js";
 
-// ============================================================
-// CONFIGURAÇÕES
-// ============================================================
-
-const CONFIG = {
-  tokenKey: 'token',
-  usuarioKeys: ['usuario', 'user'],
-  login: 'login.html',
-  modoDemonstracao: true
-};
-
-const el = {
-  agenda: document.getElementById('agenda'),
-  sub: document.getElementById('sub'),
-  abas: document.getElementById('abas'),
-  nome: document.getElementById('nomeUsuario'),
-  inicial: document.getElementById('inicialUsuario'),
-  sair: document.getElementById('btnSair'),
-  modal: document.getElementById('modal'),
-  titulo: document.getElementById('modalTitulo'),
-  corpo: document.getElementById('modalCorpo'),
-  fechar: document.getElementById('modalFechar')
-};
+if (!getToken()) {
+  window.location.href = "login.html";
+}
 
 let compromissos = [];
-let filtroAtual = 'proximos';
+let carregou = false;
+let erroCarregar = "";
+let filtroAtual = "proximos";
 
-// ============================================================
-// DATAS
-// ============================================================
+const elLista = document.getElementById("lista-agenda");
+const elResumo = document.getElementById("resumo-agenda");
+const elBusca = document.getElementById("busca");
 
-function hojeISO() {
-  const d = new Date();
-  const ano = d.getFullYear();
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
-  const dia = String(d.getDate()).padStart(2, '0');
+function getLista() {
+  const termo = texto(elBusca.value).toLowerCase();
 
-  return `${ano}-${mes}-${dia}`;
-}
+  let lista;
 
-function adicionarDias(quantidade) {
-  const data = new Date();
-  data.setHours(12, 0, 0, 0);
-  data.setDate(data.getDate() + quantidade);
-
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
-  const dia = String(data.getDate()).padStart(2, '0');
-
-  return `${ano}-${mes}-${dia}`;
-}
-
-function formatarData(data) {
-  if (!data) return '—';
-
-  const [ano, mes, dia] = data.split('-');
-
-  return `${dia}/${mes}/${ano}`;
-}
-
-const MESES = [
-  'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-  'jul', 'ago', 'set', 'out', 'nov', 'dez'
-];
-
-function partesData(data) {
-  const [, mes, dia] = data.split('-');
-
-  return {
-    dia,
-    mes: MESES[Number(mes) - 1] || '---'
-  };
-}
-
-// ============================================================
-// COMPROMISSOS FICTÍCIOS
-// ============================================================
-
-function gerarCompromissosDemonstracao() {
-  return [
-    {
-      id: 1,
-      titulo: 'Reunião com o advogado',
-      data: adicionarDias(-3),
-      hora: '09:00',
-      tipo: 'Reunião',
-      local: 'Escritório de Advocacia',
-      processo: '0001234-56',
-      advogado: 'Dr. Carlos Mendes',
-      status: 'agendado',
-      observacoes: 'Reunião para atualização sobre o andamento do processo.'
-    },
-    {
-      id: 2,
-      titulo: 'Audiência de conciliação',
-      data: adicionarDias(2),
-      hora: '14:00',
-      tipo: 'Audiência',
-      local: 'Fórum Central',
-      processo: '0001234-56',
-      advogado: 'Dr. Carlos Mendes',
-      status: 'agendado',
-      observacoes: 'Comparecer com documento de identificação e chegar com antecedência.'
-    },
-    {
-      id: 3,
-      titulo: 'Entrega de documentos',
-      data: adicionarDias(5),
-      hora: '10:00',
-      tipo: 'Documentação',
-      local: 'Escritório de Advocacia',
-      processo: '0005678-90',
-      advogado: 'Dra. Ana Souza',
-      status: 'agendado',
-      observacoes: 'Apresentar os documentos solicitados pelo advogado.'
-    },
-    {
-      id: 4,
-      titulo: 'Retorno sobre o processo',
-      data: adicionarDias(9),
-      hora: '15:30',
-      tipo: 'Atendimento',
-      local: 'Escritório de Advocacia',
-      processo: '0001234-56',
-      advogado: 'Dr. Carlos Mendes',
-      status: 'agendado',
-      observacoes: 'Atendimento para verificar atualizações e próximos passos do processo.'
-    }
-  ];
-}
-
-// ============================================================
-// IDENTIFICAÇÃO DO CLIENTE
-// ============================================================
-
-function carregarUsuario() {
-  for (const chave of CONFIG.usuarioKeys) {
-    try {
-      const usuario = JSON.parse(
-        localStorage.getItem(chave) || 'null'
-      );
-
-      const nome = usuario?.nome ?? usuario?.name;
-
-      if (nome) {
-        el.nome.textContent = nome;
-        el.inicial.textContent = nome.trim().charAt(0).toUpperCase();
-        return;
-      }
-    } catch (erro) {
-      console.error(erro);
-    }
+  if (filtroAtual === "proximos") lista = compromissosFuturos(compromissos);
+  else if (filtroAtual === "anteriores") lista = compromissosAnteriores(compromissos);
+  else {
+    lista = compromissos
+      .filter(c => momentoDoCompromisso(c))
+      .sort((a, b) => momentoDoCompromisso(a) - momentoDoCompromisso(b));
   }
 
-  el.nome.textContent = 'Cliente Demonstração';
-  el.inicial.textContent = 'C';
+  if (!termo) return lista;
+
+  return lista.filter(c =>
+    [c.titulo, c.local, c.tipo, c.descricao, c.processo]
+      .some(campo => texto(campo).toLowerCase().includes(termo))
+  );
 }
 
-// ============================================================
-// ESTADO DOS COMPROMISSOS
-// ============================================================
+function renderResumo() {
+  const agora = new Date();
+  const futuros = compromissosFuturos(compromissos);
+  const n = futuros.length;
 
-function estadoDe(c) {
-  if (c.status === 'concluido') return 'concluido';
-  if (c.status === 'cancelado') return 'cancelado';
-
-  if (c.data < hojeISO()) return 'atrasado';
-  if (c.data === hojeISO()) return 'hoje';
-
-  return 'agendado';
-}
-
-const ROTULOS = {
-  atrasado: 'Anterior',
-  hoje: 'Hoje',
-  concluido: 'Concluído',
-  cancelado: 'Cancelado',
-  agendado: 'Agendado'
-};
-
-// ============================================================
-// CARREGAMENTO
-// ============================================================
-
-function carregar() {
-  el.agenda.innerHTML =
-    '<div class="vazio">Carregando compromissos...</div>';
-
-  if (CONFIG.modoDemonstracao) {
-    // Não filtra pelo nome do usuário.
-    // Todos os compromissos fictícios aparecem na demonstração.
-
-    compromissos = gerarCompromissosDemonstracao();
-
-    renderizar();
-
-    console.log('Agenda de demonstração carregada:', compromissos);
-
-    return;
-  }
-}
-
-// ============================================================
-// FILTROS
-// ============================================================
-
-function filtrar() {
-  const hoje = hojeISO();
-
-  let lista = [...compromissos];
-
-  if (filtroAtual === 'proximos') {
-    lista = lista.filter(c =>
-      c.data >= hoje &&
-      !['cancelado', 'concluido'].includes(c.status)
-    );
-
-  } else if (filtroAtual === 'anteriores') {
-    lista = lista.filter(c =>
-      c.data < hoje
-    );
-  }
-
-  lista.sort((a, b) => {
-    if (filtroAtual === 'anteriores') {
-      return (b.data + b.hora).localeCompare(a.data + a.hora);
-    }
-
-    return (a.data + a.hora).localeCompare(b.data + b.hora);
+  const noMes = compromissos.filter(c => {
+    const d = momentoDoCompromisso(c);
+    return d && d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
   });
 
-  return lista;
+  elResumo.textContent = erroCarregar && !carregou
+    ? erroCarregar
+    : `Você tem ${n} compromisso${n === 1 ? "" : "s"} futuro${n === 1 ? "" : "s"}.`;
+
+  document.getElementById("stat-total").textContent = compromissos.length;
+  document.getElementById("stat-mes").textContent = noMes.length;
+
+  if (n) {
+    const p = futuros[0];
+    const d = momentoDoCompromisso(p);
+    const hora = texto(pegar(p, "horario", "hora")).substring(0, 5);
+
+    document.getElementById("stat-proximo").textContent =
+      `${String(d.getDate()).padStart(2, "0")} ${MESES[d.getMonth()].toLowerCase()}` +
+      (hora ? ` às ${hora}` : "");
+  } else {
+    document.getElementById("stat-proximo").textContent = "—";
+  }
 }
 
-// ============================================================
-// RENDERIZAÇÃO
-// ============================================================
-
-function escaparHTML(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function classeStatus(status) {
+  const s = texto(status).toLowerCase();
+  if (s === "concluído" || s === "concluido") return "badge-verde";
+  if (s === "cancelado") return "badge-vermelho";
+  return "badge-azul";
 }
 
-function renderizar() {
-  const lista = filtrar();
+function renderAgenda() {
+  if (!carregou) {
+    elLista.innerHTML = erroCarregar
+      ? `<p class="vazio">${escaparHTML(erroCarregar)}</p>`
+      : '<p class="vazio">Carregando compromissos...</p>';
+    return;
+  }
 
-  const proximos = compromissos.filter(c =>
-    c.data >= hojeISO() &&
-    !['cancelado', 'concluido'].includes(c.status)
-  ).length;
-
-  el.sub.textContent =
-    `Você tem ${proximos} compromisso(s) próximo(s) e ${compromissos.length} no total.`;
+  const lista = getLista();
 
   if (!lista.length) {
     const mensagens = {
-      proximos: 'Nenhum compromisso próximo.',
-      anteriores: 'Nenhum compromisso anterior.',
-      todos: 'Nenhum compromisso encontrado.'
+      proximos: "Nenhum compromisso futuro.",
+      anteriores: "Nenhum compromisso anterior.",
+      todos: "Nenhum compromisso encontrado."
     };
 
-    el.agenda.innerHTML =
-      `<div class="vazio">${mensagens[filtroAtual]}</div>`;
-
+    elLista.innerHTML = `<p class="vazio">${
+      texto(elBusca.value) ? "Nenhum compromisso encontrado." : mensagens[filtroAtual]
+    }</p>`;
     return;
   }
 
-  el.agenda.innerHTML = lista.map(c => {
-    const estado = estadoDe(c);
-    const { dia, mes } = partesData(c.data);
+  elLista.innerHTML = lista.map(c => {
+    const d = momentoDoCompromisso(c);
+    const hora = formatarHora(pegar(c, "horario", "hora"));
+    const local = texto(c.local);
+    const tipo = texto(c.tipo);
+    const processo = texto(c.processo);
+    const descricao = texto(c.descricao);
+    const status = texto(c.status);
+    const dataPrazo = formatarData(pegar(c, "data_prazo", "dataPrazo"));
+    const horaPrazo = formatarHora(pegar(c, "hora_prazo", "horaPrazo"));
+
+    const extras = [
+      tipo ? `Tipo: ${tipo}` : "",
+      processo ? `Processo: ${processo}` : "",
+      dataPrazo ? `Prazo: ${dataPrazo}${horaPrazo ? " às " + horaPrazo : ""}` : ""
+    ].filter(Boolean).join(" · ");
 
     return `
-      <button type="button"
-        class="item s-${estado}"
-        data-id="${c.id}">
-
-        <div class="data-bloco">
-          <span class="dia">${dia}</span>
-          <span class="mes">${mes}</span>
+      <div class="compromisso-card">
+        <div class="data-box">
+          <strong>${String(d.getDate()).padStart(2, "0")}</strong>
+          <span>${MESES[d.getMonth()]}</span>
         </div>
 
-        <div class="item-info">
-
-          <div class="item-titulo">
-            ${escaparHTML(c.titulo)}
-          </div>
-
-          <div class="item-meta">
-
-            <span>
-              <i class="fa-regular fa-clock"></i>
-              ${escaparHTML(c.hora)}
-            </span>
-
-            <span>
-              <i class="fa-solid fa-tag"></i>
-              ${escaparHTML(c.tipo)}
-            </span>
-
-            <span>
-              <i class="fa-solid fa-location-dot"></i>
-              ${escaparHTML(c.local)}
-            </span>
-
-          </div>
+        <div class="compromisso-info">
+          <h4>${escaparHTML(texto(c.titulo) || "Compromisso")}</h4>
+          <p>
+            ${hora ? `<span class="meta"><i data-lucide="clock"></i> ${escaparHTML(hora)}</span>` : ""}
+            ${local ? `<span class="meta"><i data-lucide="map-pin"></i> ${escaparHTML(local)}</span>` : ""}
+          </p>
+          ${extras ? `<p class="info-extra">${escaparHTML(extras)}</p>` : ""}
+          ${descricao ? `<p class="info-extra info-descricao">${escaparHTML(descricao)}</p>` : ""}
         </div>
 
-        <span class="badge ${estado}">
-          ${ROTULOS[estado]}
-        </span>
+        ${status ? `<span class="badge ${classeStatus(status)}">${escaparHTML(status)}</span>` : ""}
+      </div>`;
+  }).join("");
 
-        <i class="fa-solid fa-chevron-right item-seta"></i>
-
-      </button>
-    `;
-  }).join('');
+  if (window.lucide) window.lucide.createIcons();
 }
 
-// ============================================================
-// DETALHES DO COMPROMISSO
-// ============================================================
-
-function linhaDetalhe(icone, rotulo, valor) {
-  if (!valor) return '';
-
-  return `
-    <div class="linha">
-      <i class="${icone}"></i>
-
-      <div>
-        <small>${rotulo}</small>
-        <span>${escaparHTML(valor)}</span>
-      </div>
-    </div>
-  `;
+function atualizarTudo() {
+  renderResumo();
+  renderAgenda();
 }
 
-function abrirModal(c) {
-  const estado = estadoDe(c);
-
-  el.titulo.textContent = c.titulo;
-
-  el.corpo.innerHTML =
-    linhaDetalhe(
-      'fa-regular fa-calendar',
-      'Data',
-      formatarData(c.data)
-    ) +
-
-    linhaDetalhe(
-      'fa-regular fa-clock',
-      'Horário',
-      c.hora
-    ) +
-
-    linhaDetalhe(
-      'fa-solid fa-tag',
-      'Tipo',
-      c.tipo
-    ) +
-
-    linhaDetalhe(
-      'fa-solid fa-location-dot',
-      'Local',
-      c.local
-    ) +
-
-    linhaDetalhe(
-      'fa-solid fa-scale-balanced',
-      'Processo',
-      c.processo
-    ) +
-
-    linhaDetalhe(
-      'fa-solid fa-user-tie',
-      'Advogado',
-      c.advogado
-    ) +
-
-    linhaDetalhe(
-      'fa-solid fa-circle-check',
-      'Situação',
-      ROTULOS[estado]
-    ) +
-
-    linhaDetalhe(
-      'fa-regular fa-note-sticky',
-      'Observações',
-      c.observacoes
-    );
-
-  el.modal.hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-
-function fecharModal() {
-  el.modal.hidden = true;
-  el.corpo.innerHTML = '';
-  document.body.style.overflow = '';
-}
-
-// ============================================================
-// EVENTOS DAS ABAS
-// ============================================================
-
-el.abas.addEventListener('click', ev => {
-  const botao = ev.target.closest('button[data-f]');
-
-  if (!botao) return;
-
-  filtroAtual = botao.dataset.f;
-
-  el.abas.querySelectorAll('button').forEach(b => {
-    b.setAttribute('aria-pressed', String(b === botao));
-  });
-
-  renderizar();
-});
-
-// ============================================================
-// EVENTOS DOS COMPROMISSOS
-// ============================================================
-
-el.agenda.addEventListener('click', ev => {
-  const item = ev.target.closest('.item');
-
-  if (!item) return;
-
-  const compromisso = compromissos.find(
-    c => c.id === Number(item.dataset.id)
-  );
-
-  if (compromisso) {
-    abrirModal(compromisso);
-  }
-});
-
-// ============================================================
-// FECHAR MODAL
-// ============================================================
-
-el.fechar.addEventListener('click', fecharModal);
-
-el.modal.addEventListener('click', ev => {
-  if (ev.target === el.modal) {
-    fecharModal();
-  }
-});
-
-document.addEventListener('keydown', ev => {
-  if (ev.key === 'Escape' && !el.modal.hidden) {
-    fecharModal();
-  }
-});
-
-// ============================================================
-// SAIR
-// ============================================================
-
-el.sair.addEventListener('click', () => {
-  localStorage.removeItem(CONFIG.tokenKey);
-
-  CONFIG.usuarioKeys.forEach(chave => {
-    localStorage.removeItem(chave);
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    filtroAtual = btn.dataset.filtro;
+    renderAgenda();
   });
 });
 
-// ============================================================
-// INICIALIZAÇÃO
-// ============================================================
+elBusca.addEventListener("input", renderAgenda);
 
-carregarUsuario();
-carregar();
+observarCompromissos(
+  lista => {
+    compromissos = lista;
+    carregou = true;
+    erroCarregar = "";
+    atualizarTudo();
+  },
+  erro => {
+    console.error("Erro ao carregar a agenda:", erro);
+
+    if (erro.status === 401) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (!carregou) {
+      erroCarregar = "Não foi possível carregar os compromissos.";
+      atualizarTudo();
+    }
+  }
+);
+
+setInterval(atualizarTudo, 60000);

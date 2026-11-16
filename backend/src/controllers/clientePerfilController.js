@@ -2,19 +2,20 @@
 //
 // Perfil e configurações do cliente logado.
 // O cadastro do cliente fica na tabela "clientes", ligado à conta
-// de login pela coluna user_id.
+// de login pela coluna auth_user_id.
 
 const {
   supabaseAdmin,
   criarClienteAnonimo
 } = require("../config/supabase");
 
-// Acha o cadastro do cliente logado (clientes.user_id = id do login)
+// Acha o cadastro do cliente logado. O cadastro grava o id do login em
+// auth_user_id (e, em cadastros antigos, em user_id), então procura nos dois.
 async function buscarCliente(uid) {
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("*")
-    .eq("user_id", uid)
+    .or(`auth_user_id.eq.${uid},user_id.eq.${uid}`)
     .maybeSingle();
 
   if (error) throw error;

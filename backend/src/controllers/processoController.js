@@ -1,6 +1,6 @@
-
 const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
+const { resolverClienteId } = require("../utils/vinculoCliente");
 
 
 // ==========================================================
@@ -69,10 +69,15 @@ const cadastrarProcesso = async (req, res) => {
 
         const advogadoId = req.advogado.id;
 
+        const clienteIdFinal = await resolverClienteId(advogadoId, {
+            clienteId: clienteId || cliente_id,
+            nome: cliente
+        });
+
         const processo = {
             numero_processo: numeroProcesso || "",
             cliente: cliente || "",
-            cliente_id: clienteId || cliente_id || null,
+            cliente_id: clienteIdFinal,
 
             advogado: req.advogado.nome || req.usuario.email || "",
             advogado_id: advogadoId,
@@ -219,6 +224,19 @@ const atualizarProcesso = async (req, res) => {
         if (Object.keys(atualizacao).length === 0) {
             return res.status(400).json({
                 erro: "Nenhum campo válido informado para atualização"
+            });
+        }
+
+        if (
+            atualizacao.cliente !== undefined ||
+            atualizacao.cliente_id !== undefined ||
+            !dadosAntes.cliente_id
+        ) {
+            atualizacao.cliente_id = await resolverClienteId(advogadoId, {
+                clienteId: atualizacao.cliente_id,
+                nome: atualizacao.cliente !== undefined
+                    ? atualizacao.cliente
+                    : dadosAntes.cliente
             });
         }
 

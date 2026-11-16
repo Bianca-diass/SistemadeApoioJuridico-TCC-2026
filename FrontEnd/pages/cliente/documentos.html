@@ -11,6 +11,35 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <link rel="stylesheet" href="../../css/style-cliente/documentos-cliente.css">
+
+  <!-- Estilos do envio de documento (usa as cores da página) -->
+  <style>
+    .btn-prim {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border: 0; border-radius: 10px;
+      background: var(--verde); color: #fff;
+      font: inherit; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-prim:hover { background: var(--verde-escuro); }
+    .btn-prim:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-prim i { color: var(--dourado); }
+
+    .form-envio { display: grid; gap: 14px; padding: 4px 2px; }
+    .campo { display: grid; gap: 6px; }
+    .campo label { font-size: 13px; font-weight: 600; color: var(--verde-escuro); }
+    .campo input, .campo select {
+      padding: 11px 12px; border: 1px solid var(--borda); border-radius: 10px;
+      font: inherit; font-size: 14px; background: #fff; color: var(--texto);
+    }
+    .campo input:focus, .campo select:focus { outline: 2px solid var(--dourado); outline-offset: 1px; }
+    .campo small { color: var(--suave); font-size: 12px; }
+    .msg-envio { font-size: 13px; font-weight: 600; min-height: 18px; }
+    .msg-envio.erro { color: var(--erro); }
+    .msg-envio.ok { color: var(--ok); }
+    .acoes-envio { display: flex; justify-content: flex-end; gap: 10px; }
+    .b-err { background: #fde8e6; color: var(--erro); }
+  </style>
 </head>
 
 <body class="documentos-page">
@@ -22,22 +51,18 @@
 
     <nav>
       <a href="dashboard.html">
-        <i class="fa-solid fa-chart-line"></i>
         Dashboard
       </a>
 
       <a href="agenda.html">
-        <i class="fa-regular fa-calendar"></i>
         Agenda
       </a>
 
       <a href="documentos.html" class="on">
-        <i class="fa-regular fa-file-lines"></i>
         Documentos
       </a>
 
       <a href="configuracoes.html">
-        <i class="fa-solid fa-gear"></i>
         Configurações
       </a>
     </nav>
@@ -47,7 +72,7 @@
 
     <header>
       <h1>Documentos</h1>
-      <p class="sub">Acompanhe e visualize os documentos dos seus processos.</p>
+      <p class="sub">Acompanhe os documentos dos seus processos e envie arquivos para o seu advogado.</p>
     </header>
 
     <section class="card">
@@ -69,7 +94,27 @@
 
           <select id="filtro" aria-label="Filtrar por tipo">
             <option value="todos">Todos os tipos</option>
+            <option value="Comprovante">Comprovante</option>
+            <option value="Contrato">Contrato</option>
+            <option value="CPF">CPF</option>
+            <option value="Petição">Petição</option>
+            <option value="Procuração">Procuração</option>
+            <option value="RG">RG</option>
+            <option value="Outros">Outros</option>
           </select>
+
+          <select id="filtroStatus" aria-label="Filtrar por situação">
+            <option value="todos">Todas as situações</option>
+            <option value="Enviado">Enviado</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Rejeitado">Rejeitado</option>
+          </select>
+
+          <button type="button" class="btn-prim" id="btnEnviar">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            Enviar documento
+          </button>
 
         </div>
 
@@ -77,121 +122,9 @@
 
       <div class="resumo-documentos" id="resumoDocumentos"></div>
 
-      <!-- ===== DOCUMENTOS =====
-           Para adicionar um novo, copie um bloco <button class="doc-item"> e
-           altere os data-* e o texto.
-           data-conteudo: parágrafos separados por ||
-           data-arquivo (opcional): caminho de um PDF real para o botão Baixar -->
-      <div id="docs">
+      <!-- Preenchido pelo script com os documentos do banco -->
+      <div id="docs"></div>
 
-        <button type="button" class="doc-item"
-          data-nome="Procuração"
-          data-tipo="Procuração"
-          data-processo="0001234-56.2026.8.12.0002"
-          data-data="2026-09-10"
-          data-tamanho="148 KB"
-          data-status="assinado"
-          data-conteudo="Pelo presente instrumento particular, o outorgante nomeia e constitui seu advogado para representá-lo em juízo ou fora dele.||Ficam outorgados os poderes da cláusula ad judicia et extra, para o foro em geral, em qualquer instância.||O presente mandato é válido até a conclusão do processo indicado.">
-          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
-          <div class="doc-info">
-            <div class="doc-nome">Procuração</div>
-            <div class="doc-meta">
-              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
-              <span><i class="fa-regular fa-calendar"></i>10/09/2026</span>
-              <span><i class="fa-solid fa-weight-hanging"></i>148 KB</span>
-            </div>
-          </div>
-          <span class="badge b-ok">Assinado</span>
-          <i class="fa-solid fa-chevron-right doc-seta"></i>
-        </button>
-
-        <button type="button" class="doc-item"
-          data-nome="Contrato de honorários"
-          data-tipo="Contrato"
-          data-processo="0001234-56.2026.8.12.0002"
-          data-data="2026-09-10"
-          data-tamanho="212 KB"
-          data-status="assinado"
-          data-conteudo="Contrato de prestação de serviços advocatícios firmado entre o escritório e o cliente.||O objeto do contrato é o acompanhamento do processo indicado, em todas as suas fases.||Os honorários e a forma de pagamento foram acordados entre as partes e constam neste instrumento.">
-          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
-          <div class="doc-info">
-            <div class="doc-nome">Contrato de honorários</div>
-            <div class="doc-meta">
-              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
-              <span><i class="fa-regular fa-calendar"></i>10/09/2026</span>
-              <span><i class="fa-solid fa-weight-hanging"></i>212 KB</span>
-            </div>
-          </div>
-          <span class="badge b-ok">Assinado</span>
-          <i class="fa-solid fa-chevron-right doc-seta"></i>
-        </button>
-
-        <button type="button" class="doc-item"
-          data-nome="Petição inicial"
-          data-tipo="Petição"
-          data-processo="0001234-56.2026.8.12.0002"
-          data-data="2026-09-22"
-          data-tamanho="386 KB"
-          data-status="disponivel"
-          data-conteudo="EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO.||O autor, já qualificado nos autos, vem respeitosamente à presença de Vossa Excelência propor a presente ação, pelos fatos e fundamentos a seguir expostos.||Ao final, requer a citação da parte contrária e a total procedência dos pedidos.">
-          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
-          <div class="doc-info">
-            <div class="doc-nome">Petição inicial</div>
-            <div class="doc-meta">
-              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
-              <span><i class="fa-regular fa-calendar"></i>22/09/2026</span>
-              <span><i class="fa-solid fa-weight-hanging"></i>386 KB</span>
-            </div>
-          </div>
-          <span class="badge">Disponível</span>
-          <i class="fa-solid fa-chevron-right doc-seta"></i>
-        </button>
-
-        <button type="button" class="doc-item"
-          data-nome="Ata da audiência de conciliação"
-          data-tipo="Ata"
-          data-processo="0001234-56.2026.8.12.0002"
-          data-data="2026-10-28"
-          data-tamanho="97 KB"
-          data-status="disponivel"
-          data-conteudo="Aos vinte e oito dias do mês de outubro, realizou-se a audiência de conciliação, com a presença das partes e de seus advogados.||Não havendo acordo, o processo seguirá seu curso regular, com a designação da próxima fase.">
-          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
-          <div class="doc-info">
-            <div class="doc-nome">Ata da audiência de conciliação</div>
-            <div class="doc-meta">
-              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
-              <span><i class="fa-regular fa-calendar"></i>28/10/2026</span>
-              <span><i class="fa-solid fa-weight-hanging"></i>97 KB</span>
-            </div>
-          </div>
-          <span class="badge">Disponível</span>
-          <i class="fa-solid fa-chevron-right doc-seta"></i>
-        </button>
-
-        <button type="button" class="doc-item"
-          data-nome="Comprovante de residência"
-          data-tipo="Comprovante"
-          data-processo="0001234-56.2026.8.12.0002"
-          data-data="2026-09-05"
-          data-tamanho="1,2 MB"
-          data-status="analise"
-          data-conteudo="Comprovante de residência enviado pelo cliente.||Este documento está em análise pelo escritório e será validado em breve.">
-          <div class="doc-icone"><i class="fa-regular fa-file-pdf"></i></div>
-          <div class="doc-info">
-            <div class="doc-nome">Comprovante de residência</div>
-            <div class="doc-meta">
-              <span><i class="fa-solid fa-scale-balanced"></i>Proc. 0001234-56.2026.8.12.0002</span>
-              <span><i class="fa-regular fa-calendar"></i>05/09/2026</span>
-              <span><i class="fa-solid fa-weight-hanging"></i>1,2 MB</span>
-            </div>
-          </div>
-          <span class="badge b-warn">Em análise</span>
-          <i class="fa-solid fa-chevron-right doc-seta"></i>
-        </button>
-
-      </div>
-
-      <!-- Mensagem quando nenhum documento aparece -->
       <p class="vazio" id="vazio" hidden>
         <i class="fa-regular fa-folder-open"></i>
         Nenhum documento encontrado.
@@ -201,6 +134,7 @@
 
   </main>
 
+  <!-- ===== MODAL: DETALHES DO DOCUMENTO ===== -->
   <div class="modal" id="modal" hidden>
 
     <div class="modal-box"
@@ -239,55 +173,242 @@
 
   </div>
 
+  <!-- ===== MODAL: ENVIAR DOCUMENTO ===== -->
+  <div class="modal" id="modalEnvio" hidden>
+
+    <div class="modal-box"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="envioTitulo">
+
+      <div class="modal-head">
+
+        <div class="modal-titulo">
+          <h3 id="envioTitulo">Enviar documento</h3>
+          <span>O arquivo será enviado ao seu advogado.</span>
+        </div>
+
+        <div class="modal-acoes">
+          <button class="btn-x"
+            id="envioFechar"
+            type="button"
+            aria-label="Fechar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <div class="modal-corpo">
+        <form class="form-envio" id="formEnvio" novalidate>
+
+          <div class="campo">
+            <label for="envioArquivo">Arquivo</label>
+            <input type="file" id="envioArquivo"
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required>
+            <small>PDF, JPG, PNG, DOC ou DOCX, até 10 MB.</small>
+          </div>
+
+          <div class="campo">
+            <label for="envioTituloDoc">Título do documento</label>
+            <input type="text" id="envioTituloDoc" maxlength="120"
+              placeholder="Ex.: Comprovante de residência" required>
+          </div>
+
+          <div class="campo">
+            <label for="envioTipo">Tipo</label>
+            <select id="envioTipo" required>
+              <option value="Comprovante">Comprovante</option>
+              <option value="RG">RG</option>
+              <option value="CPF">CPF</option>
+              <option value="Procuração">Procuração</option>
+              <option value="Contrato">Contrato</option>
+              <option value="Petição">Petição</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="envioProcesso">Número do processo (opcional)</label>
+            <input type="text" id="envioProcesso" maxlength="40"
+              placeholder="0000000-00.0000.0.00.0000">
+          </div>
+
+          <div class="msg-envio" id="msgEnvio" role="alert"></div>
+
+          <div class="acoes-envio">
+            <button type="button" class="btn-sec" id="envioCancelar">Cancelar</button>
+            <button type="submit" class="btn-prim" id="envioEnviar">
+              <i class="fa-solid fa-paper-plane"></i>
+              Enviar
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
   <script>
     (function () {
-      var docs = Array.prototype.slice.call(document.querySelectorAll('#docs .doc-item'));
+      var API = 'http://localhost:3000/documentos';
+      var MAX_BYTES = 10 * 1024 * 1024;
+
+      var token = localStorage.getItem('token');
+      if (!token) { window.location.href = 'login.html'; return; }
+
+      var docsEl = document.getElementById('docs');
       var busca = document.getElementById('busca');
       var filtro = document.getElementById('filtro');
+      var filtroStatus = document.getElementById('filtroStatus');
       var resumo = document.getElementById('resumoDocumentos');
       var vazio = document.getElementById('vazio');
       var modal = document.getElementById('modal');
       var modalTitulo = document.getElementById('modalTitulo');
       var modalMeta = document.getElementById('modalMeta');
       var modalCorpo = document.getElementById('modalCorpo');
+      var btnBaixar = document.getElementById('modalBaixar');
+
+      var modalEnvio = document.getElementById('modalEnvio');
+      var formEnvio = document.getElementById('formEnvio');
+      var msgEnvio = document.getElementById('msgEnvio');
+      var btnEnviarForm = document.getElementById('envioEnviar');
+      var inputArquivo = document.getElementById('envioArquivo');
+      var inputTitulo = document.getElementById('envioTituloDoc');
+
+      var documentos = [];
       var aberto = null;
+      var ultimoFoco = null;
 
-      var STATUS = { assinado: 'Assinado', disponivel: 'Disponível', analise: 'Em análise' };
+      var STATUS = {
+        Aprovado: { rotulo: 'Aprovado', classe: 'b-ok' },
+        Pendente: { rotulo: 'Pendente', classe: 'b-warn' },
+        Rejeitado: { rotulo: 'Rejeitado', classe: 'b-err' },
+        Enviado: { rotulo: 'Enviado', classe: '' }
+      };
 
-      function esc(s) {
-        var d = document.createElement('div');
-        d.textContent = s || '';
-        return d.innerHTML;
-      }
+      var MIME_POR_EXT = {
+        pdf: 'application/pdf',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      };
 
+      /* ----- utilidades ----- */
       function dataBR(str) {
-        var p = str.split('-');
-        return p[2] + '/' + p[1] + '/' + p[0];
+        if (!str) return '—';
+        var p = String(str).slice(0, 10).split('-');
+        return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : str;
       }
 
-      /* ----- monta o filtro de tipos automaticamente ----- */
-      var tipos = [];
-      docs.forEach(function (d) {
-        if (tipos.indexOf(d.dataset.tipo) === -1) tipos.push(d.dataset.tipo);
-      });
-      tipos.sort().forEach(function (t) {
-        var o = document.createElement('option');
-        o.value = t;
-        o.textContent = t;
-        filtro.appendChild(o);
-      });
+      function tamanho(valor) {
+        var n = Number(valor);
+        if (!n) return valor ? String(valor) : '';
+        if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + ' KB';
+        return (n / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+      }
 
-      /* ----- busca + filtro ----- */
+      function el(tag, classe, texto) {
+        var e = document.createElement(tag);
+        if (classe) e.className = classe;
+        if (texto !== undefined) e.textContent = texto;
+        return e;
+      }
+
+      function icone(classe) {
+        var i = document.createElement('i');
+        i.className = classe;
+        return i;
+      }
+
+      function metaItem(iconeClasse, texto) {
+        var s = document.createElement('span');
+        s.appendChild(icone(iconeClasse));
+        s.appendChild(document.createTextNode(texto));
+        return s;
+      }
+
+      function mimeDoArquivo(arquivo) {
+        if (arquivo.type) return arquivo.type;
+        var ext = (arquivo.name.split('.').pop() || '').toLowerCase();
+        return MIME_POR_EXT[ext] || '';
+      }
+
+      /* ----- chamadas ao servidor ----- */
+      function chamar(url, opcoes) {
+        opcoes = opcoes || {};
+        opcoes.headers = Object.assign(
+          { Authorization: 'Bearer ' + token },
+          opcoes.headers || {}
+        );
+
+        return fetch(url, opcoes).then(function (resp) {
+          if (resp.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+            throw new Error('Sua sessão expirou. Faça login novamente.');
+          }
+
+          return resp.json().catch(function () { return {}; }).then(function (dados) {
+            if (!resp.ok) throw new Error(dados.erro || 'Erro ao processar a solicitação.');
+            return dados;
+          });
+        });
+      }
+
+      /* ----- lista ----- */
+      function criarItem(d) {
+        var st = STATUS[d.status] || { rotulo: d.status || '—', classe: '' };
+
+        var item = el('button', 'doc-item');
+        item.type = 'button';
+        item.dataset.id = d.id;
+        item.dataset.busca = ((d.titulo || '') + ' ' + (d.processo || '') + ' ' + (d.tipo || '')).toLowerCase();
+        item.dataset.tipo = d.tipo || '';
+        item.dataset.status = d.status || '';
+
+        var ic = el('div', 'doc-icone');
+        ic.appendChild(icone('fa-regular fa-file-pdf'));
+
+        var info = el('div', 'doc-info');
+        info.appendChild(el('div', 'doc-nome', d.titulo || 'Documento'));
+
+        var meta = el('div', 'doc-meta');
+        if (d.processo) meta.appendChild(metaItem('fa-solid fa-scale-balanced', 'Proc. ' + d.processo));
+        meta.appendChild(metaItem('fa-regular fa-calendar', dataBR(d.data_envio)));
+        if (tamanho(d.arquivo_tamanho)) meta.appendChild(metaItem('fa-solid fa-weight-hanging', tamanho(d.arquivo_tamanho)));
+        info.appendChild(meta);
+
+        var badge = el('span', 'badge ' + st.classe, st.rotulo);
+        var seta = icone('fa-solid fa-chevron-right doc-seta');
+
+        item.append(ic, info, badge, seta);
+        item.addEventListener('click', function () { abrir(d, item); });
+
+        return item;
+      }
+
+      function renderizar() {
+        docsEl.replaceChildren();
+        documentos.forEach(function (d) { docsEl.appendChild(criarItem(d)); });
+        aplicar();
+      }
+
       function aplicar() {
         var termo = busca.value.trim().toLowerCase();
         var tipo = filtro.value;
+        var status = filtroStatus.value;
         var visiveis = 0;
 
-        docs.forEach(function (el) {
-          var texto = (el.dataset.nome + ' ' + el.dataset.processo + ' ' + el.dataset.tipo).toLowerCase();
-          var ok = (!termo || texto.indexOf(termo) !== -1) &&
-                   (tipo === 'todos' || el.dataset.tipo === tipo);
-          el.style.display = ok ? '' : 'none';
+        Array.prototype.forEach.call(docsEl.children, function (item) {
+          var ok = (!termo || item.dataset.busca.indexOf(termo) !== -1) &&
+                   (tipo === 'todos' || item.dataset.tipo === tipo) &&
+                   (status === 'todos' || item.dataset.status === status);
+          item.style.display = ok ? '' : 'none';
           if (ok) visiveis++;
         });
 
@@ -297,39 +418,57 @@
           : visiveis + ' documentos encontrados';
       }
 
-      busca.addEventListener('input', aplicar);
-      filtro.addEventListener('change', aplicar);
-
-      /* ----- modal ----- */
-      function detalhe(rotulo, valor) {
-        return '<div class="detalhe-doc"><small>' + rotulo + '</small><strong>' +
-          esc(valor) + '</strong></div>';
+      function carregar() {
+        return chamar(API).then(function (dados) {
+          documentos = Array.isArray(dados) ? dados : [];
+          renderizar();
+        }).catch(function (erro) {
+          console.error(erro);
+          docsEl.replaceChildren();
+          vazio.hidden = false;
+          vazio.lastChild.textContent = ' ' + erro.message;
+          resumo.textContent = '';
+        });
       }
 
-      function abrir(el) {
-        aberto = el;
-        var d = el.dataset;
+      busca.addEventListener('input', aplicar);
+      filtro.addEventListener('change', aplicar);
+      filtroStatus.addEventListener('change', aplicar);
 
-        modalTitulo.textContent = d.nome;
-        modalMeta.textContent = d.tipo + ' · ' + dataBR(d.data) + ' · ' + d.tamanho;
+      /* ----- modal de detalhes ----- */
+      function detalhe(rotulo, valor) {
+        var box = el('div', 'detalhe-doc');
+        box.appendChild(el('small', '', rotulo));
+        box.appendChild(el('strong', '', valor || '—'));
+        return box;
+      }
 
-        var paragrafos = (d.conteudo || '').split('||').map(function (p) {
-          return '<p>' + esc(p) + '</p>';
-        }).join('');
+      function abrir(d, origem) {
+        aberto = d;
+        ultimoFoco = origem;
 
-        modalCorpo.innerHTML =
-          '<div class="preview-aviso">Pré-visualização simplificada. Use o botão Baixar para obter o arquivo.</div>' +
-          '<div class="detalhes-doc">' +
-            detalhe('Processo', d.processo) +
-            detalhe('Tipo', d.tipo) +
-            detalhe('Data', dataBR(d.data)) +
-            detalhe('Situação', STATUS[d.status] || d.status) +
-          '</div>' +
-          '<div class="documento-preview">' +
-            '<div class="preview-topo"><h4>' + esc(d.nome) + '</h4><p>Processo ' + esc(d.processo) + '</p></div>' +
-            '<div class="preview-conteudo">' + paragrafos + '</div>' +
-            '<div class="preview-assinatura">Escritório de advocacia</div>' +
-          '</div>';
+        var st = STATUS[d.status] || { rotulo: d.status || '—' };
+        var partes = [d.tipo, dataBR(d.data_envio), tamanho(d.arquivo_tamanho)].filter(Boolean);
+
+        modalTitulo.textContent = d.titulo || 'Documento';
+        modalMeta.textContent = partes.join(' · ');
+
+        var grade = el('div', 'detalhes-doc');
+        grade.appendChild(detalhe('Processo', d.processo));
+        grade.appendChild(detalhe('Tipo', d.tipo));
+        grade.appendChild(detalhe('Data', dataBR(d.data_envio)));
+        grade.appendChild(detalhe('Situação', st.rotulo));
+        grade.appendChild(detalhe('Enviado por', d.origem === 'cliente' ? 'Você' : 'Escritório'));
+
+        modalCorpo.replaceChildren(grade);
+
+        if (d.descricao) {
+          var desc = el('div', 'preview-aviso', d.descricao);
+          modalCorpo.appendChild(desc);
+        }
+
+        btnBaixar.disabled = !d.arquivo_path;
+        btnBaixar.title = d.arquivo_path ? '' : 'Este documento não possui arquivo anexado';
 
         modal.hidden = false;
         document.getElementById('modalFechar').focus();
@@ -337,45 +476,100 @@
 
       function fechar() {
         modal.hidden = true;
-        if (aberto) aberto.focus();
+        if (ultimoFoco) ultimoFoco.focus();
       }
-
-      docs.forEach(function (el) {
-        el.addEventListener('click', function () { abrir(el); });
-      });
 
       document.getElementById('modalFechar').addEventListener('click', fechar);
       modal.addEventListener('click', function (e) { if (e.target === modal) fechar(); });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !modal.hidden) fechar();
+
+      btnBaixar.addEventListener('click', function () {
+        if (!aberto || !aberto.arquivo_path) return;
+
+        chamar(API + '/' + encodeURIComponent(aberto.id) + '/arquivo')
+          .then(function (dados) { window.location.href = dados.url; })
+          .catch(function (erro) { alert(erro.message); });
       });
 
-      /* ----- baixar ----- */
-      document.getElementById('modalBaixar').addEventListener('click', function () {
-        if (!aberto) return;
-        var d = aberto.dataset;
-        var a = document.createElement('a');
+      /* ----- modal de envio ----- */
+      function abrirEnvio() {
+        formEnvio.reset();
+        msgEnvio.textContent = '';
+        msgEnvio.className = 'msg-envio';
+        modalEnvio.hidden = false;
+        inputArquivo.focus();
+      }
 
-        if (d.arquivo) {
-          a.href = d.arquivo;
-          a.download = '';
-        } else {
-          var texto = d.nome + '\nProcesso ' + d.processo + '\n\n' +
-            (d.conteudo || '').split('||').join('\n\n');
-          var blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
-          a.href = URL.createObjectURL(blob);
-          a.download = d.nome.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.txt';
+      function fecharEnvio() {
+        modalEnvio.hidden = true;
+        document.getElementById('btnEnviar').focus();
+      }
+
+      function mensagem(texto, tipo) {
+        msgEnvio.textContent = texto;
+        msgEnvio.className = 'msg-envio ' + (tipo || '');
+      }
+
+      document.getElementById('btnEnviar').addEventListener('click', abrirEnvio);
+      document.getElementById('envioFechar').addEventListener('click', fecharEnvio);
+      document.getElementById('envioCancelar').addEventListener('click', fecharEnvio);
+      modalEnvio.addEventListener('click', function (e) { if (e.target === modalEnvio) fecharEnvio(); });
+
+      // Sugere o título a partir do nome do arquivo
+      inputArquivo.addEventListener('change', function () {
+        var f = inputArquivo.files[0];
+        if (f && !inputTitulo.value.trim()) {
+          inputTitulo.value = f.name.replace(/\.[^.]+$/, '');
+        }
+      });
+
+      formEnvio.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var arquivo = inputArquivo.files[0];
+        var titulo = inputTitulo.value.trim();
+        var tipo = document.getElementById('envioTipo').value;
+        var processo = document.getElementById('envioProcesso').value.trim();
+
+        if (!arquivo) return mensagem('Escolha um arquivo.', 'erro');
+        if (!titulo) return mensagem('Informe o título do documento.', 'erro');
+        if (arquivo.size > MAX_BYTES) return mensagem('O arquivo deve ter no máximo 10 MB.', 'erro');
+
+        var mime = mimeDoArquivo(arquivo);
+        if (!mime || Object.keys(MIME_POR_EXT).every(function (k) { return MIME_POR_EXT[k] !== mime; })) {
+          return mensagem('Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX.', 'erro');
         }
 
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        if (!d.arquivo) URL.revokeObjectURL(a.href);
+        var params = new URLSearchParams({
+          titulo: titulo,
+          tipo: tipo,
+          processo: processo,
+          nome: arquivo.name
+        });
+
+        btnEnviarForm.disabled = true;
+        mensagem('Enviando...', '');
+
+        chamar(API + '/cliente?' + params.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': mime },
+          body: arquivo
+        }).then(function () {
+          fecharEnvio();
+          return carregar();
+        }).catch(function (erro) {
+          mensagem(erro.message, 'erro');
+        }).then(function () {
+          btnEnviarForm.disabled = false;
+        });
       });
 
-      aplicar();
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (!modalEnvio.hidden) fecharEnvio();
+        else if (!modal.hidden) fechar();
+      });
+
+      carregar();
     })();
   </script>
 
