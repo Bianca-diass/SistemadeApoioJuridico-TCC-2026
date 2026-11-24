@@ -22,8 +22,9 @@ class DocumentoController {
     this._notificar();
   }
 
+  // Devolve { mensagem, id } para quem precisar do id do documento criado
   async cadastrarDocumento(documento) {
-    await cadastrarDocumento(documento);
+    return await cadastrarDocumento(documento);
   }
 
   async editarDocumento(id, dadosAtualizados) {

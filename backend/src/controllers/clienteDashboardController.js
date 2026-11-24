@@ -1,107 +1,114 @@
 const { supabaseAdmin } = require("../config/supabase");
-const { normalizarTexto } = require("../utils/vinculoCliente");
+const { unirCadastros, vincularLegado } = require("../utils/clienteResolver");
 
-async function buscarCliente(uid) {
+async function buscarCliente(usuario) {
+  if (!usuario || !usuario.uid) {
+    throw new Error("Usuário não autenticado.");
+  }
+
+  // Vincula o cadastro (feito pelo advogado) à conta de login, se ainda não estiver.
+  try {
+    await unirCadastros(usuario.uid, usuario.email);
+  } catch (e) {
+    console.error("Aviso ao vincular cadastro:", e.message);
+  }
+
+  // Procura nos dois campos, igual ao perfil (cadastros antigos usam user_id).
   const { data, error } = await supabaseAdmin
     .from("clientes")
     .select("*")
-    .or(`auth_user_id.eq.${uid},user_id.eq.${uid}`)
-    .maybeSingle();
+    .or(`auth_user_id.eq.${usuario.uid},user_id.eq.${usuario.uid}`)
+    .limit(1);
 
-  if (error) throw error;
-
-  return data;
-}
-
-async function advogadosDoCliente(clienteId) {
-  const { data, error } = await supabaseAdmin
-    .from("advogado_clientes")
-    .select("advogado_id")
-    .eq("cliente_id", clienteId);
-
-  if (error) throw error;
-
-  return (data || []).map((v) => v.advogado_id);
-}
-
-async function buscarDoCliente(tabela, cliente) {
-  const { data: diretos, error } = await supabaseAdmin
-    .from(tabela)
-    .select("*")
-    .eq("cliente_id", cliente.id);
-
-  if (error) throw error;
-
-  let resultado = diretos || [];
-
-  const advogados = await advogadosDoCliente(cliente.id);
-  const nomeCliente = normalizarTexto(cliente.nome);
-
-  if (advogados.length > 0 && nomeCliente) {
-    const { data: semVinculo, error: erroSemVinculo } = await supabaseAdmin
-      .from(tabela)
-      .select("*")
-      .is("cliente_id", null)
-      .in("advogado_id", advogados);
-
-    if (erroSemVinculo) throw erroSemVinculo;
-
-    const doMesmoNome = (semVinculo || []).filter(
-      (linha) => normalizarTexto(linha.cliente) === nomeCliente
-    );
-
-    resultado = resultado.concat(doMesmoNome);
+  if (error) {
+    throw error;
   }
 
-  return resultado;
-}
+  const cliente = data && data.length > 0 ? data[0] : null;
 
-function ordenarPorData(lista, campo) {
-  return lista.sort((a, b) =>
-    String(b[campo] || "").localeCompare(String(a[campo] || ""))
-  );
+  // Liga processos/compromissos antigos (sem cliente_id) a este cliente.
+  if (cliente) {
+    await vincularLegado(cliente);
+  }
+
+  return cliente;
 }
 
 exports.listarProcessosDoCliente = async (req, res) => {
   try {
-    const cliente = await buscarCliente(req.usuario.uid);
+    const cliente = await buscarCliente(req.usuario);
 
     if (!cliente) {
-      return res.status(403).json({
-        erro: "Acesso permitido apenas para clientes."
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cadastro do cliente não encontrado.",
+        mensagem: "Cadastro do cliente não encontrado."
       });
     }
 
-    const processos = await buscarDoCliente("processos", cliente);
+    const { data: processos, error } = await supabaseAdmin
+      .from("processos")
+      .select("*")
+      .eq("cliente_id", cliente.id)
+      .order("criado_em", { ascending: false });
 
-    return res.status(200).json(ordenarPorData(processos, "criado_em"));
+    if (error) {
+      throw error;
+    }
 
-  } catch (e) {
-    console.error("ERRO PROCESSOS DO CLIENTE:", e);
-    return res.status(500).json({ erro: "Erro ao carregar seus processos." });
+    return res.status(200).json({
+      sucesso: true,
+      processos: processos || []
+    });
+
+  } catch (error) {
+    console.error("Erro ao listar processos do cliente:", error);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao carregar os processos.",
+      mensagem: "Erro ao carregar os processos."
+    });
   }
 };
 
 exports.listarCompromissosDoCliente = async (req, res) => {
   try {
-    const cliente = await buscarCliente(req.usuario.uid);
+    const cliente = await buscarCliente(req.usuario);
 
     if (!cliente) {
-      return res.status(403).json({
-        erro: "Acesso permitido apenas para clientes."
+      return res.status(404).json({
+        sucesso: false,
+        erro: "Cadastro do cliente não encontrado.",
+        mensagem: "Cadastro do cliente não encontrado."
       });
     }
 
-    const compromissos = await buscarDoCliente("agenda", cliente);
+    const { data: compromissos, error } = await supabaseAdmin
+      .from("agenda")
+      .select("*")
+      .eq("cliente_id", cliente.id)
+      .order("data", { ascending: true });
 
-    return res.status(200).json(compromissos);
+    if (error) {
+      throw error;
+    }
 
-  } catch (e) {
-    console.error("ERRO COMPROMISSOS DO CLIENTE:", e);
-    return res.status(500).json({ erro: "Erro ao carregar seus compromissos." });
+    return res.status(200).json({
+      sucesso: true,
+      compromissos: compromissos || []
+    });
+
+  } catch (error) {
+    console.error("Erro ao listar compromissos do cliente:", error);
+
+    return res.status(500).json({
+      sucesso: false,
+      erro: "Erro ao carregar os compromissos.",
+      mensagem: "Erro ao carregar os compromissos."
+    });
   }
 };
 
-// Nomes usados pelos arquivos que você já tinha (routes/processos.js)
 exports.listarProcessosCliente = exports.listarProcessosDoCliente;
 exports.listarCompromissosCliente = exports.listarCompromissosDoCliente;

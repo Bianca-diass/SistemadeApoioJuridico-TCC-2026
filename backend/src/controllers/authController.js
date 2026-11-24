@@ -1,142 +1,138 @@
+
 const {
     supabaseAdmin,
     criarClienteAnonimo
 } = require("../config/supabase");
 
+const {
+    reivindicarCadastroExistente,
+    unirCadastros
+} = require("../utils/clienteResolver");
 
-// ==========================================================
-// FUNÇÕES AUXILIARES
-// ==========================================================
+// ======================================================
+// BUSCAR PERFIL DO USUÁRIO
+// ======================================================
 
 async function buscarPerfilPorAuthId(authUserId) {
-
-    const { data: advogado, error: erroAdv } =
+    const { data: advogado, error: erroAdvogado } =
         await supabaseAdmin
             .from("advogados")
             .select("*")
             .eq("auth_user_id", authUserId)
             .maybeSingle();
 
-    if (erroAdv) throw erroAdv;
+    if (erroAdvogado) throw erroAdvogado;
 
     if (advogado) {
-        return { tipo: "advogado", perfil: advogado };
+        return {
+            tipo: "advogado",
+            perfil: advogado
+        };
     }
 
-    const { data: cliente, error: erroCli } =
+    const { data: cliente, error: erroCliente } =
         await supabaseAdmin
             .from("clientes")
             .select("*")
             .eq("auth_user_id", authUserId)
             .maybeSingle();
 
-    if (erroCli) throw erroCli;
+    if (erroCliente) throw erroCliente;
 
     if (cliente) {
-        return { tipo: "cliente", perfil: cliente };
+        return {
+            tipo: "cliente",
+            perfil: cliente
+        };
     }
 
-    return { tipo: null, perfil: null };
+    return {
+        tipo: null,
+        perfil: null
+    };
 }
 
-function emailJaCadastrado(error) {
+// ======================================================
+// VERIFICAR E-MAIL DUPLICADO
+// ======================================================
 
-    const msg = (error?.message || "").toLowerCase();
+function emailJaCadastrado(error) {
+    const mensagem = (error?.message || "").toLowerCase();
 
     return (
         error?.code === "email_exists" ||
-        msg.includes("already been registered") ||
-        msg.includes("already registered")
+        mensagem.includes("already been registered") ||
+        mensagem.includes("already registered")
     );
 }
 
-
-// ==========================================================
+// ======================================================
 // LOGIN
-// ==========================================================
+// ======================================================
 
 exports.login = async (req, res) => {
-
     try {
-
         const { email, senha } = req.body;
 
         if (!email || !senha) {
             return res.status(400).json({
-                erro: "Email e senha são obrigatórios"
+                erro: "Email e senha são obrigatórios."
             });
         }
 
-        // Cliente descartável: o login não pode prender a sessão
-        // no supabaseAdmin.
         const supabase = criarClienteAnonimo();
 
         const { data, error } =
             await supabase.auth.signInWithPassword({
-                email: email.trim(),
+                email: email.trim().toLowerCase(),
                 password: senha
             });
 
         if (error || !data?.session) {
-
-            console.error(
-                "Erro Supabase Login:",
-                error?.message
-            );
-
             return res.status(401).json({
-                erro: "Email ou senha inválidos"
+                erro: "Email ou senha inválidos."
             });
         }
 
         const { tipo, perfil } =
             await buscarPerfilPorAuthId(data.user.id);
 
-        if (!tipo) {
+        if (!tipo || !perfil) {
             return res.status(403).json({
                 erro: "Perfil do usuário não encontrado."
             });
         }
 
-        return res.json({
-
-            mensagem: "Login realizado com sucesso",
-
+        return res.status(200).json({
+            mensagem: "Login realizado com sucesso.",
             usuario: {
+                ...perfil,
                 email: data.user.email,
                 tipo,
-                ...perfil,
                 auth_user_id: data.user.id
             },
-
             token: data.session.access_token,
-
             refreshToken: data.session.refresh_token,
-
             expiresIn: data.session.expires_in
         });
 
     } catch (error) {
-
         console.error("ERRO NO LOGIN:", error);
 
         return res.status(500).json({
-            erro: "Erro ao processar login"
+            erro: "Erro ao processar login."
         });
     }
 };
 
-
-// ==========================================================
+// ======================================================
 // CADASTRO
-// ==========================================================
+// ======================================================
 
 exports.register = async (req, res) => {
-
     let authUserId = null;
 
     try {
-
         const {
             nome,
             email,
@@ -149,34 +145,34 @@ exports.register = async (req, res) => {
 
         if (!nome || !email || !senha) {
             return res.status(400).json({
-                erro: "Nome, email e senha são obrigatórios"
+                erro: "Nome, email e senha são obrigatórios."
             });
         }
 
         if (String(senha).length < 6) {
             return res.status(400).json({
-                erro: "A senha deve possuir pelo menos 6 caracteres"
+                erro: "A senha deve possuir pelo menos 6 caracteres."
             });
         }
 
         const ehCliente = tipo === "cliente";
-
         const emailLimpo = String(email).trim().toLowerCase();
 
-        // 1) Cria o login no Supabase Auth
+        // Criar usuário no Supabase Auth
         const { data: criado, error: erroAuth } =
             await supabaseAdmin.auth.admin.createUser({
                 email: emailLimpo,
                 password: senha,
                 email_confirm: true,
-                user_metadata: { nome }
+                user_metadata: {
+                    nome
+                }
             });
 
         if (erroAuth) {
-
             if (emailJaCadastrado(erroAuth)) {
                 return res.status(400).json({
-                    erro: "Este email já está cadastrado"
+                    erro: "Este email já está cadastrado."
                 });
             }
 
@@ -185,8 +181,9 @@ exports.register = async (req, res) => {
 
         authUserId = criado.user.id;
 
-        // 2) Cria o perfil (todos os campos NOT NULL vão preenchidos)
-        const tabela = ehCliente ? "clientes" : "advogados";
+        const tabela = ehCliente
+            ? "clientes"
+            : "advogados";
 
         const dadosPerfil = {
             nome: String(nome).trim(),
@@ -198,48 +195,66 @@ exports.register = async (req, res) => {
 
         if (!ehCliente) {
             dadosPerfil.oab = oab ?? "";
-
-            // advogados.id tem FK para auth.users(id): o id do
-            // advogado precisa ser o mesmo id do login.
             dadosPerfil.id = authUserId;
         }
 
-        const { data: perfil, error: erroPerfil } =
-            await supabaseAdmin
+        let perfil = null;
+        let erroPerfil = null;
+
+        // Aproveitar o cadastro já feito pelo advogado
+        if (ehCliente) {
+            try {
+                perfil = await reivindicarCadastroExistente(
+                    emailLimpo,
+                    authUserId,
+                    dadosPerfil
+                );
+            } catch (error) {
+                erroPerfil = error;
+            }
+        }
+
+        // Criar perfil somente quando não existir cadastro anterior
+        if (!perfil && !erroPerfil) {
+            const resposta = await supabaseAdmin
                 .from(tabela)
                 .insert(dadosPerfil)
                 .select()
                 .single();
 
+            perfil = resposta.data;
+            erroPerfil = resposta.error;
+        }
+
         if (erroPerfil) {
-
-            // Desfaz o usuário do Auth para não deixar conta órfã
             await supabaseAdmin.auth.admin.deleteUser(authUserId);
-
             authUserId = null;
-
             throw erroPerfil;
         }
 
+        // Unir cadastros antigos pelo e-mail
+        if (ehCliente) {
+            await unirCadastros(authUserId, emailLimpo);
+        }
+
         return res.status(201).json({
-
             mensagem: ehCliente
-                ? "Cliente cadastrado"
-                : "Advogado cadastrado",
-
+                ? "Cliente cadastrado com sucesso."
+                : "Advogado cadastrado com sucesso.",
             id: perfil.id
         });
 
     } catch (error) {
-
         console.error("ERRO NO CADASTRO:", error);
 
-        // Garantia extra contra conta órfã
         if (authUserId) {
             try {
                 await supabaseAdmin.auth.admin.deleteUser(authUserId);
-            } catch (e) {
-                console.error("Falha ao desfazer usuário do Auth:", e);
+            } catch (erro) {
+                console.error(
+                    "Erro ao remover usuário do Auth:",
+                    erro
+                );
             }
         }
 
@@ -249,15 +264,12 @@ exports.register = async (req, res) => {
     }
 };
 
-
-// ==========================================================
-// PEGAR DADOS DO ADVOGADO LOGADO
-// ==========================================================
+// ======================================================
+// DADOS DO ADVOGADO LOGADO
+// ======================================================
 
 exports.me = async (req, res) => {
-
     try {
-
         const uid = req.usuario.uid;
 
         const { data: advogado, error } =
@@ -271,12 +283,11 @@ exports.me = async (req, res) => {
 
         if (!advogado) {
             return res.status(404).json({
-                erro: "Perfil de advogado não encontrado"
+                erro: "Perfil de advogado não encontrado."
             });
         }
 
-        return res.json({
-
+        return res.status(200).json({
             usuario: {
                 id: advogado.id,
                 nome: advogado.nome || "",
@@ -289,31 +300,31 @@ exports.me = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error("ERRO AO BUSCAR PERFIL:", error);
 
         return res.status(500).json({
-            erro: "Erro ao carregar perfil"
+            erro: "Erro ao carregar perfil."
         });
     }
 };
 
-
-// ==========================================================
+// ======================================================
 // ATUALIZAR PERFIL
-// ==========================================================
+// ======================================================
 
 exports.atualizarPerfil = async (req, res) => {
-
     try {
-
         const uid = req.usuario.uid;
 
-        const { nome, email, telefone } = req.body;
+        const {
+            nome,
+            email,
+            telefone
+        } = req.body;
 
         if (!nome || !email) {
             return res.status(400).json({
-                erro: "Nome e email são obrigatórios"
+                erro: "Nome e email são obrigatórios."
             });
         }
 
@@ -330,35 +341,28 @@ exports.atualizarPerfil = async (req, res) => {
 
         if (!existente) {
             return res.status(404).json({
-                erro: "Advogado não encontrado"
+                erro: "Advogado não encontrado."
             });
         }
 
-        // Atualiza o login (Auth)
         const { error: erroAuth } =
             await supabaseAdmin.auth.admin.updateUserById(uid, {
                 email: emailLimpo,
-                user_metadata: { nome }
+                user_metadata: {
+                    nome
+                }
             });
 
         if (erroAuth) {
-
             if (emailJaCadastrado(erroAuth)) {
                 return res.status(400).json({
-                    erro: "Este email já está sendo utilizado"
-                });
-            }
-
-            if ((erroAuth.message || "").toLowerCase().includes("invalid")) {
-                return res.status(400).json({
-                    erro: "O email informado é inválido"
+                    erro: "Este email já está sendo utilizado."
                 });
             }
 
             throw erroAuth;
         }
 
-        // Atualiza o perfil
         const { data: atualizado, error: erroPerfil } =
             await supabaseAdmin
                 .from("advogados")
@@ -373,10 +377,8 @@ exports.atualizarPerfil = async (req, res) => {
 
         if (erroPerfil) throw erroPerfil;
 
-        return res.json({
-
-            mensagem: "Perfil atualizado com sucesso",
-
+        return res.status(200).json({
+            mensagem: "Perfil atualizado com sucesso.",
             usuario: {
                 tipo: "advogado",
                 ...atualizado
@@ -384,37 +386,32 @@ exports.atualizarPerfil = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error("ERRO AO ATUALIZAR PERFIL:", error);
 
         return res.status(500).json({
-            erro: "Erro ao atualizar perfil"
+            erro: "Erro ao atualizar perfil."
         });
     }
 };
 
-
-// ==========================================================
+// ======================================================
 // ALTERAR SENHA
-// ==========================================================
+// ======================================================
 
 exports.alterarSenha = async (req, res) => {
-
     try {
-
         const uid = req.usuario.uid;
-
         const { novaSenha } = req.body;
 
         if (!novaSenha) {
             return res.status(400).json({
-                erro: "Informe a nova senha"
+                erro: "Informe a nova senha."
             });
         }
 
-        if (novaSenha.length < 6) {
+        if (String(novaSenha).length < 6) {
             return res.status(400).json({
-                erro: "A senha deve possuir pelo menos 6 caracteres"
+                erro: "A senha deve possuir pelo menos 6 caracteres."
             });
         }
 
@@ -425,16 +422,15 @@ exports.alterarSenha = async (req, res) => {
 
         if (error) throw error;
 
-        return res.json({
-            mensagem: "Senha alterada com sucesso"
+        return res.status(200).json({
+            mensagem: "Senha alterada com sucesso."
         });
 
     } catch (error) {
-
         console.error("ERRO AO ALTERAR SENHA:", error);
 
         return res.status(500).json({
-            erro: "Erro ao alterar senha"
+            erro: "Erro ao alterar senha."
         });
     }
 };

@@ -1,4 +1,7 @@
-import { listarCompromissosDoCliente } from "./clienteDashboardService.js";
+import {
+  listarCompromissosDoCliente,
+  assinarEventosCliente
+} from "./clienteDashboardService.js";
 
 export const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
 
@@ -87,9 +90,17 @@ export function observarCompromissos(aoReceber, aoFalhar) {
   const INTERVALO = 8000;
   let ativo = true;
   let carregando = false;
+  let pendente = false;
 
   async function atualizar() {
-    if (!ativo || carregando) return;
+    if (!ativo) return;
+
+    // Se chegar um aviso durante uma consulta, repete ao terminar.
+    if (carregando) {
+      pendente = true;
+      return;
+    }
+
     carregando = true;
 
     try {
@@ -99,6 +110,11 @@ export function observarCompromissos(aoReceber, aoFalhar) {
       if (ativo && aoFalhar) aoFalhar(erro);
     } finally {
       carregando = false;
+
+      if (pendente && ativo) {
+        pendente = false;
+        atualizar();
+      }
     }
   }
 
@@ -106,11 +122,17 @@ export function observarCompromissos(aoReceber, aoFalhar) {
   const aoVoltar = () => { if (!document.hidden) atualizar(); };
   document.addEventListener("visibilitychange", aoVoltar);
 
+  // Tempo real: atualiza assim que o advogado mexer na agenda.
+  const pararEventos = assinarEventosCliente(tipo => {
+    if (tipo !== "notificacoes") atualizar();
+  });
+
   atualizar();
 
   return () => {
     ativo = false;
     clearInterval(timer);
+    pararEventos();
     document.removeEventListener("visibilitychange", aoVoltar);
   };
 }

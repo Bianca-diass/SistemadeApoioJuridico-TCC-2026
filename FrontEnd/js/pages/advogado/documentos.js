@@ -152,7 +152,8 @@ function padronizarDocumento(doc) {
         processo: doc.processo || "-",
         data_envio: doc.data_envio || "",
         status: doc.status || "Pendente",
-        descricao: doc.descricao || ""
+        descricao: doc.descricao || "",
+        arquivo_path: doc.arquivo_path || ""
     };
 }
 
@@ -331,6 +332,20 @@ function renderizarDocumentos() {
 
                     <button
                         type="button"
+                        title="Baixar"
+                        onclick="baixarDocumento('${escaparHTML(doc.id)}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        title="${doc.arquivo_path ? "Substituir arquivo" : "Anexar arquivo"}"
+                        onclick="anexarArquivo('${escaparHTML(doc.id)}')">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+
+                    <button
+                        type="button"
                         title="Visualizar"
                         onclick="visualizarDocumento('${escaparHTML(doc.id)}')">
                         <i class="fas fa-eye"></i>
@@ -386,6 +401,158 @@ function visualizarDocumento(id) {
 function fecharModal() {
     el.modal.hidden = true;
 }
+
+// ==========================================
+// BAIXAR DOCUMENTO
+// ==========================================
+
+async function baixarDocumento(id) {
+
+    const doc = obterDocumento(id);
+
+    if (!doc) return;
+
+    try {
+
+        const resposta = await fetchAuth(
+            `/documentos/${encodeURIComponent(id)}/arquivo`
+        );
+
+        const resultado = await lerResposta(resposta);
+
+        if (!resposta.ok) {
+            throw new Error(
+                resultado.erro || "Não foi possível baixar o documento."
+            );
+        }
+
+        const link = document.createElement("a");
+        let urlTemporaria = null;
+
+        if (resultado.url) {
+            link.href = resultado.url;
+        } else {
+            // Documento sem arquivo anexado: baixa a ficha em texto.
+            const blob = new Blob(
+                ["\uFEFF" + (resultado.texto || "")],
+                { type: "text/plain;charset=utf-8" }
+            );
+            urlTemporaria = URL.createObjectURL(blob);
+            link.href = urlTemporaria;
+        }
+
+        link.download = resultado.nome || "documento";
+        link.style.display = "none";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        if (urlTemporaria) {
+            setTimeout(() => URL.revokeObjectURL(urlTemporaria), 1000);
+        }
+
+    } catch (erro) {
+
+        console.error("Erro ao baixar:", erro);
+
+        mostrarErro(erro.message);
+    }
+}
+
+// ==========================================
+// ANEXAR / SUBSTITUIR ARQUIVO
+// ==========================================
+
+const MIME_POR_EXT = {
+    pdf: "application/pdf",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+};
+
+const TAMANHO_MAXIMO = 10 * 1024 * 1024;
+
+const seletorArquivo = document.createElement("input");
+seletorArquivo.type = "file";
+seletorArquivo.accept = ".pdf,.jpg,.jpeg,.png,.doc,.docx";
+seletorArquivo.hidden = true;
+document.body.appendChild(seletorArquivo);
+
+let documentoParaAnexar = null;
+
+function anexarArquivo(id) {
+
+    const doc = obterDocumento(id);
+
+    if (!doc) return;
+
+    if (doc.arquivo_path && !confirm(
+        "Este documento já possui um arquivo. Deseja substituí-lo?"
+    )) {
+        return;
+    }
+
+    documentoParaAnexar = doc;
+    seletorArquivo.value = "";
+    seletorArquivo.click();
+}
+
+seletorArquivo.addEventListener("change", async () => {
+
+    const arquivo = seletorArquivo.files[0];
+    const doc = documentoParaAnexar;
+
+    documentoParaAnexar = null;
+
+    if (!arquivo || !doc) return;
+
+    const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
+    const mime = MIME_POR_EXT[ext];
+
+    if (!mime) {
+        mostrarErro("Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX.");
+        return;
+    }
+
+    if (arquivo.size > TAMANHO_MAXIMO) {
+        mostrarErro("O arquivo deve ter no máximo 10 MB.");
+        return;
+    }
+
+    try {
+
+        const resposta = await fetchAuth(
+            `/documentos/${encodeURIComponent(doc.id)}/arquivo` +
+            `?nome=${encodeURIComponent(arquivo.name)}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": mime },
+                body: arquivo
+            }
+        );
+
+        const resultado = await lerResposta(resposta);
+
+        if (!resposta.ok) {
+            throw new Error(
+                resultado.erro || "Não foi possível anexar o arquivo."
+            );
+        }
+
+        alert("Arquivo anexado com sucesso!");
+
+        await carregarDocumentos();
+
+    } catch (erro) {
+
+        console.error("Erro ao anexar:", erro);
+
+        mostrarErro(erro.message);
+    }
+});
 
 // ==========================================
 // ABRIR EDIÇÃO
@@ -576,6 +743,8 @@ document.addEventListener("keydown", (event) => {
 
 window.carregarDocumentos = carregarDocumentos;
 window.visualizarDocumento = visualizarDocumento;
+window.baixarDocumento = baixarDocumento;
+window.anexarArquivo = anexarArquivo;
 window.abrirEdicao = abrirEdicao;
 window.excluirDocumento = excluirDocumento;
 

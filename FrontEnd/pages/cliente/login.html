@@ -28,7 +28,7 @@
 
         <div class="logo">
 
-           <i class="fas fa-users icone-login-cliente"></i>
+            <i class="fas fa-users icone-login-cliente"></i>
 
             <h1>Login do Cliente</h1>
 
@@ -40,7 +40,7 @@
 
             <div class="campo">
 
-                <label>Email</label>
+                <label for="email">Email</label>
 
                 <input
                     type="email"
@@ -52,7 +52,7 @@
 
             <div class="campo">
 
-                <label>Senha</label>
+                <label for="senha">Senha</label>
 
                 <input
                     type="password"
@@ -76,11 +76,11 @@
 
             <p>Ainda não possui cadastro?</p>
 
-            <a href="cadastro.html">
+            <button type="button" onclick="window.location.href='cadastro.html'">
 
                 Criar Conta
 
-            </a>
+            </button>
 
         </div>
 
@@ -94,25 +94,23 @@ import { fazerLogin } from "../../js/services/authService.js";
 
 const form = document.getElementById("formLogin");
 
-form.addEventListener("submit", async(e)=>{
+form.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
-    const email =
-    document.getElementById("email").value;
+    const email = document.getElementById("email").value;
 
-    const senha =
-    document.getElementById("senha").value;
+    const senha = document.getElementById("senha").value;
 
-    try{
+    try {
 
-        await fazerLogin(email,senha);
+        await fazerLogin(email, senha);
 
-        window.location.href="dashboard.html";
+        window.location.href = "dashboard.html";
 
     }
 
-    catch(error){
+    catch (error) {
 
         alert("Email ou senha inválidos.");
 

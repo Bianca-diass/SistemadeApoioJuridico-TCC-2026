@@ -20,10 +20,27 @@ let compromissos = [];
 let carregou = false;
 let erroCarregar = "";
 let filtroAtual = "proximos";
+// Enquanto o cliente não clicar em uma aba, a página escolhe sozinha:
+// "Próximos" se houver compromisso futuro; senão "Todos".
+let filtroManual = false;
 
 const elLista = document.getElementById("lista-agenda");
 const elResumo = document.getElementById("resumo-agenda");
 const elBusca = document.getElementById("busca");
+
+function marcarAba() {
+  document.querySelectorAll(".tab").forEach(b => {
+    b.classList.toggle("active", b.dataset.filtro === filtroAtual);
+  });
+}
+
+function escolherFiltroAutomatico() {
+  if (filtroManual || !carregou) return;
+
+  const temFuturos = compromissosFuturos(compromissos).length > 0;
+  filtroAtual = temFuturos || !compromissos.length ? "proximos" : "todos";
+  marcarAba();
+}
 
 function getLista() {
   const termo = texto(elBusca.value).toLowerCase();
@@ -35,7 +52,7 @@ function getLista() {
   else {
     lista = compromissos
       .filter(c => momentoDoCompromisso(c))
-      .sort((a, b) => momentoDoCompromisso(a) - momentoDoCompromisso(b));
+      .sort((a, b) => momentoDoCompromisso(b) - momentoDoCompromisso(a));
   }
 
   if (!termo) return lista;
@@ -56,9 +73,15 @@ function renderResumo() {
     return d && d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
   });
 
-  elResumo.textContent = erroCarregar && !carregou
-    ? erroCarregar
-    : `Você tem ${n} compromisso${n === 1 ? "" : "s"} futuro${n === 1 ? "" : "s"}.`;
+  if (erroCarregar && !carregou) {
+    elResumo.textContent = erroCarregar;
+  } else if (n) {
+    elResumo.textContent = `Você tem ${n} compromisso${n === 1 ? "" : "s"} futuro${n === 1 ? "" : "s"}.`;
+  } else if (compromissos.length) {
+    elResumo.textContent = "Nenhum compromisso futuro. Mostrando todos os seus compromissos.";
+  } else {
+    elResumo.textContent = "Você não tem compromissos.";
+  }
 
   document.getElementById("stat-total").textContent = compromissos.length;
   document.getElementById("stat-mes").textContent = noMes.length;
@@ -143,25 +166,32 @@ function renderAgenda() {
         ${status ? `<span class="badge ${classeStatus(status)}">${escaparHTML(status)}</span>` : ""}
       </div>`;
   }).join("");
-
-  if (window.lucide) window.lucide.createIcons();
 }
 
 function atualizarTudo() {
+  escolherFiltroAutomatico();
   renderResumo();
   renderAgenda();
+
+  // Sempre desenha os ícones (cards do topo + ícones da lista),
+  // mesmo quando a lista está vazia.
+  if (window.lucide) window.lucide.createIcons();
 }
 
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+    filtroManual = true;
     filtroAtual = btn.dataset.filtro;
+    marcarAba();
     renderAgenda();
+    if (window.lucide) window.lucide.createIcons();
   });
 });
 
-elBusca.addEventListener("input", renderAgenda);
+elBusca.addEventListener("input", () => {
+  renderAgenda();
+  if (window.lucide) window.lucide.createIcons();
+});
 
 observarCompromissos(
   lista => {
@@ -179,10 +209,15 @@ observarCompromissos(
     }
 
     if (!carregou) {
-      erroCarregar = "Não foi possível carregar os compromissos.";
+      erroCarregar = erro.message || "Não foi possível carregar os compromissos.";
       atualizarTudo();
     }
   }
 );
 
 setInterval(atualizarTudo, 60000);
+
+// A biblioteca de ícones pode terminar de carregar depois do módulo.
+window.addEventListener("load", () => {
+  if (window.lucide) window.lucide.createIcons();
+});

@@ -168,6 +168,23 @@ body {
     gap: 0;
 }
 
+/* DICA DE SENHA */
+
+.dicaSenha {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--texto-sub);
+}
+
+.dicaSenha.valida {
+    color: #166534;
+}
+
+.dicaSenha.invalida {
+    color: #b91c1c;
+}
+
 /* MENSAGENS (erro / sucesso) */
 
 #mensagem {

@@ -1,16 +1,5 @@
-import {
-    createUserWithEmailAndPassword,
-    updateProfile,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import {
-    doc,
-    setDoc,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import { auth, db } from "../../config/firebaseConfig.js";
+import { fazerCadastro } from "../../services/authService.js";
 
 // ==========================================
 // ELEMENTOS DO HTML
@@ -111,36 +100,17 @@ function mostrarMensagem(texto, tipo = "") {
 }
 
 // ==========================================
-// TRATAMENTO DOS ERROS DO FIREBASE
+// MENSAGEM DE ERRO
 // ==========================================
 
 function obterMensagemErro(erro) {
-    switch (erro.code) {
-        case "auth/email-already-in-use":
-            return "Este e-mail já está cadastrado.";
+    const msg = String(erro?.message || "");
 
-        case "auth/invalid-email":
-            return "Informe um endereço de e-mail válido.";
-
-        case "auth/weak-password":
-            return "A senha é muito fraca. Utilize pelo menos 6 caracteres.";
-
-        case "auth/operation-not-allowed":
-            return "O cadastro por e-mail e senha não está habilitado no Firebase.";
-
-        case "auth/network-request-failed":
-            return "Falha de conexão. Verifique sua internet e tente novamente.";
-
-        case "auth/too-many-requests":
-            return "Muitas tentativas. Aguarde um pouco antes de tentar novamente.";
-
-        case "permission-denied":
-        case "firestore/permission-denied":
-            return "O Firebase não permitiu salvar os dados. Verifique as regras do Firestore.";
-
-        default:
-            return "Não foi possível concluir o cadastro. Verifique a configuração do Firebase e tente novamente.";
+    if (/failed to fetch|networkerror/i.test(msg)) {
+        return "Falha de conexão com o servidor. Verifique se o backend está rodando e tente novamente.";
     }
+
+    return msg || "Não foi possível concluir o cadastro. Tente novamente.";
 }
 
 // ==========================================
@@ -220,46 +190,17 @@ async function cadastrarCliente(evento) {
 
     mostrarMensagem("");
 
-    let usuarioCriado = null;
-    let perfilSalvo = false;
-
     try {
-        // 1. Cria a conta de autenticação.
-        const resultado =
-            await createUserWithEmailAndPassword(
-                auth,
-                email,
-                senha
-            );
-
-        usuarioCriado = resultado.user;
-
-        // 2. Define o nome do cliente no perfil Firebase.
-        await updateProfile(usuarioCriado, {
-            displayName: nome
+        // O backend cria a conta (Supabase Auth) e o cadastro na tabela
+        // "clientes". Se o advogado já cadastrou este e-mail, a conta
+        // passa a usar esse mesmo cadastro, e os processos dele já
+        // aparecem no Dashboard.
+        await fazerCadastro(email, senha, {
+            nome,
+            cpf,
+            tipo: "cliente"
         });
 
-        // 3. Salva os dados na coleção "clientes".
-        // O UID vincula o perfil à conta autenticada.
-        await setDoc(
-            doc(db, "clientes", usuarioCriado.uid),
-            {
-                uid: usuarioCriado.uid,
-                nome: nome,
-                cpf: cpf,
-                email: usuarioCriado.email,
-                tipo: "cliente",
-                criadoEm: serverTimestamp()
-            }
-        );
-
-        perfilSalvo = true;
-
-        // 4. Encerra a sessão aberta automaticamente
-        // pelo Firebase após a criação da conta.
-        await signOut(auth);
-
-        // 5. Informa o sucesso e redireciona para o login.
         mostrarMensagem(
             "Cadastro realizado com sucesso! Redirecionando para o login...",
             "sucesso"
@@ -272,22 +213,10 @@ async function cadastrarCliente(evento) {
     } catch (erro) {
         console.error("Erro ao cadastrar cliente:", erro);
 
-        if (usuarioCriado && !perfilSalvo) {
-            mostrarMensagem(
-                "Sua conta foi criada, mas não foi possível salvar o perfil do cliente. Não tente criar outra conta com o mesmo e-mail. Verifique o Firestore ou solicite suporte.",
-                "erro"
-            );
-        } else if (usuarioCriado && perfilSalvo) {
-            mostrarMensagem(
-                "Seu cadastro foi salvo. Não foi possível encerrar a sessão automaticamente. Acesse o login após sair da conta atual.",
-                "erro"
-            );
-        } else {
-            mostrarMensagem(
-                obterMensagemErro(erro),
-                "erro"
-            );
-        }
+        mostrarMensagem(
+            obterMensagemErro(erro),
+            "erro"
+        );
     } finally {
         botaoCadastrar.disabled = false;
         botaoCadastrar.textContent = "Criar cadastro";

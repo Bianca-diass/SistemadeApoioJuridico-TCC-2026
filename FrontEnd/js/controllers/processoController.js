@@ -1,22 +1,67 @@
-const { db } = require("../config/firebase");
+const { supabaseAdmin } = require("../config/supabase");
+const { criarNotificacao } = require("../services/notificacaoService");
+const { emitir } = require("../services/eventosService");
+const {
+    buscarClienteVinculado,
+    normalizarTexto
+} = require("../utils/vinculoCliente");
 
 
-// ========================================
+// ==========================================================
+// CAMPOS PERMITIDOS PARA ATUALIZAÇÃO
+// ==========================================================
+
+const camposPermitidos = {
+    numeroProcesso: "numero_processo",
+    numero_processo: "numero_processo",
+    cliente: "cliente",
+    clienteId: "cliente_id",
+    cliente_id: "cliente_id",
+    advogado: "advogado",
+    vara: "vara",
+    tribunal: "tribunal",
+    comarca: "comarca",
+    status: "status",
+    tipoManifestacao: "tipo_manifestacao",
+    tipo_manifestacao: "tipo_manifestacao",
+    ultimaMovimentacao: "ultima_movimentacao",
+    ultima_movimentacao: "ultima_movimentacao",
+    intimacao: "intimacao",
+    prazo: "prazo",
+    dataAbertura: "data_abertura",
+    data_abertura: "data_abertura",
+    observacoes: "observacoes"
+};
+
+function converterCampos(dados) {
+    const resultado = {};
+
+    for (const [campo, valor] of Object.entries(dados)) {
+        const campoBanco = camposPermitidos[campo];
+
+        if (campoBanco) {
+            resultado[campoBanco] = valor;
+        }
+    }
+
+    return resultado;
+}
+
+
+// ==========================================================
 // CADASTRAR PROCESSO
-// ========================================
+// ==========================================================
 
 const cadastrarProcesso = async (req, res) => {
-
     try {
-
         const {
-
             numeroProcesso,
             cliente,
-            advogado,
+            clienteId,
+            cliente_id,
             vara,
-            comarca,
             tribunal,
+            comarca,
             status,
             tipoManifestacao,
             ultimaMovimentacao,
@@ -24,337 +69,361 @@ const cadastrarProcesso = async (req, res) => {
             prazo,
             dataAbertura,
             observacoes
-
         } = req.body;
 
+        const advogadoId = req.advogado.id;
+
+        // O processo SEMPRE precisa estar ligado a um cliente do advogado.
+        // O vínculo é feito pelo id (o nome só é aceito se for exato e único).
+        const clienteVinculado = await buscarClienteVinculado(advogadoId, {
+            clienteId: clienteId || cliente_id,
+            nome: cliente
+        });
+
+        if (!clienteVinculado) {
+            return res.status(400).json({
+                erro:
+                    "Cliente não encontrado na sua lista. Selecione um " +
+                    "cliente cadastrado para que o processo apareça no " +
+                    "painel dele."
+            });
+        }
+
+        // Evita duplicar o mesmo processo (ex.: clique duplo em "Salvar").
+        if (numeroProcesso) {
+            const { data: jaExiste, error: erroDuplicado } = await supabaseAdmin
+                .from("processos")
+                .select("id")
+                .eq("advogado_id", advogadoId)
+                .eq("cliente_id", clienteVinculado.id)
+                .eq("numero_processo", numeroProcesso)
+                .limit(1);
+
+            if (erroDuplicado) throw erroDuplicado;
+
+            if (jaExiste && jaExiste.length > 0) {
+                return res.status(409).json({
+                    erro:
+                        "Já existe um processo com esse número cadastrado " +
+                        "para este cliente."
+                });
+            }
+        }
 
         const processo = {
+            numero_processo: numeroProcesso || "",
+            cliente: clienteVinculado.nome || cliente || "",
+            cliente_id: clienteVinculado.id,
 
-            numeroProcesso:
-                numeroProcesso || "",
+            advogado: req.advogado.nome || req.usuario.email || "",
+            advogado_id: advogadoId,
 
-            cliente:
-                cliente || "",
-
-            advogado:
-                advogado ||
-                req.usuario?.email ||
-                "",
-
-            vara:
-                vara || "",
-
-            comarca:
-                comarca || "",
-
-            tribunal:
-                tribunal || "",
-
-            status:
-                status || "",
-
-            tipoManifestacao:
-                tipoManifestacao ||
-                "Nenhuma",
-
-            ultimaMovimentacao:
-                ultimaMovimentacao || "",
-
-            intimacao:
-                intimacao === true,
-
-            prazo:
-                prazo || "",
-
-            dataAbertura:
-                dataAbertura || "",
-
-            observacoes:
-                observacoes || "",
-
-            criadoEm:
-                new Date()
-
+            vara: vara || "",
+            tribunal: tribunal || "",
+            comarca: comarca || "",
+            status: status || "",
+            tipo_manifestacao: tipoManifestacao || "Nenhuma",
+            ultima_movimentacao: ultimaMovimentacao || "",
+            intimacao: intimacao === true,
+            prazo: prazo || "",
+            data_abertura: dataAbertura || "",
+            observacoes: observacoes || ""
         };
 
+        const { data, error } = await supabaseAdmin
+            .from("processos")
+            .insert(processo)
+            .select("*")
+            .single();
 
-        const doc =
-            await db
-                .collection("processos")
-                .add(processo);
+        if (error) throw error;
 
-
-        res.status(201).json({
-
+        await criarNotificacao({
+            tipo: "processo",
+            titulo: "Novo processo cadastrado",
             mensagem:
-                "Processo cadastrado com sucesso",
-
-            id:
-                doc.id
-
+                `O processo ${data.numero_processo || "sem número"} ` +
+                `(cliente: ${data.cliente || "não informado"}) ` +
+                "foi cadastrado no sistema.",
+            clienteId: data.cliente_id,
+            processoId: data.id
         });
 
+        // Avisa o navegador do cliente em tempo real.
+        emitir(data.cliente_id, "processos");
+
+        return res.status(201).json({
+            mensagem: "Processo cadastrado com sucesso",
+            id: data.id
+        });
 
     } catch (error) {
+        console.error("Erro ao cadastrar processo:", error);
 
-        console.error(
-            "Erro ao cadastrar processo:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            erro:
-                error.message
-
+        return res.status(500).json({
+            erro: error.message
         });
-
     }
-
 };
 
 
-// ========================================
-// LISTAR PROCESSOS
-// ========================================
+// ==========================================================
+// LISTAR PROCESSOS DO ADVOGADO
+// ==========================================================
 
 const listarProcessos = async (req, res) => {
-
     try {
+        const { data, error } = await supabaseAdmin
+            .from("processos")
+            .select("*")
+            .eq("advogado_id", req.advogado.id)
+            .order("criado_em", { ascending: false });
 
-        const snapshot =
-            await db
-                .collection("processos")
-                .get();
+        if (error) throw error;
 
-
-        const processos = [];
-
-
-        snapshot.forEach((doc) => {
-
-            processos.push({
-
-                id:
-                    doc.id,
-
-                ...doc.data()
-
-            });
-
-        });
-
-
-        res.status(200).json(
-            processos
-        );
-
+        return res.status(200).json(data || []);
 
     } catch (error) {
+        console.error("Erro ao listar processos:", error);
 
-        console.error(
-            "Erro ao listar processos:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            erro:
-                error.message
-
+        return res.status(500).json({
+            erro: error.message
         });
-
     }
-
 };
 
 
-// ========================================
-// VISUALIZAR PROCESSO
-// ========================================
+// ==========================================================
+// BUSCAR PROCESSO
+// ==========================================================
 
 const buscarProcesso = async (req, res) => {
-
     try {
-
-        const { id } =
-            req.params;
-
+        const { id } = req.params;
 
         if (!id) {
-
             return res.status(400).json({
-
-                erro:
-                    "ID do processo não informado"
-
+                erro: "ID do processo não informado"
             });
-
         }
 
+        const { data, error } = await supabaseAdmin
+            .from("processos")
+            .select("*")
+            .eq("id", id)
+            .eq("advogado_id", req.advogado.id)
+            .maybeSingle();
 
-        const documento =
-            await db
-                .collection("processos")
-                .doc(id)
-                .get();
+        if (error) throw error;
 
-
-        if (!documento.exists) {
-
+        if (!data) {
             return res.status(404).json({
-
-                erro:
-                    "Processo não encontrado"
-
+                erro: "Processo não encontrado"
             });
-
         }
 
-
-        const processo = {
-
-            id:
-                documento.id,
-
-            ...documento.data()
-
-        };
-
-
-        res.status(200).json(
-            processo
-        );
-
+        return res.status(200).json(data);
 
     } catch (error) {
+        console.error("Erro ao buscar processo:", error);
 
-        console.error(
-            "Erro ao buscar processo:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            erro:
-                error.message
-
+        return res.status(500).json({
+            erro: error.message
         });
-
     }
-
 };
 
 
-// ========================================
+// ==========================================================
 // ATUALIZAR PROCESSO
-// ========================================
+// ==========================================================
 
 const atualizarProcesso = async (req, res) => {
-
     try {
+        const { id } = req.params;
+        const advogadoId = req.advogado.id;
 
-        const { id } =
-            req.params;
+        const { data: dadosAntes, error: erroBusca } = await supabaseAdmin
+            .from("processos")
+            .select("*")
+            .eq("id", id)
+            .eq("advogado_id", advogadoId)
+            .maybeSingle();
 
+        if (erroBusca) throw erroBusca;
 
-        await db
-            .collection("processos")
-            .doc(id)
-            .update(req.body);
+        if (!dadosAntes) {
+            return res.status(404).json({
+                erro: "Processo não encontrado"
+            });
+        }
 
+        const atualizacao = converterCampos(req.body);
 
-        res.status(200).json({
+        if (Object.keys(atualizacao).length === 0) {
+            return res.status(400).json({
+                erro: "Nenhum campo válido informado para atualização"
+            });
+        }
 
-            mensagem:
-                "Processo atualizado com sucesso"
+        // ------------------------------------------------------
+        // VÍNCULO COM O CLIENTE
+        // ------------------------------------------------------
+        // Só mexe no vínculo se o advogado trocou o cliente ou se o
+        // processo ainda não tinha vínculo (cadastros antigos).
+        if (
+            atualizacao.cliente_id === "" ||
+            atualizacao.cliente_id === null
+        ) {
+            delete atualizacao.cliente_id;
+        }
 
+        const pediuCliente = atualizacao.cliente_id !== undefined;
+        const pediuNome = atualizacao.cliente !== undefined;
+
+        const trocouCliente =
+            (pediuCliente &&
+                String(atualizacao.cliente_id) !==
+                    String(dadosAntes.cliente_id)) ||
+            (pediuNome &&
+                normalizarTexto(atualizacao.cliente) !==
+                    normalizarTexto(dadosAntes.cliente));
+
+        if (trocouCliente || !dadosAntes.cliente_id) {
+            const vinculado = await buscarClienteVinculado(advogadoId, {
+                clienteId: atualizacao.cliente_id,
+                nome: pediuNome ? atualizacao.cliente : dadosAntes.cliente
+            });
+
+            if (vinculado) {
+                atualizacao.cliente_id = vinculado.id;
+                atualizacao.cliente = vinculado.nome;
+            } else if (trocouCliente) {
+                return res.status(400).json({
+                    erro:
+                        "Cliente não encontrado na sua lista. Selecione um " +
+                        "cliente cadastrado."
+                });
+            } else {
+                // Processo antigo sem vínculo e sem como identificar o
+                // cliente: segue a edição sem mexer no vínculo.
+                delete atualizacao.cliente_id;
+                delete atualizacao.cliente;
+            }
+        } else {
+            // Mesmo cliente de antes: preserva o vínculo existente.
+            delete atualizacao.cliente_id;
+            delete atualizacao.cliente;
+        }
+
+        if (Object.keys(atualizacao).length === 0) {
+            return res.status(400).json({
+                erro: "Nenhum campo válido informado para atualização"
+            });
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from("processos")
+            .update(atualizacao)
+            .eq("id", id)
+            .eq("advogado_id", advogadoId)
+            .select("*")
+            .single();
+
+        if (error) throw error;
+
+        const numeroProcesso =
+            data.numero_processo || "sem número";
+
+        const statusMudou =
+            atualizacao.status !== undefined &&
+            atualizacao.status !== dadosAntes.status;
+
+        await criarNotificacao({
+            tipo: "processo",
+
+            titulo: statusMudou
+                ? "Status do processo atualizado"
+                : "Processo atualizado",
+
+            mensagem: statusMudou
+                ? `O processo ${numeroProcesso} mudou de status: ` +
+                  `"${dadosAntes.status || "-"}" → "${data.status}".`
+                : `O processo ${numeroProcesso} foi atualizado.`,
+
+            clienteId: data.cliente_id,
+            processoId: id
         });
 
+        // Avisa o navegador do cliente em tempo real.
+        emitir(data.cliente_id, "processos");
+        if (dadosAntes.cliente_id && dadosAntes.cliente_id !== data.cliente_id) {
+            emitir(dadosAntes.cliente_id, "processos");
+        }
+
+        return res.status(200).json({
+            mensagem: "Processo atualizado com sucesso"
+        });
 
     } catch (error) {
+        console.error("Erro ao atualizar processo:", error);
 
-        console.error(
-            "Erro ao atualizar processo:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            erro:
-                error.message
-
+        return res.status(500).json({
+            erro: error.message
         });
-
     }
-
 };
 
 
-// ========================================
+// ==========================================================
 // EXCLUIR PROCESSO
-// ========================================
+// ==========================================================
 
 const excluirProcesso = async (req, res) => {
-
     try {
+        const { id } = req.params;
 
-        const { id } =
-            req.params;
+        const { data, error } = await supabaseAdmin
+            .from("processos")
+            .delete()
+            .eq("id", id)
+            .eq("advogado_id", req.advogado.id)
+            .select("id, cliente_id")
+            .maybeSingle();
 
+        if (error) throw error;
 
-        await db
-            .collection("processos")
-            .doc(id)
-            .delete();
+        if (!data) {
+            return res.status(404).json({
+                erro: "Processo não encontrado"
+            });
+        }
 
+        // Avisa o navegador do cliente em tempo real.
+        emitir(data.cliente_id, "processos");
 
-        res.status(200).json({
-
-            mensagem:
-                "Processo excluído com sucesso"
-
+        return res.status(200).json({
+            mensagem: "Processo excluído com sucesso"
         });
-
 
     } catch (error) {
+        console.error("Erro ao excluir processo:", error);
 
-        console.error(
-            "Erro ao excluir processo:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            erro:
-                error.message
-
+        return res.status(500).json({
+            erro: error.message
         });
-
     }
-
 };
 
 
-// ========================================
+// ==========================================================
 // EXPORTAÇÕES
-// ========================================
+// ==========================================================
 
 module.exports = {
-
     cadastrarProcesso,
-
     listarProcessos,
-
     buscarProcesso,
-
     atualizarProcesso,
-
     excluirProcesso
-
 };

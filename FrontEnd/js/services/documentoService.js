@@ -99,3 +99,89 @@ export function excluirDocumento(id) {
         "Erro ao excluir documento"
     );
 }
+
+// BAIXAR ARQUIVO
+// Devolve { url, nome } (arquivo no storage) ou { texto, nome } (ficha em texto).
+export function obterDownloadDocumento(id) {
+    return requisicao(
+        `${API}/${encodeURIComponent(id)}/arquivo`,
+        {},
+        "Erro ao baixar documento"
+    );
+}
+
+
+// Dispara o download no navegador a partir do que o servidor devolveu
+export function iniciarDownload(dados) {
+    const link = document.createElement("a");
+    let urlTemporaria = null;
+
+    if (dados.url) {
+        link.href = dados.url;
+    } else {
+        const blob = new Blob(
+            ["﻿" + (dados.texto || "")],
+            { type: "text/plain;charset=utf-8" }
+        );
+        urlTemporaria = URL.createObjectURL(blob);
+        link.href = urlTemporaria;
+    }
+
+    link.download = dados.nome || "documento";
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    if (urlTemporaria) {
+        setTimeout(() => URL.revokeObjectURL(urlTemporaria), 1000);
+    }
+}
+
+
+// ANEXAR ARQUIVO A UM DOCUMENTO (advogado)
+export async function anexarArquivoDocumento(id, arquivo) {
+
+    const tipo = arquivo.type || "";
+
+    let resposta;
+
+    try {
+        resposta = await fetch(
+            `${API}/${encodeURIComponent(id)}/arquivo?nome=${encodeURIComponent(arquivo.name)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": tipo,
+                    "Authorization": `Bearer ${getToken()}`
+                },
+                body: arquivo
+            }
+        );
+    } catch (erro) {
+        throw new Error(
+            "Não foi possível conectar ao servidor. " +
+            "Verifique se o back-end está rodando na porta 3000."
+        );
+    }
+
+    let dados = null;
+
+    try {
+        dados = await resposta.json();
+    } catch (erro) {
+        dados = null;
+    }
+
+    if (resposta.status === 401) {
+        await sessaoExpirada();
+        throw new Error("Sua sessão expirou. Faça login novamente.");
+    }
+
+    if (!resposta.ok) {
+        throw new Error((dados && dados.erro) || "Erro ao anexar arquivo");
+    }
+
+    return dados;
+}

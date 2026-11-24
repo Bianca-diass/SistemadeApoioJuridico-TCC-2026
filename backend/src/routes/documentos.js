@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 const verificarToken = require("../middlewares/authMiddleware");
@@ -9,9 +8,13 @@ const {
   obterDocumento,
   editarDocumento,
   excluirDocumento,
-  enviarDocumentoCliente,
-  baixarArquivo
+  enviarDocumentoCliente
 } = require("../controllers/documentosController");
+
+const {
+  anexarArquivo,
+  baixarArquivo
+} = require("../controllers/documentosArquivoController");
 
 router.use(verificarToken);
 
@@ -30,7 +33,16 @@ router.post(
 // Listagem
 router.get("/", listarDocumentos);
 
-// Download do arquivo
+// Arquivo do documento: advogado anexa, advogado e cliente baixam
+router.post(
+  "/:id/arquivo",
+  express.raw({
+    type: () => true,
+    limit: "10mb"
+  }),
+  anexarArquivo
+);
+
 router.get("/:id/arquivo", baixarArquivo);
 
 // Consulta, edição e exclusão

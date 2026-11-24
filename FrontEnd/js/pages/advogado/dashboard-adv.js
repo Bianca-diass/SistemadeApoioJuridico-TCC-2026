@@ -1,4 +1,5 @@
-import { getToken } from "../../services/authService.js";
+import { getToken, obterMeuPerfil } from "../../services/authService.js";
+import { oabDoUsuario } from "../../utils/oab.js";
 import { listarProcessos } from "../../services/processoService.js";
 import { listarCompromissos } from "../../services/agendaService.js";
 import { listarTodasNotificacoes } from "../../services/notificacaoService.js";
@@ -28,6 +29,7 @@ const statusProcessosEl = document.getElementById("statusProcessos");
 const statusAgendaEl = document.getElementById("statusAgenda");
 const statusNotificacoesEl = document.getElementById("statusNotificacoes");
 const btnMarcarTodasEl = document.getElementById("btnMarcarTodasLidas");
+const oabAdvogadoEl = document.getElementById("oabAdvogado");
 
 // ==========================================================
 // PROTEÇÃO DE ROTA
@@ -302,7 +304,11 @@ function renderizarProximosCompromissos(compromissos) {
     });
 
     if (ativos.length === 0) {
-        listaAgendaEl.innerHTML = `<li>Nenhum compromisso pendente.</li>`;
+        const encerrados = compromissos.length;
+
+        listaAgendaEl.innerHTML = encerrados > 0
+            ? `<li>Nenhum compromisso pendente (${encerrados} concluído${encerrados === 1 ? "" : "s"}/cancelado${encerrados === 1 ? "" : "s"}).</li>`
+            : `<li>Nenhum compromisso pendente.</li>`;
         return;
     }
 
@@ -488,22 +494,24 @@ function renderizarNotificacoes() {
     if (!listaNotificacoesEl) return;
 
     const lidas = lerLidasLocal();
-    const naoLidas = notificacoesAtuais.filter(n => !lidas.has(n.id));
 
-    if (totalNotificacoesEl) totalNotificacoesEl.textContent = naoLidas.length;
-    if (btnMarcarTodasEl) btnMarcarTodasEl.hidden = naoLidas.length === 0;
+    // Ordena e limita PRIMEIRO, para o contador bater com a lista exibida
+    const exibidas = [...notificacoesAtuais]
+        .sort((a, b) => new Date(b.dataEnvio || 0) - new Date(a.dataEnvio || 0))
+        .slice(0, LIMITE_NOTIFICACOES);
+
+    // Conta apenas as não lidas que estão visíveis na lista
+    const naoLidasExibidas = exibidas.filter(n => !lidas.has(n.id));
+
+    if (totalNotificacoesEl) totalNotificacoesEl.textContent = naoLidasExibidas.length;
+    if (btnMarcarTodasEl) btnMarcarTodasEl.hidden = naoLidasExibidas.length === 0;
 
     if (notificacoesAtuais.length === 0) {
         listaNotificacoesEl.innerHTML = `<li>Nenhuma notificação por enquanto.</li>`;
         return;
     }
 
-    const ordenadas = [...notificacoesAtuais].sort((a, b) => {
-        return new Date(b.dataEnvio || 0) - new Date(a.dataEnvio || 0);
-    });
-
-    listaNotificacoesEl.innerHTML = ordenadas
-        .slice(0, LIMITE_NOTIFICACOES)
+    listaNotificacoesEl.innerHTML = exibidas
         .map(item => {
             const lida = lidas.has(item.id);
             const icone = ICONE_POR_TIPO[item.tipo] || "🔔";
@@ -550,6 +558,40 @@ btnMarcarTodasEl?.addEventListener("click", () => {
 });
 
 // ==========================================================
+// OAB DO ADVOGADO (EX.: 29588/MS)
+// ==========================================================
+
+function mostrarOab(usuario) {
+    if (!oabAdvogadoEl) return;
+
+    const oab = oabDoUsuario(usuario);
+
+    if (!oab) {
+        oabAdvogadoEl.hidden = true;
+        return;
+    }
+
+    oabAdvogadoEl.textContent = `OAB: ${oab}`;
+    oabAdvogadoEl.hidden = false;
+}
+
+async function carregarOab() {
+    // 1) mostra na hora o que já está salvo no navegador
+    try {
+        mostrarOab(JSON.parse(localStorage.getItem("usuario") || "null"));
+    } catch {
+        // dado salvo inválido: ignora e espera o servidor
+    }
+
+    // 2) confirma com o servidor (pega edições feitas nas Configurações)
+    try {
+        mostrarOab(await obterMeuPerfil());
+    } catch (erro) {
+        console.warn("Não foi possível carregar a OAB:", erro);
+    }
+}
+
+// ==========================================================
 // ATUALIZAÇÃO AUTOMÁTICA
 // ==========================================================
 
@@ -588,9 +630,27 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", pararAtualizacaoAutomatica);
 
+// Voltou para esta página (botão "voltar", troca de aba ou janela):
+// atualiza na hora, sem esperar o próximo ciclo.
+window.addEventListener("pageshow", () => {
+    if (!document.hidden) atualizarTudo();
+});
+
+window.addEventListener("focus", () => {
+    atualizarTudo();
+});
+
+// A agenda (outra aba/página) avisa quando cadastra, edita ou exclui.
+window.addEventListener("storage", evento => {
+    if (evento.key === "agendaAtualizadaEm") {
+        atualizarTudo();
+    }
+});
+
 // ==========================================================
 // INICIALIZAÇÃO
 // ==========================================================
 
+carregarOab();
 atualizarTudo({ mostrarCarregando: true });
 iniciarAtualizacaoAutomatica();

@@ -1,5 +1,9 @@
 
 const { supabaseAdmin } = require("../config/supabase");
+const {
+  emailNormalizado,
+  buscarClientesPorEmail
+} = require("../utils/clienteResolver");
 
 const cadastrarCliente = async (req, res) => {
   try {
@@ -23,9 +27,44 @@ const cadastrarCliente = async (req, res) => {
       });
     }
 
+    const emailLimpo = emailNormalizado(email);
+
+    if (emailLimpo) {
+      const existentes = await buscarClientesPorEmail(emailLimpo);
+
+      if (existentes.length > 0) {
+        const existente = existentes[0];
+
+        const { data: jaVinculado, error: erroBusca } = await supabaseAdmin
+          .from("advogado_clientes")
+          .select("cliente_id")
+          .eq("advogado_id", req.advogado.id)
+          .eq("cliente_id", existente.id)
+          .maybeSingle();
+
+        if (erroBusca) throw erroBusca;
+
+        if (!jaVinculado) {
+          const { error: erroLink } = await supabaseAdmin
+            .from("advogado_clientes")
+            .insert({
+              advogado_id: req.advogado.id,
+              cliente_id: existente.id
+            });
+
+          if (erroLink) throw erroLink;
+        }
+
+        return res.status(200).json({
+          mensagem: "Cliente já cadastrado: vinculado à sua lista",
+          id: existente.id
+        });
+      }
+    }
+
     const novoCliente = {
       nome,
-      email,
+      email: emailLimpo || email,
       telefone,
       cpf: cpf || "",
       cnpj: cnpj || "",
@@ -54,7 +93,6 @@ const cadastrarCliente = async (req, res) => {
       });
 
     if (erroVinculo) {
-      // Remove o cadastro caso não seja possível criar o vínculo.
       await supabaseAdmin
         .from("clientes")
         .delete()

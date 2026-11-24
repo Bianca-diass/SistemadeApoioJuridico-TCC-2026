@@ -1,344 +1,364 @@
-const { db } = require("../config/firebase");
+
+const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
 
-// ==========================================
-// QUEM ESTÁ LOGADO? (advogado ou cliente)
-// ==========================================
+// ==================================================
+// NORMALIZAR NOME
+// ==================================================
 
-// O advogado tem um documento em "advogados" com id = uid do login
-async function ehAdvogado(uid) {
-  const doc = await db.collection("advogados").doc(uid).get();
-  return doc.exists;
+function normalizarNome(nome) {
+    return String(nome || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
 }
 
-// O cliente com login tem documento em "clientes" com id = uid
-// (ou com um campo "uid"). Devolve os dados dele ou null.
-async function buscarCliente(uid) {
-  const direto = await db.collection("clientes").doc(uid).get();
-  if (direto.exists) return { id: direto.id, ...direto.data() };
+// ==================================================
+// LOCALIZAR CLIENTE VINCULADO AO ADVOGADO
+// ==================================================
 
-  const consulta = await db
-    .collection("clientes")
-    .where("uid", "==", uid)
-    .limit(1)
-    .get();
+async function resolverClienteId(advogadoId, dados) {
+    const clienteId = dados.clienteId || null;
+    const nomeCliente = String(dados.nome || "").trim();
 
-  if (consulta.empty) return null;
-
-  return { id: consulta.docs[0].id, ...consulta.docs[0].data() };
-}
-
-// Compara nomes sem diferenciar maiúsculas, acentos e espaços extras
-function normalizar(valor) {
-  return String(valor || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-// Só o advogado pode criar, alterar ou excluir compromissos
-const exigirAdvogado = async (req, res, next) => {
-  try {
-    if (await ehAdvogado(req.usuario.uid)) return next();
-
-    return res.status(403).json({
-      erro: "Apenas advogados podem alterar a agenda."
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ erro: error.message });
-  }
-};
-
-
-// ==========================================
-// CADASTRAR COMPROMISSO
-// ==========================================
-
-const cadastrarCompromisso = async (req, res) => {
-
-  try {
-
-    const {
-      titulo,
-      descricao,
-      tipo,
-      data,
-      horario,
-      dataPrazo,
-      horaPrazo,
-      cliente,
-      processo,
-      local,
-      status,
-      concluido
-    } = req.body;
-
-
-    const compromisso = {
-
-      titulo: titulo || "",
-      descricao: descricao || "",
-      tipo: tipo || "",
-      data: data || "",
-      horario: horario || "",
-      dataPrazo: dataPrazo || "",
-      horaPrazo: horaPrazo || "",
-      cliente: cliente || "",
-      processo: processo || "",
-      local: local || "",
-      status: status || "Agendado",
-      concluido: concluido === true,
-
-      criadoEm: new Date()
-
-    };
-
-
-    const doc =
-      await db
-        .collection("agenda")
-        .add(compromisso);
-
-
-    // ==================================================
-    // NOTIFICAÇÃO AUTOMÁTICA (RF007)
-    // ==================================================
-
-    const tipoNormalizado =
-      String(compromisso.tipo || "").toLowerCase();
-
-    let tituloNotificacao = "Novo compromisso cadastrado";
-    let tipoNotificacao = "sistema";
-
-    if (tipoNormalizado === "audiência" || tipoNormalizado === "audiencia") {
-
-      tituloNotificacao = "Audiência marcada";
-      tipoNotificacao = "audiencia";
-
-    } else if (tipoNormalizado === "prazo") {
-
-      tituloNotificacao = "Novo prazo cadastrado";
-      tipoNotificacao = "prazo";
-
+    if (!clienteId && !nomeCliente) {
+        return null;
     }
 
-    await criarNotificacao({
+    // Buscar clientes vinculados ao advogado
+    const { data: vinculos, error: erroVinculos } =
+        await supabaseAdmin
+            .from("advogado_clientes")
+            .select("cliente_id")
+            .eq("advogado_id", advogadoId);
 
-      tipo: tipoNotificacao,
+    if (erroVinculos) throw erroVinculos;
 
-      titulo: tituloNotificacao,
+    const ids = (vinculos || []).map(v => v.cliente_id);
 
-      mensagem:
-        `${compromisso.titulo || "Compromisso"} - ` +
-        `${compromisso.data || "data não informada"} ` +
-        `às ${compromisso.horario || "--:--"}` +
-        (compromisso.cliente ? ` (Cliente: ${compromisso.cliente})` : ""),
-
-      compromissoId: doc.id
-
-    });
-
-
-    res.status(201).json({
-
-      mensagem:
-        "Compromisso cadastrado com sucesso",
-
-      id: doc.id
-
-    });
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-
-      erro: error.message
-
-    });
-
-  }
-
-};
-
-
-// ==========================================
-// LISTAR COMPROMISSOS
-// ==========================================
-
-const listarCompromissos = async (req, res) => {
-
-  try {
-
-    const uid = req.usuario.uid;
-
-    const advogado = await ehAdvogado(uid);
-
-    // Quem não é advogado só pode ver os próprios compromissos
-    let cliente = null;
-
-    if (!advogado) {
-
-      cliente = await buscarCliente(uid);
-
-      if (!cliente) {
-
-        return res.status(403).json({
-          erro: "Acesso negado."
-        });
-
-      }
-
+    if (!ids.length) {
+        throw new Error(
+            "Este advogado ainda não possui clientes vinculados."
+        );
     }
 
+    // Se recebeu ID, conferir se pertence ao advogado
+    if (clienteId) {
+        if (!ids.some(id => String(id) === String(clienteId))) {
+            throw new Error(
+                "O cliente informado não pertence à sua lista."
+            );
+        }
 
-    const snapshot =
-      await db
-        .collection("agenda")
-        .get();
-
-
-    let compromissos = [];
-
-
-    snapshot.forEach((doc) => {
-
-      compromissos.push({
-
-        id: doc.id,
-
-        ...doc.data()
-
-      });
-
-    });
-
-
-    if (cliente) {
-
-      const nomeCliente = normalizar(cliente.nome);
-
-      compromissos = compromissos.filter((c) =>
-        c.clienteId === cliente.id ||
-        (nomeCliente && normalizar(c.cliente) === nomeCliente)
-      );
-
+        return clienteId;
     }
 
+    // Buscar os clientes vinculados
+    const { data: clientes, error: erroClientes } =
+        await supabaseAdmin
+            .from("clientes")
+            .select("id, nome")
+            .in("id", ids);
 
-    res.status(200).json(
-      compromissos
+    if (erroClientes) throw erroClientes;
+
+    const nomeNormalizado = normalizarNome(nomeCliente);
+
+    const encontrados = (clientes || []).filter(cliente =>
+        normalizarNome(cliente.nome) === nomeNormalizado
     );
 
+    if (encontrados.length === 0) {
+        throw new Error(
+            "Cliente não encontrado na sua lista. Verifique o nome cadastrado."
+        );
+    }
 
-  } catch (error) {
+    if (encontrados.length > 1) {
+        throw new Error(
+            "Existem clientes com o mesmo nome. É necessário identificar o cliente pelo ID."
+        );
+    }
 
-    console.error(error);
+    return encontrados[0].id;
+}
 
-    res.status(500).json({
+// ==================================================
+// CADASTRAR COMPROMISSO
+// ==================================================
 
-      erro: error.message
+const cadastrarCompromisso = async (req, res) => {
+    try {
+        const {
+            titulo,
+            descricao,
+            tipo,
+            data,
+            horario,
+            dataPrazo,
+            data_prazo,
+            horaPrazo,
+            hora_prazo,
+            cliente,
+            clienteId,
+            cliente_id,
+            processo,
+            local,
+            status,
+            concluido
+        } = req.body;
 
-    });
+        const advogadoId = req.advogado.id;
 
-  }
+        const clienteIdFinal = await resolverClienteId(
+            advogadoId,
+            {
+                clienteId: clienteId || cliente_id,
+                nome: cliente
+            }
+        );
 
+        const compromisso = {
+            titulo: titulo || "",
+            descricao: descricao || "",
+            tipo: tipo || "",
+            data: data || "",
+            horario: horario || "",
+            data_prazo: dataPrazo || data_prazo || null,
+            hora_prazo: horaPrazo || hora_prazo || null,
+            cliente: cliente || "",
+            cliente_id: clienteIdFinal,
+            advogado_id: advogadoId,
+            processo: processo || "",
+            local: local || "",
+            status: status || "Agendado",
+            concluido: concluido === true
+        };
+
+        const { data: novoCompromisso, error } =
+            await supabaseAdmin
+                .from("agenda")
+                .insert(compromisso)
+                .select("*")
+                .single();
+
+        if (error) throw error;
+
+        // Criar notificação para o cliente
+        if (clienteIdFinal) {
+
+            let tituloNotificacao = "Novo compromisso cadastrado";
+            let tipoNotificacao = "sistema";
+
+            const tipoNormalizado = normalizarNome(tipo);
+
+            if (tipoNormalizado === "audiencia") {
+                tituloNotificacao = "Audiência marcada";
+                tipoNotificacao = "audiencia";
+            } else if (tipoNormalizado === "prazo") {
+                tituloNotificacao = "Novo prazo cadastrado";
+                tipoNotificacao = "prazo";
+            }
+
+            await criarNotificacao({
+                tipo: tipoNotificacao,
+                titulo: tituloNotificacao,
+                mensagem:
+                    `${compromisso.titulo || "Compromisso"} - ` +
+                    `${compromisso.data || "Data não informada"} ` +
+                    `às ${compromisso.horario || "--:--"} ` +
+                    (compromisso.local
+                        ? `- Local: ${compromisso.local}`
+                        : ""),
+                clienteId: clienteIdFinal,
+                compromissoId: novoCompromisso.id
+            });
+        }
+
+        return res.status(201).json({
+            mensagem: "Compromisso cadastrado com sucesso.",
+            compromisso: novoCompromisso
+        });
+
+    } catch (error) {
+        console.error("Erro ao cadastrar compromisso:", error);
+
+        return res.status(400).json({
+            erro: error.message || "Erro ao cadastrar compromisso."
+        });
+    }
 };
 
+// ==================================================
+// LISTAR COMPROMISSOS DO ADVOGADO
+// ==================================================
 
-// ==========================================
+const listarCompromissos = async (req, res) => {
+    try {
+        const advogadoId = req.advogado.id;
+
+        const { data, error } = await supabaseAdmin
+            .from("agenda")
+            .select("*")
+            .eq("advogado_id", advogadoId)
+            .order("data", { ascending: true });
+
+        if (error) throw error;
+
+        return res.status(200).json(data || []);
+
+    } catch (error) {
+        console.error("Erro ao listar compromissos:", error);
+
+        return res.status(500).json({
+            erro: "Erro ao listar compromissos."
+        });
+    }
+};
+
+// ==================================================
 // ATUALIZAR COMPROMISSO
-// ==========================================
+// ==================================================
 
 const atualizarCompromisso = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const advogadoId = req.advogado.id;
 
-  try {
+        const camposPermitidos = {
+            titulo: "titulo",
+            descricao: "descricao",
+            tipo: "tipo",
+            data: "data",
+            horario: "horario",
+            dataPrazo: "data_prazo",
+            data_prazo: "data_prazo",
+            horaPrazo: "hora_prazo",
+            hora_prazo: "hora_prazo",
+            cliente: "cliente",
+            clienteId: "cliente_id",
+            cliente_id: "cliente_id",
+            processo: "processo",
+            local: "local",
+            status: "status",
+            concluido: "concluido"
+        };
 
-    const { id } =
-      req.params;
+        const atualizacao = {};
 
+        Object.entries(camposPermitidos).forEach(([campo, coluna]) => {
+            if (req.body[campo] !== undefined) {
+                atualizacao[coluna] = req.body[campo];
+            }
+        });
 
-    await db
-      .collection("agenda")
-      .doc(id)
-      .update(req.body);
+        if (!Object.keys(atualizacao).length) {
+            return res.status(400).json({
+                erro: "Nenhum campo válido informado."
+            });
+        }
 
+        const { data: atual, error: erroBusca } =
+            await supabaseAdmin
+                .from("agenda")
+                .select("*")
+                .eq("id", id)
+                .eq("advogado_id", advogadoId)
+                .maybeSingle();
 
-    res.status(200).json({
+        if (erroBusca) throw erroBusca;
 
-      mensagem:
-        "Compromisso atualizado com sucesso"
+        if (!atual) {
+            return res.status(404).json({
+                erro: "Compromisso não encontrado."
+            });
+        }
 
-    });
+        if (
+            atualizacao.cliente !== undefined ||
+            atualizacao.cliente_id !== undefined
+        ) {
+            atualizacao.cliente_id = await resolverClienteId(
+                advogadoId,
+                {
+                    clienteId: atualizacao.cliente_id,
+                    nome: atualizacao.cliente !== undefined
+                        ? atualizacao.cliente
+                        : atual.cliente
+                }
+            );
+        }
 
+        const { data, error } = await supabaseAdmin
+            .from("agenda")
+            .update(atualizacao)
+            .eq("id", id)
+            .eq("advogado_id", advogadoId)
+            .select("id");
 
-  } catch (error) {
+        if (error) throw error;
 
-    console.error(error);
+        if (!data || !data.length) {
+            return res.status(404).json({
+                erro: "Compromisso não encontrado."
+            });
+        }
 
-    res.status(500).json({
+        return res.status(200).json({
+            mensagem: "Compromisso atualizado com sucesso."
+        });
 
-      erro: error.message
+    } catch (error) {
+        console.error("Erro ao atualizar compromisso:", error);
 
-    });
-
-  }
-
+        return res.status(400).json({
+            erro: error.message || "Erro ao atualizar compromisso."
+        });
+    }
 };
 
-
-// ==========================================
+// ==================================================
 // EXCLUIR COMPROMISSO
-// ==========================================
+// ==================================================
 
 const excluirCompromisso = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const advogadoId = req.advogado.id;
 
-  try {
+        const { data, error } = await supabaseAdmin
+            .from("agenda")
+            .delete()
+            .eq("id", id)
+            .eq("advogado_id", advogadoId)
+            .select("id");
 
-    const { id } =
-      req.params;
+        if (error) throw error;
 
+        if (!data || !data.length) {
+            return res.status(404).json({
+                erro: "Compromisso não encontrado."
+            });
+        }
 
-    await db
-      .collection("agenda")
-      .doc(id)
-      .delete();
+        return res.status(200).json({
+            mensagem: "Compromisso excluído com sucesso."
+        });
 
+    } catch (error) {
+        console.error("Erro ao excluir compromisso:", error);
 
-    res.status(200).json({
-
-      mensagem:
-        "Compromisso excluído com sucesso"
-
-    });
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-
-      erro: error.message
-
-    });
-
-  }
-
+        return res.status(500).json({
+            erro: "Erro ao excluir compromisso."
+        });
+    }
 };
 
-
 module.exports = {
-
-  cadastrarCompromisso,
-  listarCompromissos,
-  atualizarCompromisso,
-  excluirCompromisso,
-  exigirAdvogado
-
+    cadastrarCompromisso,
+    listarCompromissos,
+    atualizarCompromisso,
+    excluirCompromisso
 };

@@ -786,7 +786,7 @@ const baixarArquivo = async (req, res) => {
 
     const { data: documento, error } = await supabaseAdmin
       .from("documentos")
-      .select("id, cliente_id, arquivo_path")
+      .select("id, cliente_id, arquivo_path, titulo")
       .eq("id", req.params.id)
       .maybeSingle();
 
@@ -815,10 +815,25 @@ const baixarArquivo = async (req, res) => {
       });
     }
 
+    // Nome do arquivo baixado: título do documento + extensão original
+    // (em vez do nome interno do storage, que começa com um número).
+    const extensao = (
+      documento.arquivo_path.match(/\.([a-zA-Z0-9]{1,5})$/) || []
+    )[1];
+
+    let nomeDownload = nomeSeguro(documento.titulo || "documento");
+
+    if (
+      extensao &&
+      !nomeDownload.toLowerCase().endsWith("." + extensao.toLowerCase())
+    ) {
+      nomeDownload += "." + extensao.toLowerCase();
+    }
+
     const { data, error: erroUrl } = await supabaseAdmin.storage
       .from(BUCKET)
       .createSignedUrl(documento.arquivo_path, 60, {
-        download: true
+        download: nomeDownload
       });
 
     if (erroUrl) throw erroUrl;

@@ -1,531 +1,399 @@
+(function () {
+  var API = 'http://localhost:3000/documentos';
+  var MAX_BYTES = 10 * 1024 * 1024;
 
-// ============================================================
-// CONFIGURAÇÕES
-// ============================================================
+  var token = localStorage.getItem('token');
+  if (!token) { window.location.href = 'login.html'; return; }
 
-const CONFIG = {
-  usuarioKeys: ['usuario', 'user'],
-  tokenKey: 'token'
-};
+  var docsEl = document.getElementById('docs');
+  var busca = document.getElementById('busca');
+  var filtro = document.getElementById('filtro');
+  var filtroStatus = document.getElementById('filtroStatus');
+  var resumo = document.getElementById('resumoDocumentos');
+  var vazio = document.getElementById('vazio');
+  var modal = document.getElementById('modal');
+  var modalTitulo = document.getElementById('modalTitulo');
+  var modalMeta = document.getElementById('modalMeta');
+  var modalCorpo = document.getElementById('modalCorpo');
+  var btnBaixar = document.getElementById('modalBaixar');
+  var btnBaixarTodos = document.getElementById('btnBaixarTodos');
 
-const el = {
-  docs: document.getElementById('docs'),
-  busca: document.getElementById('busca'),
-  filtro: document.getElementById('filtro'),
-  resumo: document.getElementById('resumoDocumentos'),
+  var modalEnvio = document.getElementById('modalEnvio');
+  var formEnvio = document.getElementById('formEnvio');
+  var msgEnvio = document.getElementById('msgEnvio');
+  var btnEnviarForm = document.getElementById('envioEnviar');
+  var inputArquivo = document.getElementById('envioArquivo');
+  var inputTitulo = document.getElementById('envioTituloDoc');
 
-  nome: document.getElementById('nomeUsuario'),
-  inicial: document.getElementById('inicialUsuario'),
-  sair: document.getElementById('btnSair'),
+  var documentos = [];
+  var aberto = null;
+  var ultimoFoco = null;
 
-  modal: document.getElementById('modal'),
-  modalTitulo: document.getElementById('modalTitulo'),
-  modalMeta: document.getElementById('modalMeta'),
-  modalCorpo: document.getElementById('modalCorpo'),
-  modalBaixar: document.getElementById('modalBaixar'),
-  modalFechar: document.getElementById('modalFechar')
-};
+  var STATUS = {
+    Aprovado: { rotulo: 'Aprovado', classe: 'b-ok' },
+    Pendente: { rotulo: 'Pendente', classe: 'b-warn' },
+    Rejeitado: { rotulo: 'Rejeitado', classe: 'b-err' },
+    Enviado: { rotulo: 'Enviado', classe: '' }
+  };
 
-let documentos = [];
-let documentoAtual = null;
+  var MIME_POR_EXT = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  };
 
-// ============================================================
-// DATAS
-// ============================================================
-
-function dataAnterior(dias) {
-  const data = new Date();
-  data.setHours(12, 0, 0, 0);
-  data.setDate(data.getDate() - dias);
-
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
-  const dia = String(data.getDate()).padStart(2, '0');
-
-  return `${ano}-${mes}-${dia}`;
-}
-
-function formatarData(data) {
-  if (!data) return '—';
-
-  const [ano, mes, dia] = data.split('-');
-
-  return `${dia}/${mes}/${ano}`;
-}
-
-// ============================================================
-// DOCUMENTOS FICTÍCIOS
-// ============================================================
-
-function gerarDocumentosDemonstracao() {
-  return [
-    {
-      id: 1,
-      nome: 'Documento de Identidade.pdf',
-      tipo: 'Identidade',
-      extensao: 'PDF',
-      data: dataAnterior(12),
-      processo: '0001234-56',
-      tamanho: '1,2 MB',
-      status: 'Disponível',
-      conteudo: 'Documento de identificação apresentado pelo cliente para identificação e registro no processo.'
-    },
-
-    {
-      id: 2,
-      nome: 'Comprovante de Residência.pdf',
-      tipo: 'Comprovante',
-      extensao: 'PDF',
-      data: dataAnterior(8),
-      processo: '0001234-56',
-      tamanho: '850 KB',
-      status: 'Disponível',
-      conteudo: 'Comprovante de residência utilizado para confirmar o endereço cadastrado do cliente.'
-    },
-
-    {
-      id: 3,
-      nome: 'Procuração.pdf',
-      tipo: 'Procuração',
-      extensao: 'PDF',
-      data: dataAnterior(5),
-      processo: '0005678-90',
-      tamanho: '980 KB',
-      status: 'Disponível',
-      conteudo: 'Instrumento de procuração para representação do cliente em procedimentos jurídicos.'
-    },
-
-    {
-      id: 4,
-      nome: 'Contrato de Honorários.pdf',
-      tipo: 'Contrato',
-      extensao: 'PDF',
-      data: dataAnterior(2),
-      processo: '0005678-90',
-      tamanho: '1,5 MB',
-      status: 'Disponível',
-      conteudo: 'Contrato demonstrativo contendo informações sobre a prestação de serviços advocatícios e honorários.'
-    }
-  ];
-}
-
-// ============================================================
-// UTILITÁRIOS
-// ============================================================
-
-function escaparHTML(texto) {
-  return String(texto ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function iconeDocumento(extensao) {
-  if (extensao === 'PDF') {
-    return 'fa-solid fa-file-pdf';
+  /* ----- utilidades ----- */
+  function dataBR(str) {
+    if (!str) return '—';
+    var p = String(str).slice(0, 10).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : str;
   }
 
-  return 'fa-solid fa-file';
-}
+  function tamanho(valor) {
+    var n = Number(valor);
+    if (!n) return valor ? String(valor) : '';
+    if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + ' KB';
+    return (n / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+  }
 
-// ============================================================
-// USUÁRIO
-// ============================================================
+  function el(tag, classe, texto) {
+    var e = document.createElement(tag);
+    if (classe) e.className = classe;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
 
-function carregarUsuario() {
-  for (const chave of CONFIG.usuarioKeys) {
-    try {
-      const usuario = JSON.parse(
-        localStorage.getItem(chave) || 'null'
-      );
+  function icone(classe) {
+    var i = document.createElement('i');
+    i.className = classe;
+    return i;
+  }
 
-      const nome = usuario?.nome ?? usuario?.name;
+  function metaItem(iconeClasse, texto) {
+    var s = document.createElement('span');
+    s.appendChild(icone(iconeClasse));
+    s.appendChild(document.createTextNode(texto));
+    return s;
+  }
 
-      if (nome) {
-        el.nome.textContent = nome;
-        el.inicial.textContent =
-          nome.trim().charAt(0).toUpperCase();
+  function mimeDoArquivo(arquivo) {
+    if (arquivo.type) return arquivo.type;
+    var ext = (arquivo.name.split('.').pop() || '').toLowerCase();
+    return MIME_POR_EXT[ext] || '';
+  }
 
-        return;
+  function esperar(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  /* ----- chamadas ao servidor ----- */
+  function chamar(url, opcoes) {
+    opcoes = opcoes || {};
+    opcoes.headers = Object.assign(
+      { Authorization: 'Bearer ' + token },
+      opcoes.headers || {}
+    );
+
+    return fetch(url, opcoes).then(function (resp) {
+      if (resp.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+        throw new Error('Sua sessão expirou. Faça login novamente.');
       }
-    } catch (erro) {
+
+      return resp.json().catch(function () { return {}; }).then(function (dados) {
+        if (!resp.ok) throw new Error(dados.erro || 'Erro ao processar a solicitação.');
+        return dados;
+      });
+    });
+  }
+
+  function iconeDoArquivo(mime) {
+  mime = String(mime || '');
+  if (mime === 'application/pdf') return 'fa-regular fa-file-pdf';
+  if (mime.indexOf('image/') === 0) return 'fa-regular fa-file-image';
+  if (mime.indexOf('word') !== -1 || mime === 'application/msword') return 'fa-regular fa-file-word';
+  return 'fa-regular fa-file-lines';
+}
+
+/* ----- lista ----- */
+  function criarItem(d) {
+    var st = STATUS[d.status] || { rotulo: d.status || '—', classe: '' };
+
+    var item = el('button', 'doc-item');
+    item.type = 'button';
+    item.dataset.id = d.id;
+    item.dataset.busca = ((d.titulo || '') + ' ' + (d.processo || '') + ' ' + (d.tipo || '')).toLowerCase();
+    item.dataset.tipo = d.tipo || '';
+    item.dataset.status = d.status || '';
+
+    var ic = el('div', 'doc-icone');
+    ic.appendChild(icone(iconeDoArquivo(d.arquivo_tipo)));
+
+    var info = el('div', 'doc-info');
+    info.appendChild(el('div', 'doc-nome', d.titulo || 'Documento'));
+
+    var meta = el('div', 'doc-meta');
+    if (d.processo) meta.appendChild(metaItem('fa-solid fa-scale-balanced', 'Proc. ' + d.processo));
+    meta.appendChild(metaItem('fa-regular fa-calendar', dataBR(d.data_envio)));
+    if (tamanho(d.arquivo_tamanho)) meta.appendChild(metaItem('fa-solid fa-weight-hanging', tamanho(d.arquivo_tamanho)));
+    info.appendChild(meta);
+
+    var badge = el('span', 'badge ' + st.classe, st.rotulo);
+    var seta = icone('fa-solid fa-chevron-right doc-seta');
+
+    item.append(ic, info, badge, seta);
+    item.addEventListener('click', function () { abrir(d, item); });
+
+    return item;
+  }
+
+  function renderizar() {
+    docsEl.replaceChildren();
+    documentos.forEach(function (d) { docsEl.appendChild(criarItem(d)); });
+    aplicar();
+  }
+
+  function aplicar() {
+    var termo = busca.value.trim().toLowerCase();
+    var tipo = filtro.value;
+    var status = filtroStatus.value;
+    var visiveis = 0;
+
+    Array.prototype.forEach.call(docsEl.children, function (item) {
+      var ok = (!termo || item.dataset.busca.indexOf(termo) !== -1) &&
+               (tipo === 'todos' || item.dataset.tipo === tipo) &&
+               (status === 'todos' || item.dataset.status === status);
+      item.style.display = ok ? '' : 'none';
+      if (ok) visiveis++;
+    });
+
+    if (visiveis === 0) vazio.lastChild.textContent = ' Nenhum documento encontrado.';
+    vazio.hidden = visiveis !== 0;
+    resumo.textContent = visiveis === 1
+      ? '1 documento encontrado'
+      : visiveis + ' documentos encontrados';
+  }
+
+  function carregar() {
+    return chamar(API).then(function (dados) {
+      documentos = Array.isArray(dados) ? dados : [];
+      renderizar();
+    }).catch(function (erro) {
       console.error(erro);
+      docsEl.replaceChildren();
+      vazio.hidden = false;
+      vazio.lastChild.textContent = ' ' + erro.message;
+      resumo.textContent = '';
+    });
+  }
+
+  busca.addEventListener('input', aplicar);
+  filtro.addEventListener('change', aplicar);
+  filtroStatus.addEventListener('change', aplicar);
+
+  /* ----- modal de detalhes ----- */
+  function detalhe(rotulo, valor) {
+    var box = el('div', 'detalhe-doc');
+    box.appendChild(el('small', '', rotulo));
+    box.appendChild(el('strong', '', valor || '—'));
+    return box;
+  }
+
+  function abrir(d, origem) {
+    aberto = d;
+    ultimoFoco = origem;
+
+    var st = STATUS[d.status] || { rotulo: d.status || '—' };
+    var partes = [d.tipo, dataBR(d.data_envio), tamanho(d.arquivo_tamanho)].filter(Boolean);
+
+    modalTitulo.textContent = d.titulo || 'Documento';
+    modalMeta.textContent = partes.join(' · ');
+
+    var grade = el('div', 'detalhes-doc');
+    grade.appendChild(detalhe('Processo', d.processo));
+    grade.appendChild(detalhe('Tipo', d.tipo));
+    grade.appendChild(detalhe('Data', dataBR(d.data_envio)));
+    grade.appendChild(detalhe('Situação', st.rotulo));
+    grade.appendChild(detalhe('Enviado por', d.origem === 'cliente' ? 'Você' : 'Escritório'));
+
+    modalCorpo.replaceChildren(grade);
+
+    if (d.descricao) {
+      var desc = el('div', 'preview-aviso', d.descricao);
+      modalCorpo.appendChild(desc);
     }
+
+    btnBaixar.disabled = false;
+    btnBaixar.title = d.arquivo_path ? '' : 'Sem arquivo anexado: baixa a ficha do documento';
+
+    modal.hidden = false;
+    document.getElementById('modalFechar').focus();
   }
 
-  el.nome.textContent = 'Cliente Demonstração';
-  el.inicial.textContent = 'C';
-}
+  function fechar() {
+    modal.hidden = true;
+    if (ultimoFoco) ultimoFoco.focus();
+  }
 
-// ============================================================
-// CARREGAMENTO DOS DOCUMENTOS
-// ============================================================
+  document.getElementById('modalFechar').addEventListener('click', fechar);
+  modal.addEventListener('click', function (e) { if (e.target === modal) fechar(); });
 
-function carregarDocumentos() {
-  documentos = gerarDocumentosDemonstracao();
+  btnBaixar.addEventListener('click', function () {
+    if (!aberto) return;
 
-  atualizarFiltros();
-  renderizarDocumentos();
-}
-
-// ============================================================
-// FILTROS
-// ============================================================
-
-function atualizarFiltros() {
-  const tipos = [...new Set(
-    documentos.map(doc => doc.tipo)
-  )];
-
-  el.filtro.innerHTML = `
-    <option value="todos">Todos os tipos</option>
-
-    ${tipos.map(tipo => `
-      <option value="${escaparHTML(tipo)}">
-        ${escaparHTML(tipo)}
-      </option>
-    `).join('')}
-  `;
-}
-
-function filtrarDocumentos() {
-  const pesquisa = el.busca.value.trim().toLowerCase();
-  const tipo = el.filtro.value;
-
-  return documentos.filter(doc => {
-    const correspondePesquisa =
-      doc.nome.toLowerCase().includes(pesquisa) ||
-      doc.processo.toLowerCase().includes(pesquisa) ||
-      doc.tipo.toLowerCase().includes(pesquisa);
-
-    const correspondeTipo =
-      tipo === 'todos' || doc.tipo === tipo;
-
-    return correspondePesquisa && correspondeTipo;
+    baixarUm(aberto).catch(function (erro) { alert(erro.message); });
   });
-}
 
-// ============================================================
-// RENDERIZAÇÃO
-// ============================================================
+  /* ----- baixar todos ----- */
+  function baixarUm(d) {
+    return chamar(API + '/' + encodeURIComponent(d.id) + '/arquivo')
+      .then(function (dados) {
+        var a = document.createElement('a');
+        var urlTemporaria = null;
 
-function renderizarDocumentos() {
-  const lista = filtrarDocumentos();
+        if (dados.url) {
+          a.href = dados.url;
+        } else {
+          // Documento sem arquivo anexado: baixa a ficha em texto.
+          var blob = new Blob(['\uFEFF' + (dados.texto || '')], { type: 'text/plain;charset=utf-8' });
+          urlTemporaria = URL.createObjectURL(blob);
+          a.href = urlTemporaria;
+        }
 
-  el.resumo.textContent =
-    `${documentos.length} documento(s) cadastrado(s).`;
+        a.download = dados.nome || 'documento';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
 
-  if (!lista.length) {
-    el.docs.innerHTML = `
-      <div class="vazio">
-        <i class="fa-regular fa-folder-open"></i>
-        Nenhum documento encontrado.
-      </div>
-    `;
-
-    return;
+        if (urlTemporaria) setTimeout(function () { URL.revokeObjectURL(urlTemporaria); }, 1000);
+      });
   }
 
-  el.docs.innerHTML = lista.map(doc => `
-    <div
-      class="doc-item"
-      data-id="${doc.id}"
-      role="button"
-      tabindex="0"
-      aria-label="Visualizar ${escaparHTML(doc.nome)}">
-
-      <div class="doc-icone">
-        <i class="${iconeDocumento(doc.extensao)}"></i>
-      </div>
-
-      <div class="doc-info">
-
-        <div class="doc-nome">
-          ${escaparHTML(doc.nome)}
-        </div>
-
-        <div class="doc-meta">
-
-          <span>
-            <i class="fa-regular fa-calendar"></i>
-            ${formatarData(doc.data)}
-          </span>
-
-          <span>
-            <i class="fa-solid fa-scale-balanced"></i>
-            Processo ${escaparHTML(doc.processo)}
-          </span>
-
-          <span>
-            <i class="fa-solid fa-file"></i>
-            ${escaparHTML(doc.tamanho)}
-          </span>
-
-        </div>
-
-      </div>
-
-      <span class="doc-status">
-        ${escaparHTML(doc.status)}
-      </span>
-
-      <i class="fa-solid fa-chevron-right doc-seta"></i>
-
-    </div>
-  `).join('');
-}
-
-// ============================================================
-// PRÉ-VISUALIZAÇÃO
-// ============================================================
-
-function gerarPreview(doc) {
-  return `
-    <div class="preview-aviso">
-      <i class="fa-solid fa-circle-info"></i>
-      Documento fictício para demonstração do sistema.
-    </div>
-
-    <div class="documento-preview">
-
-      <div class="preview-topo">
-        <h4>DOCUMENTO JURÍDICO</h4>
-        <p>SISTEMA DE APOIO JURÍDICO DIGITAL</p>
-      </div>
-
-      <div class="preview-conteudo">
-
-        <p>
-          <strong>
-            ${escaparHTML(doc.nome.replace(/\.pdf$/i, ''))}
-          </strong>
-        </p>
-
-        <br>
-
-        <p>
-          Este documento faz parte do cadastro demonstrativo
-          do Sistema de Apoio Jurídico Digital.
-        </p>
-
-        <br>
-
-        <p>${escaparHTML(doc.conteudo)}</p>
-
-        <br>
-
-        <p>
-          <strong>Processo:</strong>
-          ${escaparHTML(doc.processo)}
-        </p>
-
-        <p>
-          <strong>Tipo:</strong>
-          ${escaparHTML(doc.tipo)}
-        </p>
-
-        <p>
-          <strong>Data de registro:</strong>
-          ${formatarData(doc.data)}
-        </p>
-
-      </div>
-
-      <div class="preview-assinatura">
-        ______________________________
-        <p>Documento demonstrativo</p>
-      </div>
-
-    </div>
-  `;
-}
-
-// ============================================================
-// ABRIR DOCUMENTO
-// ============================================================
-
-function abrirDocumento(doc) {
-  documentoAtual = doc;
-
-  el.modalTitulo.textContent = doc.nome;
-
-  el.modalMeta.textContent =
-    `${doc.tipo} • ${formatarData(doc.data)} • ${doc.tamanho}`;
-
-  const detalhes = `
-    <div class="detalhes-doc">
-
-      <div class="detalhe-doc">
-        <small>Tipo</small>
-        <strong>${escaparHTML(doc.tipo)}</strong>
-      </div>
-
-      <div class="detalhe-doc">
-        <small>Processo</small>
-        <strong>${escaparHTML(doc.processo)}</strong>
-      </div>
-
-      <div class="detalhe-doc">
-        <small>Data de registro</small>
-        <strong>${formatarData(doc.data)}</strong>
-      </div>
-
-      <div class="detalhe-doc">
-        <small>Situação</small>
-        <strong>${escaparHTML(doc.status)}</strong>
-      </div>
-
-    </div>
-  `;
-
-  el.modalCorpo.innerHTML =
-    detalhes + gerarPreview(doc);
-
-  el.modal.hidden = false;
-
-  document.body.style.overflow = 'hidden';
-}
-
-// ============================================================
-// BAIXAR DOCUMENTO DEMONSTRATIVO
-// ============================================================
-
-function baixarDocumento() {
-  if (!documentoAtual) return;
-
-  const doc = documentoAtual;
-
-  const conteudo = `
-SISTEMA DE APOIO JURÍDICO DIGITAL
-
-${doc.nome}
-
-Tipo: ${doc.tipo}
-Processo: ${doc.processo}
-Data: ${formatarData(doc.data)}
-Situação: ${doc.status}
-
-Descrição:
-${doc.conteudo}
-
-DOCUMENTO FICTÍCIO PARA DEMONSTRAÇÃO DO TCC.
-  `;
-
-  const blob = new Blob(
-    [conteudo],
-    { type: 'text/plain;charset=utf-8' }
-  );
-
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-
-  link.href = url;
-
-  link.download =
-    doc.nome.replace(/\.pdf$/i, '') + '.txt';
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  link.remove();
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 1000);
-}
-
-// ============================================================
-// FECHAR MODAL
-// ============================================================
-
-function fecharModal() {
-  el.modal.hidden = true;
-  el.modalCorpo.innerHTML = '';
-
-  documentoAtual = null;
-
-  document.body.style.overflow = '';
-}
-
-// ============================================================
-// EVENTOS DE PESQUISA
-// ============================================================
-
-el.busca.addEventListener('input', renderizarDocumentos);
-
-el.filtro.addEventListener('change', renderizarDocumentos);
-
-// ============================================================
-// EVENTOS DA LISTA
-// ============================================================
-
-function selecionarDocumento(item) {
-  const doc = documentos.find(
-    documento => documento.id === Number(item.dataset.id)
-  );
-
-  if (doc) {
-    abrirDocumento(doc);
-  }
-}
-
-el.docs.addEventListener('click', ev => {
-  const item = ev.target.closest('.doc-item');
-
-  if (item) selecionarDocumento(item);
-});
-
-el.docs.addEventListener('keydown', ev => {
-  if (ev.key !== 'Enter' && ev.key !== ' ') return;
-
-  const item = ev.target.closest('.doc-item');
-
-  if (!item) return;
-
-  ev.preventDefault();
-
-  selecionarDocumento(item);
-});
-
-// ============================================================
-// EVENTOS DO MODAL
-// ============================================================
-
-el.modalBaixar.addEventListener('click', baixarDocumento);
-
-el.modalFechar.addEventListener('click', fecharModal);
-
-el.modal.addEventListener('click', ev => {
-  if (ev.target === el.modal) {
-    fecharModal();
-  }
-});
-
-document.addEventListener('keydown', ev => {
-  if (ev.key === 'Escape' && !el.modal.hidden) {
-    fecharModal();
-  }
-});
-
-// ============================================================
-// SAIR
-// ============================================================
-
-el.sair.addEventListener('click', () => {
-  localStorage.removeItem(CONFIG.tokenKey);
-
-  CONFIG.usuarioKeys.forEach(chave => {
-    localStorage.removeItem(chave);
+  btnBaixarTodos.addEventListener('click', function () {
+    var idsVisiveis = [];
+
+    Array.prototype.forEach.call(docsEl.children, function (item) {
+      if (item.style.display !== 'none') idsVisiveis.push(item.dataset.id);
+    });
+
+    var lista = documentos.filter(function (d) {
+      return idsVisiveis.indexOf(String(d.id)) !== -1;
+    });
+
+    if (!lista.length) {
+      alert('Nenhum documento para baixar.');
+      return;
+    }
+
+    var rotulo = btnBaixarTodos.querySelector('span');
+    var falhas = 0;
+    var fila = Promise.resolve();
+
+    btnBaixarTodos.disabled = true;
+
+    lista.forEach(function (d, i) {
+      fila = fila.then(function () {
+        rotulo.textContent = 'Baixando ' + (i + 1) + '/' + lista.length;
+        return baixarUm(d).catch(function (erro) {
+          console.error(erro);
+          falhas++;
+        });
+      }).then(function () { return esperar(800); });
+    });
+
+    fila.then(function () {
+      rotulo.textContent = 'Baixar todos';
+      btnBaixarTodos.disabled = false;
+
+      if (falhas) {
+        alert(falhas + ' arquivo(s) não puderam ser baixados.');
+      }
+    });
   });
-});
 
-// ============================================================
-// INICIALIZAÇÃO
-// ============================================================
+  /* ----- modal de envio ----- */
+  function abrirEnvio() {
+    formEnvio.reset();
+    msgEnvio.textContent = '';
+    msgEnvio.className = 'msg-envio';
+    modalEnvio.hidden = false;
+    inputArquivo.focus();
+  }
 
-carregarUsuario();
-carregarDocumentos();
+  function fecharEnvio() {
+    modalEnvio.hidden = true;
+    document.getElementById('btnEnviar').focus();
+  }
+
+  function mensagem(texto, tipo) {
+    msgEnvio.textContent = texto;
+    msgEnvio.className = 'msg-envio ' + (tipo || '');
+  }
+
+  document.getElementById('btnEnviar').addEventListener('click', abrirEnvio);
+  document.getElementById('envioFechar').addEventListener('click', fecharEnvio);
+  document.getElementById('envioCancelar').addEventListener('click', fecharEnvio);
+  modalEnvio.addEventListener('click', function (e) { if (e.target === modalEnvio) fecharEnvio(); });
+
+  // Sugere o título a partir do nome do arquivo
+  inputArquivo.addEventListener('change', function () {
+    var f = inputArquivo.files[0];
+    if (f && !inputTitulo.value.trim()) {
+      inputTitulo.value = f.name.replace(/\.[^.]+$/, '');
+    }
+  });
+
+  formEnvio.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var arquivo = inputArquivo.files[0];
+    var titulo = inputTitulo.value.trim();
+    var tipo = document.getElementById('envioTipo').value;
+    var processo = document.getElementById('envioProcesso').value.trim();
+
+    if (!arquivo) return mensagem('Escolha um arquivo.', 'erro');
+    if (!titulo) return mensagem('Informe o título do documento.', 'erro');
+    if (arquivo.size > MAX_BYTES) return mensagem('O arquivo deve ter no máximo 10 MB.', 'erro');
+
+    var mime = mimeDoArquivo(arquivo);
+    if (!mime || Object.keys(MIME_POR_EXT).every(function (k) { return MIME_POR_EXT[k] !== mime; })) {
+      return mensagem('Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX.', 'erro');
+    }
+
+    var params = new URLSearchParams({
+      titulo: titulo,
+      tipo: tipo,
+      processo: processo,
+      nome: arquivo.name
+    });
+
+    btnEnviarForm.disabled = true;
+    mensagem('Enviando...', '');
+
+    chamar(API + '/cliente?' + params.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': mime },
+      body: arquivo
+    }).then(function () {
+      fecharEnvio();
+      return carregar();
+    }).catch(function (erro) {
+      mensagem(erro.message, 'erro');
+    }).then(function () {
+      btnEnviarForm.disabled = false;
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!modalEnvio.hidden) fecharEnvio();
+    else if (!modal.hidden) fechar();
+  });
+
+  carregar();
+})();

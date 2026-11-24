@@ -1,6 +1,10 @@
+
 const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
-const { resolverClienteId } = require("../utils/vinculoCliente");
+const {
+    buscarClienteVinculado,
+    normalizarTexto
+} = require("../utils/vinculoCliente");
 
 
 // ==========================================================
@@ -69,15 +73,47 @@ const cadastrarProcesso = async (req, res) => {
 
         const advogadoId = req.advogado.id;
 
-        const clienteIdFinal = await resolverClienteId(advogadoId, {
+        // O processo SEMPRE precisa estar ligado a um cliente do advogado.
+        // O vínculo é feito pelo id (o nome só é aceito se for exato e único).
+        const clienteVinculado = await buscarClienteVinculado(advogadoId, {
             clienteId: clienteId || cliente_id,
             nome: cliente
         });
 
+        if (!clienteVinculado) {
+            return res.status(400).json({
+                erro:
+                    "Cliente não encontrado na sua lista. Selecione um " +
+                    "cliente cadastrado para que o processo apareça no " +
+                    "painel dele."
+            });
+        }
+
+        // Evita duplicar o mesmo processo (ex.: clique duplo em "Salvar").
+        if (numeroProcesso) {
+            const { data: jaExiste, error: erroDuplicado } = await supabaseAdmin
+                .from("processos")
+                .select("id")
+                .eq("advogado_id", advogadoId)
+                .eq("cliente_id", clienteVinculado.id)
+                .eq("numero_processo", numeroProcesso)
+                .limit(1);
+
+            if (erroDuplicado) throw erroDuplicado;
+
+            if (jaExiste && jaExiste.length > 0) {
+                return res.status(409).json({
+                    erro:
+                        "Já existe um processo com esse número cadastrado " +
+                        "para este cliente."
+                });
+            }
+        }
+
         const processo = {
             numero_processo: numeroProcesso || "",
-            cliente: cliente || "",
-            cliente_id: clienteIdFinal,
+            cliente: clienteVinculado.nome || cliente || "",
+            cliente_id: clienteVinculado.id,
 
             advogado: req.advogado.nome || req.usuario.email || "",
             advogado_id: advogadoId,
@@ -227,16 +263,59 @@ const atualizarProcesso = async (req, res) => {
             });
         }
 
+        // ------------------------------------------------------
+        // VÍNCULO COM O CLIENTE
+        // ------------------------------------------------------
+        // Só mexe no vínculo se o advogado trocou o cliente ou se o
+        // processo ainda não tinha vínculo (cadastros antigos).
         if (
-            atualizacao.cliente !== undefined ||
-            atualizacao.cliente_id !== undefined ||
-            !dadosAntes.cliente_id
+            atualizacao.cliente_id === "" ||
+            atualizacao.cliente_id === null
         ) {
-            atualizacao.cliente_id = await resolverClienteId(advogadoId, {
+            delete atualizacao.cliente_id;
+        }
+
+        const pediuCliente = atualizacao.cliente_id !== undefined;
+        const pediuNome = atualizacao.cliente !== undefined;
+
+        const trocouCliente =
+            (pediuCliente &&
+                String(atualizacao.cliente_id) !==
+                    String(dadosAntes.cliente_id)) ||
+            (pediuNome &&
+                normalizarTexto(atualizacao.cliente) !==
+                    normalizarTexto(dadosAntes.cliente));
+
+        if (trocouCliente || !dadosAntes.cliente_id) {
+            const vinculado = await buscarClienteVinculado(advogadoId, {
                 clienteId: atualizacao.cliente_id,
-                nome: atualizacao.cliente !== undefined
-                    ? atualizacao.cliente
-                    : dadosAntes.cliente
+                nome: pediuNome ? atualizacao.cliente : dadosAntes.cliente
+            });
+
+            if (vinculado) {
+                atualizacao.cliente_id = vinculado.id;
+                atualizacao.cliente = vinculado.nome;
+            } else if (trocouCliente) {
+                return res.status(400).json({
+                    erro:
+                        "Cliente não encontrado na sua lista. Selecione um " +
+                        "cliente cadastrado."
+                });
+            } else {
+                // Processo antigo sem vínculo e sem como identificar o
+                // cliente: segue a edição sem mexer no vínculo.
+                delete atualizacao.cliente_id;
+                delete atualizacao.cliente;
+            }
+        } else {
+            // Mesmo cliente de antes: preserva o vínculo existente.
+            delete atualizacao.cliente_id;
+            delete atualizacao.cliente;
+        }
+
+        if (Object.keys(atualizacao).length === 0) {
+            return res.status(400).json({
+                erro: "Nenhum campo válido informado para atualização"
             });
         }
 

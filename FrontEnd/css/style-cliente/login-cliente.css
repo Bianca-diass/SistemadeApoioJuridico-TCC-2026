@@ -1,12 +1,12 @@
 /* ==========================================
    LOGIN-CLIENTE.CSS
-   Mesmo visual da tela inicial
+   Mesmo visual do login do advogado
 ========================================== */
 
 :root{
     --azul-escuro:#0f1f33;
-    --azul-botao:#234367;
-    --azul-hover:#234367;
+    --azul-botao:#0f1f33;
+    --azul-hover:#0f1f33;
     --dourado:#d4a95a;
     --card:#eceff3;
     --texto-sub:#5f6b7a;
@@ -226,17 +226,27 @@ body{
     margin:0 0 12px;
 }
 
+/* "Criar Conta" como LINK (<a>) com visual de botão contornado */
 .rodape a{
-    color:var(--azul-botao);
+    display:block;
+    box-sizing:border-box;
+    padding:15px;
+    background:transparent;
+    color:var(--azul-escuro);
+    border:1.5px solid var(--azul-escuro);
+    border-radius:10px;
+    font-size:15px;
     font-weight:700;
     text-decoration:none;
+    transition:background .2s, color .2s;
 }
 
 .rodape a:hover{
-    color:var(--dourado);
+    background:var(--azul-escuro);
+    color:#fff;
 }
 
-/* botão "Criar Conta" (secundário, só contorno) */
+/* "Criar Conta" como BOTÃO (<button>) */
 .login-box .rodape button{
     background:transparent;
     color:var(--azul-escuro);
@@ -247,6 +257,20 @@ body{
     background:var(--azul-escuro);
     color:#fff;
     filter:none;
+}
+
+/* se o botão estiver dentro de um <a>, evita borda dupla */
+.login-box .rodape a button{
+    border:none;
+    padding:0;
+    background:transparent;
+    color:inherit;
+}
+
+.login-box .rodape a button:hover{
+    background:transparent;
+    transform:none;
+    box-shadow:none;
 }
 
 

@@ -306,7 +306,8 @@ export async function obterMeuPerfil() {
 export async function atualizarMeuPerfil(
     nome,
     email,
-    telefone
+    telefone,
+    oab
 ) {
 
     const token =
@@ -343,7 +344,10 @@ export async function atualizarMeuPerfil(
 
                     nome,
                     email,
-                    telefone
+                    telefone,
+
+                    // só vai no pedido quando for informada
+                    oab
 
                 })
 

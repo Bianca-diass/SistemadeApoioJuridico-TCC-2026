@@ -53,6 +53,7 @@ function formatarValor(chave, valor) {
 
 const CAMPOS_PROCESSO = [
   ["numero_processo", "Número do processo"],
+  ["cliente", "Cliente"],
   ["nome", "Nome do processo"],
   ["nome_processo", "Nome do processo"],
   ["titulo", "Título"],
@@ -74,7 +75,7 @@ const CAMPOS_PROCESSO = [
 ];
 
 const CAMPOS_OCULTOS = new Set([
-  "id", "cliente", "cliente_id", "advogado_id", "auth_user_id", "user_id",
+  "id", "cliente_id", "advogado_id", "auth_user_id", "user_id",
   "criado_em", "atualizado_em", "created_at", "updated_at"
 ]);
 
@@ -93,11 +94,38 @@ function padronizarProcesso(p) {
   return r;
 }
 
+function manifestacaoDoProcesso(p) {
+  const t = texto(p.tipo_manifestacao);
+  return t && t.toLowerCase() !== "nenhuma" ? t : "";
+}
+
 function tituloDoProcesso(p) {
-  return texto(
-    pegar(p, "nome", "nome_processo", "titulo", "acao", "tipo_acao") ||
-    ""
-  ) || "Processo";
+  // Se o processo tiver um nome/título próprio, usa ele.
+  const proprio = texto(
+    pegar(p, "nome", "nome_processo", "titulo", "acao", "tipo_acao")
+  );
+  if (proprio) return proprio;
+
+  // Senão monta um título com a vara e o tribunal.
+  const local = [texto(p.vara), texto(p.tribunal)].filter(Boolean).join(" · ");
+  if (local) return local;
+
+  const manifestacao = manifestacaoDoProcesso(p);
+  return manifestacao ? "Processo · " + manifestacao : "Processo";
+}
+
+// Texto explicando a intimação (aparece abaixo do selo "Nova intimação").
+function textoDaIntimacao(p) {
+  const manifestacao = manifestacaoDoProcesso(p);
+  const prazo = formatarData(p.prazo);
+
+  const partes = [];
+  if (manifestacao) partes.push("Manifestação: " + manifestacao);
+  if (prazo) partes.push("Prazo: " + prazo);
+
+  return partes.length
+    ? partes.join(" · ")
+    : "Fale com seu advogado para saber como responder.";
 }
 
 function classeSituacao(status) {
@@ -151,6 +179,7 @@ function renderProcessos() {
     const aberto = processosAbertos.has(id);
 
     const numero = texto(p.numero_processo);
+    const nomeCliente = texto(p.cliente);
     const situacao = texto(p.status);
     const movimentacao = texto(p.ultima_movimentacao);
     const prazo = formatarData(p.prazo);
@@ -166,17 +195,22 @@ function renderProcessos() {
         <td>
           <b>${escaparHTML(tituloDoProcesso(p))}</b>
           <small>${escaparHTML(numero || "Sem número")}</small>
+          ${nomeCliente ? `<small>Cliente: ${escaparHTML(nomeCliente)}</small>` : ""}
           <button type="button" class="btn-detalhes" data-id="${escaparHTML(id)}"
                   aria-expanded="${aberto}">
             ${aberto ? "Ocultar detalhes" : "Ver detalhes"}
           </button>
         </td>
         <td>
+          ${p.intimacao === true
+            ? `<small style="display:block;margin-bottom:6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b26a00;">Atualização processual</small>`
+            : ""}
           ${situacao
             ? `<span class="badge ${classeSituacao(situacao)}">${escaparHTML(situacao)}</span>`
             : "—"}
           ${p.intimacao === true
-            ? `<span class="badge b-warn badge-intimacao">Nova intimação</span>`
+            ? `<span class="badge b-warn badge-intimacao">Nova intimação</span>
+               <small style="display:block;margin-top:6px;">${escaparHTML(textoDaIntimacao(p))}</small>`
             : ""}
         </td>
         <td>${escaparHTML(movimentacao || "—")}</td>
@@ -287,7 +321,15 @@ observarCompromissos(
   },
   erro => {
     console.error("Erro ao atualizar os compromissos:", erro);
-    if (erro.status === 401) window.location.href = "login.html";
+    if (erro.status === 401) {
+      window.location.href = "login.html";
+      return;
+    }
+    if (!compromissos.length) {
+      el.protituloCard.textContent = "Não foi possível carregar";
+      el.listaCompromissos.innerHTML =
+        `<p class="vazio">${escaparHTML(erro.message)}</p>`;
+    }
   }
 );
 
@@ -308,7 +350,12 @@ async function atualizarProcessos() {
       return;
     }
 
-    if (!processos.length) renderProcessos();
+    if (!processos.length && el.tabelaProcessos) {
+      el.tabelaProcessos.innerHTML = `
+        <tr>
+          <td colspan="4" class="vazio-tabela">${escaparHTML(erro.message)}</td>
+        </tr>`;
+    }
   } finally {
     carregandoProcessos = false;
   }

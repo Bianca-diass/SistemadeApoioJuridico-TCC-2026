@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Cadastro - Área do Cliente</title>
+    <title>Cadastro | Área do Cliente</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,11 +74,16 @@
                             type="password"
                             id="senha"
                             name="senha"
-                            placeholder="Mínimo de 6 caracteres"
-                            minlength="6"
+                            placeholder="Mínimo de 8 caracteres"
+                            minlength="8"
                             autocomplete="new-password"
+                            aria-describedby="dicaSenha"
                             required
                         >
+                        <small id="dicaSenha" class="dicaSenha">
+                            A senha deve conter, no mínimo, 8 caracteres,
+                            incluindo letras, números e símbolos especiais.
+                        </small>
                     </div>
 
                     <div class="grupo">
@@ -88,7 +93,7 @@
                             id="confirmarSenha"
                             name="confirmarSenha"
                             placeholder="Digite a senha novamente"
-                            minlength="6"
+                            minlength="8"
                             autocomplete="new-password"
                             required
                         >

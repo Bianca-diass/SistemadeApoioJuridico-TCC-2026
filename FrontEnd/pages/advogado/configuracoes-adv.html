@@ -1,112 +1,114 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações | Área do Advogado</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurações | Área do Advogado</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="../../css/style-advogado/configuracao-adv.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style-advogado/configuracao-adv.css">
 </head>
-
 <body>
-    <main class="conteudo">
-        <a href="dashboard-adv.html" class="btnVoltar" title="Voltar">
-            <i class="fas fa-arrow-left"></i>
-        </a>
 
-        <header class="topoPagina">
-            <h1>Configurações</h1>
-            <p>Gerencie suas informações pessoais, segurança e preferências da sua conta.</p>
-        </header>
+  <aside>
+    <div class="brand">Área do Advogado</div>
 
-        <section class="painel">
-            <h2><i class="fas fa-user"></i> Perfil</h2>
+    <nav>
+      <a href="dashboard-adv.html">Dashboard</a>
+      <a href="clientes-adv.html">Clientes</a>
+      <a href="processos-adv.html">Processos</a>
+      <a href="documentos-adv.html">Documentos</a>
+      <a href="agenda-adv.html">Agenda</a>
+      <a href="relatorios-adv.html">Relatórios</a>
+      <a href="configuracoes-adv.html" class="on">Configurações</a>
+    </nav>
 
-            <form id="formPerfil">
-                <div class="campo">
-                    <label for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" placeholder="Nome completo" required>
-                </div>
+    <div class="user">
+      <div class="av" id="inicialUsuario">A</div>
+      <div>
+        <span id="nomeUsuario">Advogado</span>
+        <small><a href="login.html" id="btnSair">Sair</a></small>
+      </div>
+    </div>
+  </aside>
 
-                <div class="campo">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" placeholder="E-mail" required>
-                </div>
+  <main>
+    <header>
+      <h1>Configurações</h1>
+      <p class="sub">Atualize seus dados e preferências.</p>
+    </header>
 
-                <div class="campo">
-                    <label for="telefone">Telefone</label>
-                    <input type="text" id="telefone" name="telefone" placeholder="(67) 99999-9999">
-                </div>
+    <section class="card">
 
-                <div class="campo">
-                    <label for="cpf">CPF</label>
-                    <input type="text" id="cpf" name="cpf" placeholder="CPF" readonly>
-                </div>
+      <!-- PERFIL -->
+      <form id="formPerfil" novalidate>
+        <div class="campo">
+          <label for="nome">Nome completo</label>
+          <input type="text" id="nome" name="nome" maxlength="120" required>
+        </div>
 
-                <div class="campo">
-                    <label for="oab">OAB</label>
-                    <input type="text" id="oab" name="oab" placeholder="OAB" readonly>
-                </div>
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+        </div>
 
-                <button type="submit" id="btnSalvarPerfil">
-                    <i class="fas fa-floppy-disk"></i> Salvar Alterações
-                </button>
+        <div class="campo">
+          <label for="telefone">Telefone</label>
+          <input type="tel" id="telefone" name="telefone" placeholder="(67) 99999-9999" maxlength="15" inputmode="numeric">
+        </div>
 
-                <p id="mensagemPerfil" class="mensagem"></p>
-            </form>
-        </section>
+        <div class="campo">
+          <label for="cpf">CPF</label>
+          <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" autocomplete="off">
+        </div>
 
-        <section class="painel">
-            <h2><i class="fas fa-lock"></i> Segurança</h2>
+        <div class="campo">
+          <label for="oab">OAB</label>
+          <input type="text" id="oab" name="oab" placeholder="Ex.: 29588/MS" maxlength="9" autocomplete="off">
+        </div>
 
-            <form id="formSenha">
-                <div class="campo">
-                    <label for="novaSenha">Nova Senha</label>
-                    <input type="password" id="novaSenha" name="novaSenha"
-                        placeholder="Digite sua nova senha" minlength="6" required>
-                </div>
+        <button type="submit" class="btn" id="btnSalvarPerfil">Salvar alterações</button>
 
-                <div class="campo">
-                    <label for="confirmarSenha">Confirmar Nova Senha</label>
-                    <input type="password" id="confirmarSenha" name="confirmarSenha"
-                        placeholder="Confirme sua nova senha" minlength="6" required>
-                </div>
+        <p id="mensagemPerfil" class="mensagem"></p>
+      </form>
 
-                <button type="submit" id="btnAlterarSenha">
-                    <i class="fas fa-key"></i> Alterar Senha
-                </button>
+      <!-- SEGURANÇA -->
+      <div class="secao-senha">
+        <h2>Segurança</h2>
+        <p>Para trocar o e-mail ou a senha, informe sua senha atual.</p>
 
-                <p id="mensagemSenha" class="mensagem"></p>
-            </form>
-        </section>
+        <form id="formSenha" novalidate>
+          <div class="campo">
+            <label for="senhaAtual">Senha atual</label>
+            <input type="password" id="senhaAtual" name="senhaAtual" autocomplete="current-password">
+          </div>
 
-        <section class="painel idioma">
-            <h2><i class="fas fa-language"></i> Idioma</h2>
+          <div class="campo">
+            <label for="novaSenha">Nova senha (opcional)</label>
+            <input type="password" id="novaSenha" name="novaSenha"
+              placeholder="Digite sua nova senha" minlength="6" autocomplete="new-password">
+          </div>
 
-            <div class="campo">
-                <label for="idioma">Idioma do Sistema</label>
-                <select id="idioma">
-                    <option value="pt-BR">Português (Brasil)</option>
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                </select>
-            </div>
-        </section>
+          <div class="campo">
+            <label for="confirmarSenha">Confirmar nova senha</label>
+            <input type="password" id="confirmarSenha" name="confirmarSenha"
+              placeholder="Confirme sua nova senha" minlength="6" autocomplete="new-password">
+          </div>
 
-        <section class="painel sair">
-            <h2><i class="fas fa-right-from-bracket"></i> Encerrar Sessão</h2>
+          <button type="submit" class="btn" id="btnAlterarSenha">Alterar senha</button>
 
-            <button type="button" class="logout" id="btnLogout">
-                <i class="fas fa-right-from-bracket"></i> Sair do Sistema
-            </button>
-        </section>
-    </main>
+          <p id="mensagemSenha" class="mensagem"></p>
+        </form>
+      </div>
 
-    <script type="module" src="../../js/pages/advogado/configuracoes-adv.js"></script>
+      <!-- ENCERRAR SESSÃO -->
+      <div class="sair secao-senha">
+        <button type="button" class="btn logout" id="btnLogout">Sair do sistema</button>
+      </div>
+
+    </section>
+  </main>
+
+  <script type="module" src="../../js/pages/advogado/configuracoes-adv.js"></script>
 </body>
 </html>

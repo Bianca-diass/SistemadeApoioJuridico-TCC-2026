@@ -1,562 +1,325 @@
-// ==========================================================
-// CONFIGURAÇÕES DO ADVOGADO
-// ==========================================================
+/* ==========================================
+   CONFIGURAÇÕES - ADVOGADO
+========================================== */
 
-import {
-    obterMeuPerfil,
-    atualizarMeuPerfil,
-    alterarSenha,
-    fazerLogout
-} from "../../services/authService.js";
+/* ==========================================
+   CONEXÃO COM O BACKEND
+   Se algo não bater com o seu backend, ajuste
+   SOMENTE este bloco (API_URL, token e rotas).
+========================================== */
 
+const API_URL = "http://localhost:3000";
 
-// ==========================================================
-// ELEMENTOS - PERFIL
-// ==========================================================
+const ROTAS = {
+  perfil: "/advogado/perfil",   // GET (carregar) e PUT (salvar)
+  senha: "/advogado/senha"      // PUT (alterar senha)
+};
 
-const formPerfil =
-    document.getElementById("formPerfil");
-
-const nomeInput =
-    document.getElementById("nome");
-
-const emailInput =
-    document.getElementById("email");
-
-const telefoneInput =
-    document.getElementById("telefone");
-
-const cpfInput =
-    document.getElementById("cpf");
-
-const oabInput =
-    document.getElementById("oab");
-
-const btnSalvarPerfil =
-    document.getElementById(
-        "btnSalvarPerfil"
-    );
-
-const mensagemPerfil =
-    document.getElementById(
-        "mensagemPerfil"
-    );
-
-
-// ==========================================================
-// ELEMENTOS - SENHA
-// ==========================================================
-
-const formSenha =
-    document.getElementById("formSenha");
-
-const novaSenhaInput =
-    document.getElementById("novaSenha");
-
-const confirmarSenhaInput =
-    document.getElementById(
-        "confirmarSenha"
-    );
-
-const btnAlterarSenha =
-    document.getElementById(
-        "btnAlterarSenha"
-    );
-
-const mensagemSenha =
-    document.getElementById(
-        "mensagemSenha"
-    );
-
-
-// ==========================================================
-// OUTROS ELEMENTOS
-// ==========================================================
-
-const idiomaSelect =
-    document.getElementById("idioma");
-
-const btnLogout =
-    document.getElementById(
-        "btnLogout"
-    );
-
-
-// ==========================================================
-// MENSAGEM DE PERFIL
-// ==========================================================
-
-function mostrarMensagemPerfil(
-    mensagem,
-    sucesso = true
-) {
-
-    if (!mensagemPerfil) {
-        return;
-    }
-
-
-    mensagemPerfil.textContent =
-        mensagem;
-
-
-    mensagemPerfil.style.display =
-        "block";
-
-
-    mensagemPerfil.style.color =
-        sucesso
-            ? "#198754"
-            : "#dc3545";
-
+// Procura o token salvo no login. Ajuste o nome da chave se o seu for outro.
+function obterToken() {
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
 }
 
+// Faz a chamada ao backend já com o token e trata os erros.
+async function api(caminho, opcoes = {}) {
+  const token = obterToken();
 
-// ==========================================================
-// MENSAGEM DE SENHA
-// ==========================================================
-
-function mostrarMensagemSenha(
-    mensagem,
-    sucesso = true
-) {
-
-    if (!mensagemSenha) {
-        return;
+  const resposta = await fetch(API_URL + caminho, {
+    ...opcoes,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(opcoes.headers || {})
     }
+  });
 
+  let corpo = null;
+  try {
+    corpo = await resposta.json();
+  } catch {
+    corpo = null;
+  }
 
-    mensagemSenha.textContent =
-        mensagem;
-
-
-    mensagemSenha.style.display =
-        "block";
-
-
-    mensagemSenha.style.color =
-        sucesso
-            ? "#198754"
-            : "#dc3545";
-
+  if (resposta.status === 401) {
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+  if (!resposta.ok) {
+    throw new Error(
+      (corpo && (corpo.erro || corpo.error || corpo.message || corpo.mensagem)) ||
+        "Erro ao comunicar com o servidor."
+    );
+  }
+  return corpo;
 }
 
-
-// ==========================================================
-// CARREGAR PERFIL
-// ==========================================================
-
+// Deve retornar { nome, email, telefone, cpf, oab }
 async function carregarPerfil() {
-
-    try {
-
-        const usuario =
-            await obterMeuPerfil();
-
-
-        if (!usuario) {
-
-            throw new Error(
-                "Não foi possível encontrar o usuário."
-            );
-
-        }
-
-
-        // ==================================================
-        // PREENCHER CAMPOS
-        // ==================================================
-
-        nomeInput.value =
-            usuario.nome || "";
-
-
-        emailInput.value =
-            usuario.email || "";
-
-
-        telefoneInput.value =
-            usuario.telefone || "";
-
-
-        cpfInput.value =
-            usuario.cpf || "Não informado";
-
-
-        oabInput.value =
-            usuario.oab || "Não informado";
-
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar perfil:",
-            erro
-        );
-
-
-        mostrarMensagemPerfil(
-            erro.message ||
-            "Erro ao carregar seus dados.",
-            false
-        );
-
-    }
-
+  const dados = await api(ROTAS.perfil, { method: "GET" });
+  return (dados && (dados.perfil || dados.advogado || dados.usuario)) || dados || {};
 }
 
-
-// ==========================================================
-// SALVAR PERFIL
-// ==========================================================
-
-formPerfil.addEventListener(
-    "submit",
-    async (evento) => {
-
-        evento.preventDefault();
-
-
-        const nome =
-            nomeInput.value.trim();
-
-
-        const email =
-            emailInput.value.trim();
-
-
-        const telefone =
-            telefoneInput.value.trim();
-
-
-        if (!nome) {
-
-            mostrarMensagemPerfil(
-                "Informe seu nome completo.",
-                false
-            );
-
-            return;
-
-        }
-
-
-        if (!email) {
-
-            mostrarMensagemPerfil(
-                "Informe seu e-mail.",
-                false
-            );
-
-            return;
-
-        }
-
-
-        // ==================================================
-        // DESABILITAR BOTÃO
-        // ==================================================
-
-        btnSalvarPerfil.disabled =
-            true;
-
-
-        btnSalvarPerfil.innerHTML = `
-            <i class="fas fa-spinner fa-spin"></i>
-            Salvando...
-        `;
-
-
-        try {
-
-            await atualizarMeuPerfil(
-                nome,
-                email,
-                telefone
-            );
-
-
-            mostrarMensagemPerfil(
-                "Alterações salvas com sucesso!",
-                true
-            );
-
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao salvar perfil:",
-                erro
-            );
-
-
-            mostrarMensagemPerfil(
-                erro.message ||
-                "Erro ao salvar alterações.",
-                false
-            );
-
-        } finally {
-
-            btnSalvarPerfil.disabled =
-                false;
-
-
-            btnSalvarPerfil.innerHTML = `
-                <i class="fas fa-floppy-disk"></i>
-                Salvar Alterações
-            `;
-
-        }
-
-    }
-);
-
-
-// ==========================================================
-// ALTERAR SENHA
-// ==========================================================
-
-formSenha.addEventListener(
-    "submit",
-    async (evento) => {
-
-        evento.preventDefault();
-
-
-        const novaSenha =
-            novaSenhaInput.value;
-
-
-        const confirmarSenha =
-            confirmarSenhaInput.value;
-
-
-        // ==================================================
-        // VALIDAR SENHAS
-        // ==================================================
-
-        if (!novaSenha) {
-
-            mostrarMensagemSenha(
-                "Digite a nova senha.",
-                false
-            );
-
-            return;
-
-        }
-
-
-        if (novaSenha.length < 6) {
-
-            mostrarMensagemSenha(
-                "A senha deve possuir pelo menos 6 caracteres.",
-                false
-            );
-
-            return;
-
-        }
-
-
-        if (
-            novaSenha !==
-            confirmarSenha
-        ) {
-
-            mostrarMensagemSenha(
-                "As senhas não coincidem.",
-                false
-            );
-
-            return;
-
-        }
-
-
-        // ==================================================
-        // DESABILITAR BOTÃO
-        // ==================================================
-
-        btnAlterarSenha.disabled =
-            true;
-
-
-        btnAlterarSenha.innerHTML = `
-            <i class="fas fa-spinner fa-spin"></i>
-            Alterando...
-        `;
-
-
-        try {
-
-            await alterarSenha(
-                novaSenha
-            );
-
-
-            // Limpa os campos
-            novaSenhaInput.value =
-                "";
-
-            confirmarSenhaInput.value =
-                "";
-
-
-            mostrarMensagemSenha(
-                "Senha alterada com sucesso!",
-                true
-            );
-
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao alterar senha:",
-                erro
-            );
-
-
-            mostrarMensagemSenha(
-                erro.message ||
-                "Erro ao alterar senha.",
-                false
-            );
-
-        } finally {
-
-            btnAlterarSenha.disabled =
-                false;
-
-
-            btnAlterarSenha.innerHTML = `
-                <i class="fas fa-key"></i>
-                Alterar Senha
-            `;
-
-        }
-
-    }
-);
-
-
-// ==========================================================
-// IDIOMA
-// ==========================================================
-
-function carregarIdioma() {
-
-    const idiomaSalvo =
-        localStorage.getItem(
-            "idiomaSistema"
-        );
-
-
-    if (idiomaSalvo) {
-
-        idiomaSelect.value =
-            idiomaSalvo;
-
-    }
-
+// Recebe { nome, email, telefone, cpf, oab }
+async function salvarPerfil(dados) {
+  return api(ROTAS.perfil, {
+    method: "PUT",
+    body: JSON.stringify(dados)
+  });
 }
 
+async function alterarSenha(senhaAtual, novaSenha) {
+  return api(ROTAS.senha, {
+    method: "PUT",
+    body: JSON.stringify({ senhaAtual, novaSenha })
+  });
+}
 
-idiomaSelect.addEventListener(
-    "change",
-    () => {
+async function sairDoSistema() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
 
-        const idioma =
-            idiomaSelect.value;
+/* ==========================================
+   ELEMENTOS
+========================================== */
 
+const $ = (id) => document.getElementById(id);
 
-        localStorage.setItem(
-            "idiomaSistema",
-            idioma
-        );
+const formPerfil = $("formPerfil");
+const formSenha = $("formSenha");
 
+const campos = {
+  nome: $("nome"),
+  email: $("email"),
+  telefone: $("telefone"),
+  cpf: $("cpf"),
+  oab: $("oab")
+};
 
-        // Por enquanto o idioma é salvo
-        // como preferência do usuário.
+const msgPerfil = $("mensagemPerfil");
+const msgSenha = $("mensagemSenha");
 
-        if (idioma === "pt-BR") {
+/* ==========================================
+   UTILITÁRIOS
+========================================== */
 
-            alert(
-                "Idioma Português (Brasil) selecionado."
-            );
+function mostrarMensagem(el, texto, tipo) {
+  el.textContent = texto;
+  el.style.color = tipo === "ok" ? "#1e7a3c" : "#c0392b";
+}
 
-        }
+function limparMensagem(el) {
+  el.textContent = "";
+}
 
-        else if (idioma === "en") {
+function somenteDigitos(valor) {
+  return String(valor || "").replace(/\D/g, "");
+}
 
-            alert(
-                "English selected."
-            );
+/* ==========================================
+   MÁSCARAS
+========================================== */
 
-        }
+function mascaraCPF(valor) {
+  const d = somenteDigitos(valor).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
 
-        else if (idioma === "es") {
+function mascaraTelefone(valor) {
+  const d = somenteDigitos(valor).slice(0, 11);
+  if (d.length <= 2) return d ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
 
-            alert(
-                "Español seleccionado."
-            );
+// Formato: 123456/MS  (até 6 números + barra + 2 letras)
+function mascaraOAB(valor) {
+  const limpo = String(valor || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  const numeros = limpo.replace(/\D/g, "").slice(0, 6);
+  const letras = limpo.replace(/[0-9]/g, "").slice(0, 2);
+  return letras ? `${numeros}/${letras}` : numeros;
+}
 
-        }
+campos.cpf.addEventListener("input", () => {
+  campos.cpf.value = mascaraCPF(campos.cpf.value);
+});
 
-    }
-);
+campos.telefone.addEventListener("input", () => {
+  campos.telefone.value = mascaraTelefone(campos.telefone.value);
+});
 
+campos.oab.addEventListener("input", () => {
+  campos.oab.value = mascaraOAB(campos.oab.value);
+});
 
-// ==========================================================
-// LOGOUT
-// ==========================================================
+/* ==========================================
+   VALIDAÇÕES
+========================================== */
 
-btnLogout.addEventListener(
-    "click",
-    async () => {
+function cpfValido(cpf) {
+  const d = somenteDigitos(cpf);
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
 
-        const confirmar =
-            confirm(
-                "Deseja realmente sair do sistema?"
-            );
+  for (let t = 9; t < 11; t++) {
+    let soma = 0;
+    for (let i = 0; i < t; i++) soma += Number(d[i]) * (t + 1 - i);
+    const digito = ((soma * 10) % 11) % 10;
+    if (digito !== Number(d[t])) return false;
+  }
+  return true;
+}
 
+function emailValido(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
-        if (!confirmar) {
-            return;
-        }
+function oabValida(oab) {
+  return /^\d{3,6}\/[A-Z]{2}$/.test(oab);
+}
 
+/* ==========================================
+   PREENCHER TELA
+========================================== */
 
-        try {
+function preencherMenu(nome) {
+  const nomeLimpo = (nome || "").trim() || "Advogado";
+  $("nomeUsuario").textContent = nomeLimpo;
+  $("inicialUsuario").textContent = nomeLimpo.charAt(0).toUpperCase();
+}
 
-            await fazerLogout();
+async function iniciar() {
+  try {
+    const perfil = await carregarPerfil();
 
+    campos.nome.value = perfil.nome || "";
+    campos.email.value = perfil.email || "";
+    campos.telefone.value = mascaraTelefone(perfil.telefone);
+    campos.cpf.value = mascaraCPF(perfil.cpf);
+    campos.oab.value = mascaraOAB(perfil.oab);
 
-            window.location.href =
-                "login-adv.html";
+    preencherMenu(perfil.nome);
+  } catch (erro) {
+    console.error(erro);
+    mostrarMensagem(msgPerfil, erro.message || "Erro ao carregar perfil.", "erro");
+  }
+}
 
+/* ==========================================
+   SALVAR PERFIL
+========================================== */
 
-        } catch (erro) {
+formPerfil.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  limparMensagem(msgPerfil);
 
-            console.error(
-                "Erro ao sair:",
-                erro
-            );
+  const nome = campos.nome.value.trim();
+  const email = campos.email.value.trim();
+  const telefone = campos.telefone.value.trim();
+  const cpf = campos.cpf.value.trim();
+  const oab = campos.oab.value.trim();
 
-            alert(
-                "Não foi possível encerrar a sessão."
-            );
+  if (nome.length < 3) {
+    return mostrarMensagem(msgPerfil, "Informe seu nome completo.", "erro");
+  }
+  if (!emailValido(email)) {
+    return mostrarMensagem(msgPerfil, "Informe um e-mail válido.", "erro");
+  }
+  if (telefone && somenteDigitos(telefone).length < 10) {
+    return mostrarMensagem(msgPerfil, "Telefone incompleto.", "erro");
+  }
+  if (cpf && !cpfValido(cpf)) {
+    return mostrarMensagem(msgPerfil, "CPF inválido.", "erro");
+  }
+  if (oab && !oabValida(oab)) {
+    return mostrarMensagem(msgPerfil, "OAB inválida. Use o formato 29588/MS.", "erro");
+  }
 
-        }
+  const botao = $("btnSalvarPerfil");
+  botao.disabled = true;
 
-    }
-);
+  try {
+    await salvarPerfil({
+      nome,
+      email,
+      telefone: somenteDigitos(telefone),
+      cpf: somenteDigitos(cpf),
+      oab
+    });
 
+    preencherMenu(nome);
+    mostrarMensagem(msgPerfil, "Dados salvos com sucesso!", "ok");
+  } catch (erro) {
+    console.error(erro);
+    mostrarMensagem(msgPerfil, erro.message || "Erro ao salvar.", "erro");
+  } finally {
+    botao.disabled = false;
+  }
+});
 
-// ==========================================================
-// INICIALIZAÇÃO
-// ==========================================================
+/* ==========================================
+   ALTERAR SENHA
+========================================== */
 
-carregarIdioma();
+formSenha.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  limparMensagem(msgSenha);
 
-carregarPerfil();
+  const senhaAtual = $("senhaAtual").value;
+  const novaSenha = $("novaSenha").value;
+  const confirmar = $("confirmarSenha").value;
+
+  if (!senhaAtual) {
+    return mostrarMensagem(msgSenha, "Informe sua senha atual.", "erro");
+  }
+  if (novaSenha.length < 6) {
+    return mostrarMensagem(msgSenha, "A senha deve ter no mínimo 6 caracteres.", "erro");
+  }
+  if (novaSenha !== confirmar) {
+    return mostrarMensagem(msgSenha, "As senhas não coincidem.", "erro");
+  }
+
+  const botao = $("btnAlterarSenha");
+  botao.disabled = true;
+
+  try {
+    await alterarSenha(senhaAtual, novaSenha);
+    formSenha.reset();
+    mostrarMensagem(msgSenha, "Senha alterada com sucesso!", "ok");
+  } catch (erro) {
+    console.error(erro);
+    mostrarMensagem(msgSenha, erro.message || "Erro ao alterar a senha.", "erro");
+  } finally {
+    botao.disabled = false;
+  }
+});
+
+/* ==========================================
+   SAIR
+========================================== */
+
+async function sair(e) {
+  e.preventDefault();
+  try {
+    await sairDoSistema();
+  } finally {
+    window.location.href = "login.html";
+  }
+}
+
+$("btnLogout").addEventListener("click", sair);
+$("btnSair").addEventListener("click", sair);
+
+/* ==========================================
+   INICIAR
+========================================== */
+
+iniciar();

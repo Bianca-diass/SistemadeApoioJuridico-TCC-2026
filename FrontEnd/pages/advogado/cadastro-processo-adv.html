@@ -3,23 +3,18 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Cadastrar Processo | Área do Advogado</title>
 
-    <!-- CSS GERAL -->
     <link rel="stylesheet" href="../../css/style.css">
 
-    <!-- CSS DA PÁGINA -->
     <link rel="stylesheet"
         href="../../css/style-advogado/cadastro-processo-adv.css">
 
-    <!-- FONT AWESOME -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
 </head>
 
 <body>
@@ -28,15 +23,12 @@
 
         <main class="conteudo">
 
-            <!-- BOTÃO VOLTAR -->
             <a href="processos-adv.html"
                class="btnVoltar"
                title="Voltar"
                aria-label="Voltar para a lista de processos">
             </a>
 
-
-            <!-- CABEÇALHO -->
             <header class="topoPagina">
 
                 <h1 id="tituloPagina">Cadastrar Processo</h1>
@@ -47,11 +39,8 @@
 
             </header>
 
-
-            <!-- FORMULÁRIO -->
             <form id="formProcesso" class="cardFormulario">
 
-                <!-- NÚMERO DO PROCESSO -->
                 <div class="grupo">
 
                     <label for="numero">
@@ -66,24 +55,22 @@
 
                 </div>
 
-
-                <!-- CLIENTE -->
                 <div class="grupo">
 
                     <label for="cliente">
                         Cliente
                     </label>
 
-                    <input
-                        type="text"
-                        id="cliente"
-                        placeholder="Nome do cliente"
-                        required>
+                    <select id="cliente" required>
+
+                        <option value="">
+                            Carregando clientes...
+                        </option>
+
+                    </select>
 
                 </div>
 
-
-                <!-- VARA -->
                 <div class="grupo">
 
                     <label for="vara">
@@ -97,8 +84,6 @@
 
                 </div>
 
-
-                <!-- TRIBUNAL -->
                 <div class="grupo">
 
                     <label for="tribunal">
@@ -112,8 +97,6 @@
 
                 </div>
 
-
-                <!-- MANIFESTAÇÃO -->
                 <div class="grupo">
 
                     <label for="tipoManifestacao">
@@ -154,8 +137,6 @@
 
                 </div>
 
-
-                <!-- ÚLTIMA MOVIMENTAÇÃO -->
                 <div class="grupo">
 
                     <label for="ultimaMovimentacao">
@@ -169,8 +150,6 @@
 
                 </div>
 
-
-                <!-- INTIMAÇÃO -->
                 <div class="grupo">
 
                     <label for="intimacao">
@@ -191,8 +170,6 @@
 
                 </div>
 
-
-                <!-- STATUS -->
                 <div class="grupo">
 
                     <label for="status">
@@ -225,8 +202,6 @@
 
                 </div>
 
-
-                <!-- PRAZO -->
                 <div class="grupo">
 
                     <label for="prazo">
@@ -239,8 +214,6 @@
 
                 </div>
 
-
-                <!-- DESCRIÇÃO -->
                 <div class="grupo">
 
                     <label for="descricao">
@@ -254,8 +227,6 @@
 
                 </div>
 
-
-                <!-- BOTÕES -->
                 <div class="botoes">
 
                     <button
@@ -269,7 +240,6 @@
                         </span>
 
                     </button>
-
 
                     <button
                         type="reset"
@@ -287,13 +257,10 @@
 
     </div>
 
-
-    <!-- JAVASCRIPT -->
     <script
         type="module"
         src="../../js/services/cadastro-processo.js">
     </script>
 
 </body>
-
 </html>

@@ -392,6 +392,29 @@ main form button[type="submit"]:disabled {
 }
 main form .badge { align-self: center; padding: 6px 14px; }
 
+/* ----- Seção Segurança (veio do <style> do HTML) ----- */
+.secao-senha {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;                 /* espaço entre Senha atual / Nova senha / Confirmar */
+  margin: 10px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 31, 51, 0.12);
+}
+.secao-senha h2 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--verde-escuro);
+}
+.secao-senha p {
+  margin: -10px 0 0;         /* aproxima o texto do título, compensando o gap */
+  font-size: 14px;
+  color: var(--suave);
+}
+
+/* mensagem de sucesso/erro do formulário */
+#msg { white-space: normal; }
+
 /* ===== Documentos ===== */
 .documentos-page main > header,
 .documentos-page main > .card {
