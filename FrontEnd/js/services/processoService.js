@@ -1,7 +1,7 @@
-﻿import { getToken } from "./authService.js";
+import { getToken } from "./authService.js";
 
 
-const API = "http://localhost:3000/processos";
+const API = "https://sistema-apoio-juridico.onrender.com/processos";
 
 
 // ========================================

@@ -1,7 +1,7 @@
-﻿
+
 import { getToken } from "./authService.js";
 
-const API = "http://localhost:3000/notificacoes";
+const API = "https://sistema-apoio-juridico.onrender.com/notificacoes";
 const INTERVALO = 8000;
 
 function headers() {

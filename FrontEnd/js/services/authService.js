@@ -2,7 +2,7 @@
 // SERVIÇO DE AUTENTICAÇÃO
 // ==========================================================
 
-const API = "http://localhost:3000/auth";
+const API = "https://sistema-apoio-juridico.onrender.com/auth";
 
 let usuarioAtual = null;
 

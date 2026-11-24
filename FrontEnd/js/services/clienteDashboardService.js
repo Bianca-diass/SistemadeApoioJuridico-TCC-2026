@@ -1,6 +1,6 @@
 import { getToken } from "./authService.js";
 
-const API = "http://localhost:3000/cliente";
+const API = "https://sistema-apoio-juridico.onrender.com/cliente";
 
 async function requisicao(caminho) {
   const token = getToken();

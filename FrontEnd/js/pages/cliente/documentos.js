@@ -1,5 +1,5 @@
 (function () {
-  var API = 'http://localhost:3000/documentos';
+  var API = 'https://sistema-apoio-juridico.onrender.com/documentos';
   var MAX_BYTES = 10 * 1024 * 1024;
 
   var token = localStorage.getItem('token');

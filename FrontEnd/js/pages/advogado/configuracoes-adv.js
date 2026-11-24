@@ -8,7 +8,7 @@
    SOMENTE este bloco (API_URL, token e rotas).
 ========================================== */
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://sistema-apoio-juridico.onrender.com";
 
 const ROTAS = {
   perfil: "/advogado/perfil",   // GET (carregar) e PUT (salvar)

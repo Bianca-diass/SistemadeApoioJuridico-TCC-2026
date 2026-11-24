@@ -4,7 +4,7 @@ import { getToken } from "../../services/authService.js";
 // CONFIGURAÇÃO (ajuste se o seu backend for diferente)
 // ======================================================
 
-const API = "http://localhost:3000/agenda";
+const API = "https://sistema-apoio-juridico.onrender.com/agenda";
 const PAGINA_EDICAO = "cadastro-agenda-adv.html";
 
 // ======================================================

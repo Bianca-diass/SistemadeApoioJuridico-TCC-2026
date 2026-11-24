@@ -1,6 +1,6 @@
 import { getToken } from "./authService.js";
 
-const API = "http://localhost:3000/clientes";
+const API = "https://sistema-apoio-juridico.onrender.com/clientes";
 
 function authHeaders() {
     return {
