@@ -313,4 +313,8 @@ const baixarArquivo = async (req, res) => {
   }
 };
 
-module.exports = { anexarArquivo, baixarArquivo };
+
+module.exports = {
+    anexarArquivo,
+    baixarArquivo
+};
