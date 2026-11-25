@@ -1,6 +1,6 @@
-
 import {
     listarProcessos,
+    editarProcesso,
     excluirProcesso
 } from "../../services/processoService.js";
 
@@ -16,15 +16,42 @@ const buscarProcesso = document.getElementById("buscarProcesso");
 
 let processos = [];
 
+let processoAbertoId = null;   // processo aberto no modal
+let modoEdicao = false;        // false = visualizando | true = editando
+let salvando = false;
+
+// ==========================================================
+// OPÇÕES DE INTIMAÇÃO
+// ==========================================================
+
+const SEM_PENDENCIAS = "Sem pendências";
+
+const OPCOES_INTIMACAO = [
+    SEM_PENDENCIAS,
+    "Intimação para audiência",
+    "Intimação para manifestação",
+    "Citação",
+    "Publicação no diário"
+];
+
 // ==========================================================
 // UTILIDADES
 // ==========================================================
 
 // PADRONIZAR NOMES DOS CAMPOS VINDOS DA API
+// (_snake guarda se a API usa nomes_com_underline, para salvar no mesmo formato)
 
 function padronizarProcesso(p) {
+
+    const usaSnake =
+        ("numero_processo" in p ||
+         "ultima_movimentacao" in p ||
+         "tipo_manifestacao" in p) &&
+        !("numeroProcesso" in p);
+
     return {
         ...p,
+        _snake: usaSnake,
         numeroProcesso: p.numeroProcesso ?? p.numero_processo ?? "",
         ultimaMovimentacao: p.ultimaMovimentacao ?? p.ultima_movimentacao ?? "",
         tipoManifestacao: p.tipoManifestacao ?? p.tipo_manifestacao ?? ""
@@ -49,12 +76,71 @@ function escaparHTML(valor) {
     })[caractere]);
 }
 
-// VERIFICAR INTIMAÇÃO
+// ==========================================================
+// INTIMAÇÃO
+// ==========================================================
 
-function possuiIntimacao(valor) {
+// valores antigos (verdadeiro/falso) que significam "tem intimação"
+function intimacaoAntiga(valor) {
     return valor === true ||
         valor === 1 ||
         ["true", "1", "sim", "pendente"].includes(normalizar(valor));
+}
+
+// VERIFICAR SE EXISTE INTIMAÇÃO
+
+function possuiIntimacao(valor) {
+
+    if (valor === null || valor === undefined || valor === false || valor === 0) {
+        return false;
+    }
+
+    const texto = normalizar(valor);
+
+    const semPendencia = [
+        "",
+        "false",
+        "0",
+        "nao",
+        "não",
+        "sem pendências",
+        "sem pendencias",
+        "nenhuma",
+        "null",
+        "undefined"
+    ];
+
+    return !semPendencia.includes(texto);
+}
+
+// TEXTO QUE APARECE NA TELA
+
+function textoIntimacao(valor) {
+
+    if (!possuiIntimacao(valor)) {
+        return SEM_PENDENCIAS;
+    }
+
+    if (intimacaoAntiga(valor)) {
+        return "Nova intimação";
+    }
+
+    return String(valor).trim();
+}
+
+// VALOR QUE VAI PARA O BANCO
+
+function valorIntimacao(original, escolhida) {
+
+    if (escolhida === SEM_PENDENCIAS) {
+
+        if (typeof original === "boolean") return false;
+        if (typeof original === "number") return 0;
+
+        return SEM_PENDENCIAS;
+    }
+
+    return escolhida;
 }
 
 // FORMATAR DATA
@@ -93,8 +179,7 @@ function verificarPrazo(data) {
 }
 
 // ==========================================================
-// MODAL DE VISUALIZAÇÃO DO PROCESSO
-// MESMO DESIGN DE CLIENTES E DOCUMENTOS
+// MODAL DE VISUALIZAÇÃO / EDIÇÃO DO PROCESSO
 // ==========================================================
 
 function criarModalProcesso() {
@@ -109,21 +194,15 @@ function criarModalProcesso() {
 
     estilos.textContent = `
 
-        /* FUNDO */
-
         #modalVisualizarProcesso {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 9999;
-
             background: rgba(4, 15, 30, 0.78);
-
             align-items: center;
             justify-content: center;
-
             padding: 20px;
-
             backdrop-filter: blur(4px);
         }
 
@@ -131,61 +210,33 @@ function criarModalProcesso() {
             display: flex;
         }
 
-        /* CAIXA PRINCIPAL */
-
         #modalVisualizarProcesso .modal-caixa {
             background: #ffffff;
-
             width: 100%;
-            max-width: 620px;
-
+            max-width: 700px;
             max-height: 90vh;
-
             border-radius: 18px;
-
             overflow: hidden;
-
             display: flex;
             flex-direction: column;
-
             box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
-
             animation: aparecerModalProcesso .25s ease;
         }
 
         @keyframes aparecerModalProcesso {
-            from {
-                opacity: 0;
-                transform: translateY(15px) scale(.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(15px) scale(.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* CABEÇALHO */
-
         #modalVisualizarProcesso .doc-cabecalho {
-            background: linear-gradient(
-                135deg,
-                #0f1f33,
-                #234367
-            );
-
+            background: linear-gradient(135deg, #0f1f33, #234367);
             color: #ffffff;
-
             padding: 24px 26px;
-
             border-bottom: 4px solid #d4a95a;
-
             display: flex;
             align-items: center;
             justify-content: space-between;
-
             gap: 15px;
-
             flex-shrink: 0;
         }
 
@@ -202,39 +253,25 @@ function criarModalProcesso() {
 
         #modalVisualizarProcesso .doc-titulo h2 {
             margin: 0;
-
             font-family: 'Inter', sans-serif;
-
             font-size: 21px;
             font-weight: 700;
-
             color: #ffffff;
         }
-
-        /* BOTÃO FECHAR */
 
         #modalVisualizarProcesso .fechar-modal-processo {
             width: 38px;
             height: 38px;
-
             border: 1px solid rgba(255,255,255,.25);
-
             border-radius: 9px;
-
             background: rgba(255,255,255,.12);
-
             color: #ffffff;
-
             display: flex;
             align-items: center;
             justify-content: center;
-
             cursor: pointer;
-
             font-size: 18px;
-
             flex-shrink: 0;
-
             transition: .2s;
         }
 
@@ -244,42 +281,26 @@ function criarModalProcesso() {
             border-color: #d4a95a;
         }
 
-        /* CORPO */
-
         #modalVisualizarProcesso .doc-corpo {
             padding: 25px 26px 28px;
-
             background: #f4f6fa;
-
             overflow-y: auto;
-
             flex: 1;
             min-height: 0;
         }
 
-        /* GRADE */
-
         #modalVisualizarProcesso .doc-grade {
             display: grid;
-
             grid-template-columns: repeat(2, minmax(0, 1fr));
-
             gap: 14px;
         }
 
-        /* CAMPOS */
-
         #modalVisualizarProcesso .doc-item {
             background: #ffffff;
-
             border: 1px solid #e0e5ed;
-
             border-radius: 12px;
-
             padding: 15px 16px;
-
             min-width: 0;
-
             transition: .2s;
         }
 
@@ -293,49 +314,33 @@ function criarModalProcesso() {
 
         #modalVisualizarProcesso .doc-item small {
             display: block;
-
             color: #718096;
-
             font-family: 'Inter', sans-serif;
-
             font-size: 12px;
             font-weight: 500;
-
             margin-bottom: 7px;
         }
 
         #modalVisualizarProcesso .doc-item strong {
             display: block;
-
             color: #17324f;
-
             font-family: 'Inter', sans-serif;
-
             font-size: 14px;
             font-weight: 600;
-
             overflow-wrap: anywhere;
             line-height: 1.5;
         }
 
-        /* STATUS */
-
         #modalVisualizarProcesso .status-modal-processo {
             display: inline-flex;
             align-items: center;
-
             padding: 5px 12px;
-
             border-radius: 20px;
-
             background: #e0edff;
             color: #1d4ed8;
-
             font-size: 12px;
             font-weight: 600;
         }
-
-        /* INTIMAÇÃO */
 
         #modalVisualizarProcesso .intimacao-pendente {
             background: #fee2e2;
@@ -346,8 +351,6 @@ function criarModalProcesso() {
             background: #dcfce7;
             color: #15803d;
         }
-
-        /* PRAZOS */
 
         #modalVisualizarProcesso .prazo-vencido {
             background: #fee2e2;
@@ -364,7 +367,85 @@ function criarModalProcesso() {
             color: #15803d;
         }
 
-        /* ROLAGEM */
+        /* ===== MODO EDIÇÃO ===== */
+
+        #modalVisualizarProcesso .campo-edicao {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d5dbe5;
+            border-radius: 9px;
+            background: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #17324f;
+            outline: none;
+            transition: .2s;
+        }
+
+        #modalVisualizarProcesso .campo-edicao:focus {
+            border-color: #d4a95a;
+            box-shadow: 0 0 0 3px rgba(212, 169, 90, .18);
+        }
+
+        #modalVisualizarProcesso select.campo-edicao {
+            cursor: pointer;
+        }
+
+        /* ===== RODAPÉ COM BOTÕES ===== */
+
+        #modalVisualizarProcesso .doc-rodape {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 26px;
+            background: #ffffff;
+            border-top: 1px solid #e0e5ed;
+            flex-shrink: 0;
+        }
+
+        #modalVisualizarProcesso .btn-modal {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 22px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        #modalVisualizarProcesso .btn-modal.primario {
+            background: #234367;
+            color: #ffffff;
+        }
+
+        #modalVisualizarProcesso .btn-modal.primario i {
+            color: #d4a95a;
+        }
+
+        #modalVisualizarProcesso .btn-modal.primario:hover {
+            background: #2d5282;
+        }
+
+        #modalVisualizarProcesso .btn-modal.secundario {
+            background: #edf1f7;
+            color: #17324f;
+            border-color: #d5dbe5;
+        }
+
+        #modalVisualizarProcesso .btn-modal.secundario:hover {
+            background: #dfe5ee;
+        }
+
+        #modalVisualizarProcesso .btn-modal:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
 
         #modalVisualizarProcesso .doc-corpo::-webkit-scrollbar {
             width: 7px;
@@ -383,8 +464,6 @@ function criarModalProcesso() {
         #modalVisualizarProcesso .doc-corpo::-webkit-scrollbar-thumb:hover {
             background: #718096;
         }
-
-        /* RESPONSIVIDADE */
 
         @media (max-width: 550px) {
 
@@ -415,6 +494,15 @@ function criarModalProcesso() {
             #modalVisualizarProcesso .doc-item.primeiro-campo {
                 grid-column: auto;
             }
+
+            #modalVisualizarProcesso .doc-rodape {
+                padding: 14px 18px;
+            }
+
+            #modalVisualizarProcesso .btn-modal {
+                flex: 1;
+                justify-content: center;
+            }
         }
 
     `;
@@ -435,7 +523,7 @@ function criarModalProcesso() {
 
                     <i class="fa-solid fa-folder-open"></i>
 
-                    <h2>Dados do Processo</h2>
+                    <h2 id="tituloModalProcesso">Dados do Processo</h2>
 
                 </div>
 
@@ -456,6 +544,8 @@ function criarModalProcesso() {
 
             </div>
 
+            <div class="doc-rodape" id="rodapeModalProcesso"></div>
+
         </div>
 
     `;
@@ -469,9 +559,227 @@ function criarModalProcesso() {
 
         if (evento.target === modal) {
             fecharModalProcesso();
+            return;
         }
 
+        const botao = evento.target.closest("[data-acao]");
+
+        if (!botao) return;
+
+        const acao = botao.dataset.acao;
+
+        if (acao === "editar")   entrarModoEdicao();
+        if (acao === "cancelar") cancelarEdicao();
+        if (acao === "salvar")   salvarEdicao();
     });
+}
+
+// ==========================================================
+// DESENHAR O CONTEÚDO DO MODAL (visualização ou edição)
+// ==========================================================
+
+function desenharModalProcesso() {
+
+    const processo = processos.find(item =>
+        String(item.id) === String(processoAbertoId)
+    );
+
+    if (!processo) return;
+
+    const container = document.getElementById("dadosVisualizarProcesso");
+    const rodape = document.getElementById("rodapeModalProcesso");
+    const titulo = document.getElementById("tituloModalProcesso");
+
+    titulo.textContent = modoEdicao ? "Editar Processo" : "Dados do Processo";
+
+    const intimacao = possuiIntimacao(processo.intimacao);
+    const textoDaIntimacao = textoIntimacao(processo.intimacao);
+    const prazoEstado = verificarPrazo(processo.prazo);
+
+    // ======================================================
+    // MODO EDIÇÃO
+    // ======================================================
+
+    if (modoEdicao) {
+
+        const tribunalValor = processo.tribunal || processo.comarca || "";
+
+        // lista de opções (se o valor atual for diferente, ele também aparece)
+        const opcoesIntimacao = OPCOES_INTIMACAO.includes(textoDaIntimacao)
+            ? OPCOES_INTIMACAO
+            : [...OPCOES_INTIMACAO, textoDaIntimacao];
+
+        container.innerHTML = `
+
+            <div class="doc-grade">
+
+                <div class="doc-item primeiro-campo">
+                    <small>Nº do Processo</small>
+                    <input class="campo-edicao" type="text" data-campo="numeroProcesso"
+                           value="${escaparHTML(processo.numeroProcesso)}">
+                </div>
+
+                <div class="doc-item">
+                    <small>Cliente</small>
+                    <strong>${escaparHTML(processo.cliente || "-")}</strong>
+                </div>
+
+                <div class="doc-item">
+                    <small>Vara</small>
+                    <input class="campo-edicao" type="text" data-campo="vara"
+                           value="${escaparHTML(processo.vara ?? "")}">
+                </div>
+
+                <div class="doc-item">
+                    <small>Tribunal</small>
+                    <input class="campo-edicao" type="text" data-campo="tribunal"
+                           value="${escaparHTML(tribunalValor)}">
+                </div>
+
+                <div class="doc-item">
+                    <small>Status</small>
+                    <input class="campo-edicao" type="text" data-campo="status"
+                           list="opcoesStatusProcesso"
+                           value="${escaparHTML(processo.status ?? "")}">
+                    <datalist id="opcoesStatusProcesso">
+                        <option value="Em andamento">
+                        <option value="Aguardando audiência">
+                        <option value="Suspenso">
+                        <option value="Arquivado">
+                        <option value="Concluído">
+                    </datalist>
+                </div>
+
+                <div class="doc-item">
+                    <small>Tipo de Manifestação</small>
+                    <input class="campo-edicao" type="text" data-campo="tipoManifestacao"
+                           value="${escaparHTML(processo.tipoManifestacao)}">
+                </div>
+
+                <div class="doc-item">
+                    <small>Última Movimentação</small>
+                    <input class="campo-edicao" type="text" data-campo="ultimaMovimentacao"
+                           value="${escaparHTML(processo.ultimaMovimentacao)}">
+                </div>
+
+                <div class="doc-item">
+                    <small>Intimação</small>
+                    <select class="campo-edicao" data-campo="intimacao">
+                        ${opcoesIntimacao.map(opcao => `
+                            <option value="${escaparHTML(opcao)}"
+                                ${opcao === textoDaIntimacao ? "selected" : ""}>
+                                ${escaparHTML(opcao)}
+                            </option>
+                        `).join("")}
+                    </select>
+                </div>
+
+                <div class="doc-item">
+                    <small>Prazo</small>
+                    <input class="campo-edicao" type="date" data-campo="prazo"
+                           value="${escaparHTML(String(processo.prazo ?? "").substring(0, 10))}">
+                </div>
+
+            </div>
+
+        `;
+
+        rodape.innerHTML = `
+            <button type="button" class="btn-modal secundario" data-acao="cancelar">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+            </button>
+            <button type="button" class="btn-modal primario" data-acao="salvar" id="btnSalvarProcesso">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar
+            </button>
+        `;
+
+        return;
+    }
+
+    // ======================================================
+    // MODO VISUALIZAÇÃO
+    // ======================================================
+
+    const statusPrazo = prazoEstado === "vencido"
+        ? "Vencido"
+        : prazoEstado === "proximo"
+            ? "Próximo do vencimento"
+            : prazoEstado === "normal"
+                ? "Dentro do prazo"
+                : "Sem prazo informado";
+
+    const dados = [
+
+        ["Nº do Processo", processo.numeroProcesso || "-", true],
+        ["Cliente", processo.cliente || "-"],
+        ["Vara", processo.vara || "-"],
+        ["Tribunal", processo.tribunal || processo.comarca || "-"],
+        ["Status", processo.status || "-"],
+        ["Tipo de Manifestação", processo.tipoManifestacao || "Nenhuma"],
+        ["Última Movimentação", processo.ultimaMovimentacao || "-"],
+        ["Intimação", textoDaIntimacao],
+        ["Prazo", formatarData(processo.prazo)],
+        ["Situação do Prazo", statusPrazo]
+
+    ];
+
+    container.innerHTML = `
+
+        <div class="doc-grade">
+
+            ${dados.map(([tituloCampo, valor, destaque]) => {
+
+                let classeValor = "";
+
+                if (tituloCampo === "Status") {
+                    classeValor = "status-modal-processo";
+                }
+
+                if (tituloCampo === "Intimação") {
+                    classeValor = intimacao
+                        ? "status-modal-processo intimacao-pendente"
+                        : "status-modal-processo intimacao-ok";
+                }
+
+                if (tituloCampo === "Situação do Prazo") {
+                    classeValor = "status-modal-processo";
+
+                    if (prazoEstado === "vencido") {
+                        classeValor += " prazo-vencido";
+                    } else if (prazoEstado === "proximo") {
+                        classeValor += " prazo-proximo";
+                    } else if (prazoEstado === "normal") {
+                        classeValor += " prazo-normal";
+                    }
+                }
+
+                return `
+
+                    <div class="doc-item ${destaque ? "primeiro-campo" : ""}">
+
+                        <small>${escaparHTML(tituloCampo)}</small>
+
+                        <strong>
+                            ${classeValor
+                                ? `<span class="${classeValor}">${escaparHTML(valor)}</span>`
+                                : escaparHTML(valor)}
+                        </strong>
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+        </div>
+
+    `;
+
+    rodape.innerHTML = `
+        <button type="button" class="btn-modal primario" data-acao="editar">
+            <i class="fa-solid fa-pen-to-square"></i> Editar
+        </button>
+    `;
 }
 
 // ==========================================================
@@ -491,88 +799,119 @@ function visualizarProcesso(id) {
 
     criarModalProcesso();
 
-    const intimacao = possuiIntimacao(processo.intimacao);
-    const prazoEstado = verificarPrazo(processo.prazo);
+    processoAbertoId = processo.id;
+    modoEdicao = false;
 
-    const statusPrazo = prazoEstado === "vencido"
-        ? "Vencido"
-        : prazoEstado === "proximo"
-            ? "Próximo do vencimento"
-            : prazoEstado === "normal"
-                ? "Dentro do prazo"
-                : "Sem prazo informado";
-
-    const dados = [
-
-        ["Nº do Processo", processo.numeroProcesso || "-", true],
-        ["Cliente", processo.cliente || "-"],
-        ["Vara", processo.vara || "-"],
-        ["Tribunal", processo.tribunal || processo.comarca || "-"],
-        ["Status", processo.status || "-"],
-        ["Tipo de Manifestação", processo.tipoManifestacao || "Nenhuma"],
-        ["Última Movimentação", processo.ultimaMovimentacao || "-"],
-        ["Intimação", intimacao ? "Nova intimação" : "Sem pendências"],
-        ["Prazo", formatarData(processo.prazo)],
-        ["Situação do Prazo", statusPrazo]
-
-    ];
-
-    const container = document.getElementById("dadosVisualizarProcesso");
-
-    container.innerHTML = `
-
-        <div class="doc-grade">
-
-            ${dados.map(([titulo, valor, destaque], indice) => {
-
-                let classeValor = "";
-
-                if (titulo === "Status") {
-                    classeValor = "status-modal-processo";
-                }
-
-                if (titulo === "Intimação") {
-                    classeValor = intimacao
-                        ? "status-modal-processo intimacao-pendente"
-                        : "status-modal-processo intimacao-ok";
-                }
-
-                if (titulo === "Situação do Prazo") {
-                    classeValor = "status-modal-processo";
-
-                    if (prazoEstado === "vencido") {
-                        classeValor += " prazo-vencido";
-                    } else if (prazoEstado === "proximo") {
-                        classeValor += " prazo-proximo";
-                    } else if (prazoEstado === "normal") {
-                        classeValor += " prazo-normal";
-                    }
-                }
-
-                return `
-
-                    <div class="doc-item ${destaque ? "primeiro-campo" : ""}">
-
-                        <small>${escaparHTML(titulo)}</small>
-
-                        <strong>
-                            ${classeValor
-                                ? `<span class="${classeValor}">${escaparHTML(valor)}</span>`
-                                : escaparHTML(valor)}
-                        </strong>
-
-                    </div>
-
-                `;
-
-            }).join("")}
-
-        </div>
-
-    `;
+    desenharModalProcesso();
 
     document.getElementById("modalVisualizarProcesso")
         .classList.add("aberto");
+}
+
+// ==========================================================
+// EDIÇÃO
+// ==========================================================
+
+function entrarModoEdicao() {
+    modoEdicao = true;
+    desenharModalProcesso();
+}
+
+function cancelarEdicao() {
+    modoEdicao = false;
+    desenharModalProcesso();
+}
+
+async function salvarEdicao() {
+
+    if (salvando) return;
+
+    const processo = processos.find(item =>
+        String(item.id) === String(processoAbertoId)
+    );
+
+    if (!processo) return;
+
+    const modal = document.getElementById("modalVisualizarProcesso");
+
+    // lê os campos digitados
+    const novos = {};
+
+    modal.querySelectorAll("[data-campo]").forEach(campo => {
+        novos[campo.dataset.campo] = campo.value.trim();
+    });
+
+    // validação
+    if (!novos.numeroProcesso) {
+        alert("Informe o número do processo.");
+        modal.querySelector('[data-campo="numeroProcesso"]').focus();
+        return;
+    }
+
+    // monta o objeto que vai para o servidor
+    // (usa os mesmos nomes de campo que a API devolveu)
+
+    const snake = processo._snake;
+
+    const chaveTribunal =
+        ("tribunal" in processo || !("comarca" in processo))
+            ? "tribunal"
+            : "comarca";
+
+    const dados = {
+        [snake ? "numero_processo" : "numeroProcesso"]: novos.numeroProcesso,
+        vara: novos.vara,
+        [chaveTribunal]: novos.tribunal,
+        status: novos.status,
+        [snake ? "tipo_manifestacao" : "tipoManifestacao"]: novos.tipoManifestacao,
+        [snake ? "ultima_movimentacao" : "ultimaMovimentacao"]: novos.ultimaMovimentacao,
+        intimacao: valorIntimacao(processo.intimacao, novos.intimacao),
+        prazo: novos.prazo || null
+    };
+
+    // salva
+    const botaoSalvar = document.getElementById("btnSalvarProcesso");
+
+    salvando = true;
+
+    if (botaoSalvar) {
+        botaoSalvar.disabled = true;
+        botaoSalvar.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Salvando...`;
+    }
+
+    try {
+
+        await editarProcesso(processo.id, dados);
+
+        // atualiza o processo na memória e na tela
+        Object.assign(processo, dados);
+
+        processo.numeroProcesso = novos.numeroProcesso;
+        processo.tipoManifestacao = novos.tipoManifestacao;
+        processo.ultimaMovimentacao = novos.ultimaMovimentacao;
+
+        modoEdicao = false;
+
+        atualizarCards();
+        aplicarFiltros();
+        desenharModalProcesso();
+
+    } catch (erro) {
+
+        console.error("Erro ao salvar processo:", erro);
+
+        alert(erro.message || "Não foi possível salvar as alterações.");
+
+        if (botaoSalvar) {
+            botaoSalvar.disabled = false;
+            botaoSalvar.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Salvar`;
+        }
+
+    } finally {
+
+        salvando = false;
+
+    }
 }
 
 // ==========================================================
@@ -586,6 +925,9 @@ function fecharModalProcesso() {
     if (modal) {
         modal.classList.remove("aberto");
     }
+
+    modoEdicao = false;
+    processoAbertoId = null;
 }
 
 document.addEventListener("keydown", evento => {
@@ -680,7 +1022,8 @@ function aplicarFiltros() {
             processo.comarca,
             processo.tribunal,
             processo.status,
-            processo.tipoManifestacao
+            processo.tipoManifestacao,
+            textoIntimacao(processo.intimacao)
         ];
 
         return campos.some(campo =>
@@ -756,7 +1099,7 @@ function renderizarProcessos(lista) {
 
             <td>
                 <span class="${intimacao ? "badge-alerta" : "badge-ok"}">
-                    ${intimacao ? "Nova intimação" : "Sem pendências"}
+                    ${escaparHTML(textoIntimacao(processo.intimacao))}
                 </span>
             </td>
 
@@ -768,20 +1111,11 @@ function renderizarProcessos(lista) {
 
                 <button
                     class="btn-visualizar"
-                    title="Visualizar"
+                    title="Visualizar e editar"
                     data-id="${id}"
                     type="button"
                 >
                     <i class="fa-solid fa-eye"></i>
-                </button>
-
-                <button
-                    class="btn-editar"
-                    title="Editar"
-                    data-id="${id}"
-                    type="button"
-                >
-                    <i class="fa-solid fa-pen"></i>
                 </button>
 
                 <button
@@ -816,21 +1150,11 @@ listaProcessos?.addEventListener("click", async evento => {
 
     if (!id) return;
 
-    // VISUALIZAR
+    // VISUALIZAR / EDITAR (dentro do modal)
 
     if (botao.classList.contains("btn-visualizar")) {
 
         visualizarProcesso(id);
-
-        return;
-    }
-
-    // EDITAR
-
-    if (botao.classList.contains("btn-editar")) {
-
-        window.location.href =
-            `cadastro-processo-adv.html?id=${encodeURIComponent(id)}`;
 
         return;
     }

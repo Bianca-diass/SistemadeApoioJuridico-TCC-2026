@@ -1,4 +1,3 @@
-
 import { getToken } from "../../services/authService.js";
 import { listarClientes } from "../../services/clienteService.js";
 import { listarProcessos } from "../../services/processoService.js";
@@ -72,6 +71,66 @@ function obterNumeroProcesso(processo) {
     );
 }
 
+// ==========================================================
+// DOCUMENTOS E TELEFONE DO CLIENTE
+// ==========================================================
+
+function somenteDigitos(valor) {
+    return String(valor ?? "").replace(/\D/g, "");
+}
+
+// Descobre CPF e CNPJ do cliente, mesmo que estejam em campos diferentes
+// (cnpj, cpf_cnpj, documento...) ou que o CNPJ tenha sido salvo no campo CPF.
+function obterDocumentos(cliente) {
+
+    let cpf = "";
+    let cnpj = "";
+
+    const candidatos = [
+        [cliente.cnpj, "cnpj"],
+        [cliente.CNPJ, "cnpj"],
+        [cliente.cpf, "cpf"],
+        [cliente.CPF, "cpf"],
+        [cliente.cpf_cnpj, ""],
+        [cliente.cpfCnpj, ""],
+        [cliente.documento, ""]
+    ];
+
+    candidatos.forEach(([valor, tipoPadrao]) => {
+
+        const texto = String(valor ?? "").trim();
+
+        if (!texto || texto === "-") return;
+
+        const digitos = somenteDigitos(texto).length;
+
+        const tipo = digitos === 14
+            ? "cnpj"
+            : digitos === 11
+                ? "cpf"
+                : tipoPadrao;
+
+        if (tipo === "cnpj" && !cnpj) cnpj = texto;
+        if (tipo === "cpf" && !cpf) cpf = texto;
+    });
+
+    return {
+        cpf: cpf || "-",
+        cnpj: cnpj || "-"
+    };
+}
+
+function obterTelefone(cliente) {
+    return (
+        cliente.telefone ||
+        cliente.celular ||
+        cliente.whatsapp ||
+        cliente.fone ||
+        cliente.contato ||
+        "-"
+    );
+}
+
 // CLIENTES
 let carregandoClientes = false;
 
@@ -93,21 +152,29 @@ async function carregarClientes() {
             if (ultimos.length === 0) {
                 listaClientes.innerHTML = `
                     <tr>
-                        <td colspan="3" class="vazio">
+                        <td colspan="4" class="vazio">
                             Nenhum cliente cadastrado.
                         </td>
                     </tr>
                 `;
             } else {
-                listaClientes.innerHTML = ultimos.map(cliente => `
-                    <tr>
-                        <td title="${cliente.nome || "-"}">
-                            ${cliente.nome || "-"}
-                        </td>
-                        <td>${cliente.cpf || "-"}</td>
-                        <td>${cliente.telefone || cliente.contato || "-"}</td>
-                    </tr>
-                `).join("");
+                listaClientes.innerHTML = ultimos.map(cliente => {
+
+                    const { cpf, cnpj } = obterDocumentos(cliente);
+                    const telefone = obterTelefone(cliente);
+
+                    return `
+                        <tr>
+                            <td title="${cliente.nome || "-"}">
+                                ${cliente.nome || "-"}
+                            </td>
+                            <td>${cpf}</td>
+                            <td>${cnpj}</td>
+                            <td>${telefone}</td>
+                        </tr>
+                    `;
+
+                }).join("");
             }
 
             marcarAtualizado(statusClientesEl);
@@ -120,7 +187,7 @@ async function carregarClientes() {
         if (listaClientes.children.length === 0) {
             listaClientes.innerHTML = `
                 <tr>
-                    <td colspan="3" class="vazio">
+                    <td colspan="4" class="vazio">
                         Não foi possível carregar os clientes.
                     </td>
                 </tr>

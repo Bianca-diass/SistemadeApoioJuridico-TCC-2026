@@ -10,6 +10,7 @@ const processosRoutes = require("./routes/processos");
 const agendaRoutes = require("./routes/agenda");
 const documentosRoutes = require("./routes/documentos");
 const notificacoesRoutes = require("./routes/notificacoes");
+const advogadoPerfilRoutes = require("./routes/advogadoPerfil.cjs");
 
 const { iniciarJobDeLembretes } = require("./jobs/lembretesJob");
 
@@ -42,6 +43,9 @@ app.use("/agenda", agendaRoutes);
 app.use("/documentos", documentosRoutes);
 
 app.use("/notificacoes", notificacoesRoutes);
+
+// Perfil e senha do advogado (tela de Configurações)
+app.use("/advogado", advogadoPerfilRoutes);
 
 
 // ==========================================================

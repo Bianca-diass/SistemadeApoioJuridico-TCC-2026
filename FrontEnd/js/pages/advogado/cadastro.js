@@ -1,62 +1,58 @@
-
 import { authController } from "../../controllers/authController.js";
-import { parseOab, validarOab, aplicarMascaraOab } from "../../utils/oab.js";
 
 const form = document.getElementById("formCadastro");
+const nome = document.getElementById("nome");
+const oab = document.getElementById("oab");
+const email = document.getElementById("email");
+const senha = document.getElementById("senha");
+const confirmarSenha = document.getElementById("confirmarSenha");
+const msgErro = document.getElementById("msgErro");
 const btnCadastrar = document.getElementById("btnCadastrar");
 const btnVoltar = document.getElementById("btnVoltar");
-const msgErro = document.getElementById("msgErro");
 
-// Campo OAB
-aplicarMascaraOab(document.getElementById("oab"));
+// OAB: aceita somente números (o "/MS" é fixo na tela)
+oab.addEventListener("input", () => {
+    oab.value = oab.value.replace(/\D/g, "");
+});
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+function mostrarMensagem(texto, sucesso = false) {
+    msgErro.style.display = "block";
+    msgErro.style.color = sucesso ? "#218838" : "#dc3545";
+    msgErro.textContent = texto;
+}
 
-    const nome = document.getElementById("nome").value.trim();
-    const oab = document.getElementById("oab").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const senha = document.getElementById("senha").value;
-    const confirmarSenha = document.getElementById("confirmarSenha").value;
-
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
     msgErro.style.display = "none";
-    msgErro.textContent = "";
 
-    // Verificar campos obrigatórios
-    if (!nome || !oab || !email || !senha || !confirmarSenha) {
-        msgErro.textContent = "Preencha todos os campos.";
-        msgErro.style.display = "block";
+    const nomeCompleto = nome.value.trim();
+    const numeroOab = oab.value.replace(/\D/g, "");
+    const emailUsuario = email.value.trim();
+    const senhaUsuario = senha.value;
+
+    if (!nomeCompleto || !numeroOab || !emailUsuario || !senhaUsuario || !confirmarSenha.value) {
+        mostrarMensagem("Preencha todos os campos.");
         return;
     }
 
-    // Validar OAB
-    const erroOab = validarOab(oab);
-
-    if (erroOab) {
-        msgErro.textContent = erroOab;
-        msgErro.style.display = "block";
+    if (!/^[1-9]\d{0,5}$/.test(numeroOab)) {
+        mostrarMensagem("OAB inválida. Digite somente o número da inscrição (até 6 dígitos).");
         return;
     }
 
-    // Validar tamanho, letras, números e símbolos
     const senhaValida =
-        senha.length >= 8 &&
-        /[A-Za-z]/.test(senha) &&
-        /[0-9]/.test(senha) &&
-        /[^A-Za-z0-9]/.test(senha);
+        senhaUsuario.length >= 8 &&
+        /[A-Za-z]/.test(senhaUsuario) &&
+        /[0-9]/.test(senhaUsuario) &&
+        /[^A-Za-z0-9]/.test(senhaUsuario);
 
     if (!senhaValida) {
-        msgErro.textContent =
-            "A senha deve conter, no mínimo, 8 caracteres, incluindo letras, números e símbolos especiais.";
-
-        msgErro.style.display = "block";
+        mostrarMensagem("A senha deve conter, no mínimo, 8 caracteres, incluindo letras, números e símbolos especiais.");
         return;
     }
 
-    // Confirmar senhas
-    if (senha !== confirmarSenha) {
-        msgErro.textContent = "As senhas não são iguais.";
-        msgErro.style.display = "block";
+    if (senhaUsuario !== confirmarSenha.value) {
+        mostrarMensagem("As senhas não são iguais.");
         return;
     }
 
@@ -64,37 +60,25 @@ form.addEventListener("submit", async (e) => {
     btnCadastrar.textContent = "Cadastrando...";
 
     try {
-
-        await authController.cadastrar(email, senha, {
-            nome,
-            oab: parseOab(oab).completo,
+        await authController.cadastrar(emailUsuario, senhaUsuario, {
+            nome: nomeCompleto,
+            oab: `${numeroOab}/MS`,
             tipo: "advogado"
         });
 
         alert("Advogado cadastrado com sucesso!");
-
         window.location.href = "login-adv.html";
 
     } catch (erro) {
-
         console.error("Erro no cadastro:", erro);
-
-        msgErro.textContent =
-            erro.message || "Erro ao cadastrar advogado.";
-
-        msgErro.style.display = "block";
+        mostrarMensagem(erro.message || "Erro ao cadastrar advogado.");
 
     } finally {
-
         btnCadastrar.disabled = false;
-
-        btnCadastrar.innerHTML =
-            '<i class="fas fa-user-plus"></i> Cadastrar';
-
+        btnCadastrar.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar';
     }
 });
 
-// Voltar para login
 btnVoltar.addEventListener("click", () => {
     window.location.href = "login-adv.html";
 });

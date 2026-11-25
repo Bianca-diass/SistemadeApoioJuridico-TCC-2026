@@ -74,8 +74,11 @@ aside {
 
 nav { display: flex; flex-direction: column; gap: 4px; }
 
-/* idêntico ao menu da Área do Cliente */
+/* menu com ícones (igual ao dashboard) */
 nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
   padding: 11px 14px;
   border-radius: 9px;
@@ -84,9 +87,13 @@ nav a {
   border-left: 3px solid transparent;
   transition: background .2s, color .2s;
 }
-/* só para links que ainda tenham ícone (outras páginas do advogado) */
-nav a:has(i) { display: flex; align-items: center; gap: 12px; }
-nav a i { width: 20px; text-align: center; color: var(--dourado); }
+nav a i {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--dourado);
+  flex-shrink: 0;
+}
 nav a:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 nav a.on {
   background: rgba(212, 169, 90, 0.14);
@@ -509,7 +516,7 @@ main p.mensagem { margin: 0; }
 
 
 /* =====================================================================
-   NOVO: Configurações do advogado = IDÊNTICO à Área do Cliente
+   Configurações do advogado = IDÊNTICO à Área do Cliente
    Vale SÓ para a página que tem o #formPerfil (não afeta as outras).
    Usa !important para vencer qualquer outro CSS que esteja sobrescrevendo.
    ===================================================================== */
@@ -566,8 +573,11 @@ main p.mensagem { margin: 0; }
     margin: 0 !important;
     padding: 0 !important;
   }
+  /* links com ícone: flex para alinhar ícone + texto */
   body:has(#formPerfil) aside nav a {
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
     margin: 0 !important;
     padding: 11px 14px !important;
     border-radius: 9px !important;
@@ -579,6 +589,14 @@ main p.mensagem { margin: 0; }
     text-align: left !important;
     text-decoration: none !important;
     background: transparent !important;
+  }
+  body:has(#formPerfil) aside nav a i {
+    display: inline-block !important;
+    width: 20px !important;
+    text-align: center !important;
+    font-size: 16px !important;
+    color: var(--dourado) !important;
+    flex-shrink: 0 !important;
   }
   body:has(#formPerfil) aside nav a:hover {
     background: rgba(255, 255, 255, 0.08) !important;

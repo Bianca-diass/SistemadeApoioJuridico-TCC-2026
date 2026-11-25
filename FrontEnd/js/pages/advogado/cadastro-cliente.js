@@ -1,4 +1,5 @@
 import { cadastrarCliente } from "../../services/clienteService.js";
+import { clienteController } from "../../controllers/clienteController.js";
 
 const form = document.getElementById("formCliente");
 const selectEstado = document.getElementById("estado");
@@ -9,15 +10,38 @@ const selectTipoPessoa = document.getElementById("tipoPessoa");
 const grupoCpf = document.getElementById("grupoCpf");
 const grupoCnpj = document.getElementById("grupoCnpj");
 
-// Alterna entre campo de CPF e CNPJ conforme o tipo de cliente
-selectTipoPessoa.addEventListener("change", () => {
+const tituloPagina = document.querySelector(".topoPagina h1");
+const subtituloPagina = document.querySelector(".topoPagina p");
+const botaoSalvar = document.querySelector(".salvar");
+const botaoLimpar = document.querySelector(".cancelar");
+
+// ==========================================================
+// MODO: NOVO OU EDIÇÃO (?id=123)
+// ==========================================================
+
+const idEdicao = new URLSearchParams(window.location.search).get("id");
+const modoEdicao = Boolean(idEdicao);
+
+// ==========================================================
+// CPF / CNPJ
+// ==========================================================
+
+function mostrarCampoDocumento() {
     if (selectTipoPessoa.value === "juridica") {
         grupoCpf.style.display = "none";
         grupoCnpj.style.display = "";
-        inputCpf.value = "";
     } else {
         grupoCnpj.style.display = "none";
         grupoCpf.style.display = "";
+    }
+}
+
+selectTipoPessoa.addEventListener("change", () => {
+    mostrarCampoDocumento();
+
+    if (selectTipoPessoa.value === "juridica") {
+        inputCpf.value = "";
+    } else {
         inputCnpj.value = "";
     }
 });
@@ -119,7 +143,119 @@ selectEstado.addEventListener("input", carregarCidades);
 carregarCidades();
 
 // ==========================================================
-// SALVAR
+// MODO EDIÇÃO: PREENCHER FORMULÁRIO COM OS DADOS CADASTRADOS
+// ==========================================================
+
+function configurarTelaEdicao() {
+    document.title = "Editar Cliente";
+    tituloPagina.textContent = "Editar Cliente";
+    subtituloPagina.textContent = "Altere os dados necessários e salve.";
+
+    botaoSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+
+    // "Limpar" apagaria os dados carregados: vira "Cancelar"
+    botaoLimpar.type = "button";
+    botaoLimpar.textContent = "Cancelar";
+    botaoLimpar.addEventListener("click", () => {
+        window.location.href = "clientes-adv.html";
+    });
+}
+
+async function preencherFormulario(cliente) {
+
+    // Tipo de pessoa (decide se aparece CPF ou CNPJ)
+    const tipo = cliente.tipoPessoa || cliente.tipo_pessoa ||
+        (cliente.cnpj ? "juridica" : "fisica");
+
+    selectTipoPessoa.value = tipo;
+    mostrarCampoDocumento();
+
+    document.getElementById("nome").value = cliente.nome || "";
+    document.getElementById("email").value = cliente.email || "";
+    document.getElementById("telefone").value = cliente.telefone || "";
+    document.getElementById("rg").value = cliente.rg || "";
+    document.getElementById("endereco").value = cliente.endereco || "";
+    inputCpf.value = cliente.cpf || "";
+    inputCnpj.value = cliente.cnpj || "";
+
+    // Estado -> carregar cidades -> só então selecionar a cidade
+    selectEstado.value = cliente.estado || "";
+    await carregarCidades();
+
+    if (cliente.cidade) {
+        const existe = [...selectCidade.options].some(
+            opcao => opcao.value === cliente.cidade
+        );
+
+        // Garante que a cidade salva apareça mesmo se o nome divergir do IBGE
+        if (!existe) {
+            const option = document.createElement("option");
+            option.value = cliente.cidade;
+            option.textContent = cliente.cidade;
+            selectCidade.appendChild(option);
+        }
+
+        selectCidade.disabled = false;
+        selectCidade.value = cliente.cidade;
+    }
+}
+
+function iniciarModoEdicao() {
+
+    configurarTelaEdicao();
+
+    // Bloqueia o salvar até os dados chegarem
+    botaoSalvar.disabled = true;
+
+    let preenchido = false;
+
+    async function tentarPreencher(lista) {
+
+        if (preenchido || !Array.isArray(lista)) return;
+
+        const cliente = lista.find(
+            item => String(item.id) === String(idEdicao)
+        );
+
+        if (!cliente) return;
+
+        preenchido = true;
+
+        await preencherFormulario(cliente);
+
+        botaoSalvar.disabled = false;
+
+        clienteController.pararEscuta();
+    }
+
+    // Se a lista já estiver em memória
+    tentarPreencher(clienteController.clientes);
+
+    // Aguarda a primeira resposta do banco
+    clienteController.onChange(async lista => {
+
+        await tentarPreencher(lista);
+
+        if (!preenchido && Array.isArray(lista) && lista.length >= 0) {
+            alert("Cliente não encontrado.");
+            window.location.href = "clientes-adv.html";
+        }
+    });
+
+    clienteController.onError(erro => {
+        console.error("Erro ao carregar cliente:", erro);
+        alert("Não foi possível carregar os dados do cliente.");
+    });
+
+    clienteController.iniciarEscuta();
+}
+
+if (modoEdicao) {
+    iniciarModoEdicao();
+}
+
+// ==========================================================
+// SALVAR (NOVO OU ATUALIZAÇÃO)
 // ==========================================================
 
 form.addEventListener("submit", async (e) => {
@@ -139,9 +275,14 @@ form.addEventListener("submit", async (e) => {
     };
 
     try {
-        await cadastrarCliente(cliente);
 
-        alert("Cliente cadastrado com sucesso!");
+        if (modoEdicao) {
+            await clienteController.editarCliente(idEdicao, cliente);
+            alert("Cliente atualizado com sucesso!");
+        } else {
+            await cadastrarCliente(cliente);
+            alert("Cliente cadastrado com sucesso!");
+        }
 
         window.location.href = "clientes-adv.html";
 

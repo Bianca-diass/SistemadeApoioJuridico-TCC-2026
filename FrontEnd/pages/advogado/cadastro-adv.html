@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -10,10 +9,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="../../css/style-advogado/login-advogado.css">
+    <link rel="stylesheet" href="../../css/style-advogado/cadastro-adv.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
@@ -33,51 +31,37 @@
 
             <div class="campo">
                 <label for="nome">Nome completo</label>
-                <input
-                    type="text"
-                    id="nome"
-                    placeholder="Digite seu nome completo"
-                    required
-                >
+                <input type="text" id="nome" placeholder="Digite seu nome completo" required>
             </div>
 
             <div class="campo">
                 <label for="oab">OAB</label>
-                <input
-                    type="text"
-                    id="oab"
-                    placeholder="Ex.: 29588/MS"
-                    maxlength="9"
-                    autocomplete="off"
-                    required
-                >
+                <div class="campo-oab">
+                    <input type="text" id="oab" placeholder="Ex.: 29588" maxlength="6" inputmode="numeric" autocomplete="off" required>
+                    <span class="uf-fixa">/MS</span>
+                </div>
             </div>
 
             <div class="campo">
                 <label for="email">E-mail</label>
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="Digite seu e-mail"
-                    required
-                >
+                <input type="email" id="email" placeholder="Digite seu e-mail" required>
             </div>
 
             <div class="campo">
                 <label for="senha">Senha</label>
-
-                <input
-                    type="password"
-                    id="senha"
-                    placeholder="Mínimo de 8 caracteres"
-                    minlength="8"
-                    pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
-                    title="A senha deve conter, no mínimo, 8 caracteres, incluindo letras, números e símbolos especiais."
-                    autocomplete="new-password"
-                    aria-describedby="dicaSenha"
-                    required
-                >
-
+                <div class="campo-senha">
+                    <input
+                        type="password"
+                        id="senha"
+                        placeholder="Mínimo de 8 caracteres"
+                        minlength="8"
+                        pattern="(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}"
+                        title="A senha deve conter, no mínimo, 8 caracteres, incluindo letras, números e símbolos especiais."
+                        autocomplete="new-password"
+                        aria-describedby="dicaSenha"
+                        required>
+                    <i class="fas fa-eye olho" data-alvo="senha"></i>
+                </div>
                 <small id="dicaSenha" class="dicaSenha">
                     A senha deve conter, no mínimo, 8 caracteres,
                     incluindo letras, números e símbolos especiais.
@@ -86,15 +70,16 @@
 
             <div class="campo">
                 <label for="confirmarSenha">Confirmar senha</label>
-
-                <input
-                    type="password"
-                    id="confirmarSenha"
-                    placeholder="Digite a senha novamente"
-                    minlength="8"
-                    autocomplete="new-password"
-                    required
-                >
+                <div class="campo-senha">
+                    <input
+                        type="password"
+                        id="confirmarSenha"
+                        placeholder="Digite a senha novamente"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required>
+                    <i class="fas fa-eye olho" data-alvo="confirmarSenha"></i>
+                </div>
             </div>
 
             <div id="msgErro" style="display:none; color:red; margin:10px 0;"></div>
@@ -108,14 +93,23 @@
 
         <div class="rodape">
             <p>Já possui uma conta?</p>
-
-            <button type="button" id="btnVoltar">
-                Voltar para Login
-            </button>
+            <button type="button" id="btnVoltar">Voltar para Login</button>
         </div>
 
     </div>
 </div>
+
+<script>
+    document.querySelectorAll(".olho").forEach(function (icone) {
+        icone.addEventListener("click", function () {
+            var campo = document.getElementById(icone.dataset.alvo);
+            var mostrar = campo.type === "password";
+            campo.type = mostrar ? "text" : "password";
+            icone.classList.toggle("fa-eye", !mostrar);
+            icone.classList.toggle("fa-eye-slash", mostrar);
+        });
+    });
+</script>
 
 <script type="module" src="../../js/pages/advogado/cadastro.js"></script>
 

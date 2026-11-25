@@ -1,267 +1,389 @@
+
 /* ==========================================
    LOGIN-ADVOGADO.CSS
    Mesmo visual da tela inicial
 ========================================== */
 
-:root{
-    --azul-escuro:#0f1f33;
-    --azul-botao:#0f1f33;
-    --azul-hover:#0f1f33;
-    --dourado:#d4a95a;
-    --card:#eceff3;
-    --texto-sub:#5f6b7a;
+:root {
+    --azul-escuro: #0f1f33;
+    --azul-botao: #0f1f33;
+    --azul-hover: #0f1f33;
+    --dourado: #d4a95a;
+    --card: #eceff3;
+    --texto-sub: #5f6b7a;
 }
 
-body{
-    margin:0;
-    padding:0;
-    font-family:'Inter',Arial,sans-serif;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:var(--azul-escuro);
+/* ==========================
+   BODY
+========================== */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--azul-escuro);
+
     background:
         linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
         radial-gradient(circle at 50% 30%, #1a3d63 0%, #14304d 40%, #0b1828 100%);
-    background-size:40px 40px, 40px 40px, 100% 100%;
-}
 
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+}
 
 /* ==========================
    CONTAINER
 ========================== */
 
-.login-container{
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:50px 20px 24px;
+.login-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px 24px;
 }
-
 
 /* ==========================
    CARD
 ========================== */
 
-.login-box{
-    position:relative;
-    width:100%;
-    max-width:430px;
-    background:var(--card);
-    padding:60px 40px 36px;
-    border-radius:18px;
-    box-shadow:0 25px 60px rgba(0,0,0,.45);
+.login-box {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    background: var(--card);
+    padding: 60px 40px 36px;
+    border-radius: 18px;
+    box-shadow: 0 25px 60px rgba(0,0,0,.45);
 }
 
-/* linha dourada no topo */
-.login-box::before{
-    content:"";
-    position:absolute;
-    top:0;
-    left:50%;
-    transform:translateX(-50%);
-    width:90px;
-    height:3px;
-    background:var(--dourado);
-    border-radius:0 0 4px 4px;
-}
+/* Linha dourada no topo */
 
+.login-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 3px;
+    background: var(--dourado);
+    border-radius: 0 0 4px 4px;
+}
 
 /* ==========================
    LOGO
 ========================== */
 
-.logo{
-    text-align:center;
-    margin-bottom:30px;
+.logo {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-.logo i{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    width:64px;
-    height:64px;
-    margin:-92px auto 20px;
-    border-radius:50%;
-    background:var(--azul-escuro);
-    border:2px solid rgba(212,169,90,.35);
-    color:var(--dourado);
-    font-size:26px;
-    box-shadow:0 6px 18px rgba(0,0,0,.3);
+.logo i {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 64px;
+    height: 64px;
+    margin: -92px auto 20px;
+    border-radius: 50%;
+    background: var(--azul-escuro);
+    border: 2px solid rgba(212,169,90,.35);
+    color: var(--dourado);
+    font-size: 26px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.3);
 }
 
-.logo h1{
-    font-family:'Playfair Display',Georgia,serif;
-    font-size:29px;
-    color:var(--azul-escuro);
-    margin:0 0 10px;
+.logo h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 29px;
+    color: var(--azul-escuro);
+    margin: 0 0 10px;
 }
 
-.logo p{
-    color:var(--texto-sub);
-    font-size:14px;
-    margin:0;
+.logo p {
+    color: var(--texto-sub);
+    font-size: 14px;
+    margin: 0;
 }
-
 
 /* ==========================
    CAMPOS
 ========================== */
 
-.campo{
-    margin-bottom:20px;
+.campo {
+    margin-bottom: 20px;
 }
 
-.campo label{
-    display:block;
-    margin-bottom:8px;
-    font-size:14px;
-    font-weight:600;
-    color:var(--azul-escuro);
+.campo label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--azul-escuro);
 }
 
-.campo input{
-    width:100%;
-    box-sizing:border-box;
-    padding:14px;
-    background:#fff;
-    border:1px solid #cfd6df;
-    border-radius:10px;
-    font-family:inherit;
-    font-size:15px;
-    color:var(--azul-escuro);
-    transition:.3s;
+.campo input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--azul-escuro);
+    transition: .3s;
 }
 
-.campo input::placeholder{
-    color:#9aa5b3;
+.campo input::placeholder {
+    color: #9aa5b3;
 }
 
-.campo input:focus{
-    outline:none;
-    border-color:var(--dourado);
-    box-shadow:0 0 0 3px rgba(212,169,90,.25);
+.campo input:focus {
+    outline: none;
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
 }
 
-/* tira o fundo azul/amarelo do preenchimento automático */
+/* Preenchimento automático */
+
 .campo input:-webkit-autofill,
 .campo input:-webkit-autofill:hover,
-.campo input:-webkit-autofill:focus{
-    -webkit-box-shadow:0 0 0 1000px #fff inset !important;
-    -webkit-text-fill-color:var(--azul-escuro) !important;
-    transition:background-color 5000s ease-in-out 0s;
+.campo input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+    -webkit-text-fill-color: var(--azul-escuro) !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
+/* ==========================
+   CAMPO OAB
+========================== */
+
+.oab-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 49px;
+    background: #fff;
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: .3s;
+}
+
+.oab-container:focus-within {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(212,169,90,.25);
+}
+
+.oab-container input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0 14px;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--azul-escuro);
+}
+
+.oab-container input:focus {
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+.oab-uf {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    background: #e1e6ec;
+    border-left: 1px solid #cfd6df;
+    color: var(--azul-escuro);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ==========================
+   DICA DA SENHA
+========================== */
+
+.dicaSenha {
+    display: block;
+    margin-top: 7px;
+    color: var(--texto-sub);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* ==========================
+   MENSAGEM DE ERRO
+========================== */
+
+#msgErro {
+    margin: 10px 0;
+    color: #c0392b;
+    font-size: 13px;
+}
 
 /* ==========================
    BOTÃO PRINCIPAL
 ========================== */
 
-.login-box button{
-    width:100%;
-    padding:15px;
-    background:var(--azul-botao);
-    color:#fff;
-    border:none;
-    border-radius:10px;
-    font-family:inherit;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    transition:transform .2s, box-shadow .2s, filter .2s;
+.login-box button {
+    width: 100%;
+    padding: 15px;
+    background: var(--azul-botao);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s, filter .2s;
 }
 
-.login-box button i{
-    color:var(--dourado);
-    margin-right:6px;
+.login-box button i {
+    color: var(--dourado);
+    margin-right: 6px;
 }
 
-.login-box button:hover{
-    background:var(--azul-botao);
-    transform:translateY(-2px);
-    filter:brightness(1.15);
-    box-shadow:0 8px 18px rgba(15,31,51,.35);
+.login-box button:hover {
+    background: var(--azul-botao);
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+    box-shadow: 0 8px 18px rgba(15,31,51,.35);
 }
 
+.login-box button:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+    transform: none;
+}
 
 /* ==========================
    LINKS
 ========================== */
 
-.links{
-    display:flex;
-    justify-content:space-between;
-    margin-top:18px;
-    font-size:14px;
+.links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 18px;
+    font-size: 14px;
 }
 
-.links a{
-    color:var(--azul-botao);
-    text-decoration:none;
+.links a {
+    color: var(--azul-botao);
+    text-decoration: none;
 }
 
-.links a:hover{
-    text-decoration:underline;
+.links a:hover {
+    text-decoration: underline;
 }
-
 
 /* ==========================
    RODAPÉ
 ========================== */
 
-.rodape{
-    margin-top:26px;
-    padding-top:22px;
-    border-top:1px solid #d3d8df;
-    text-align:center;
-    color:var(--texto-sub);
-    font-size:14px;
+.rodape {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid #d3d8df;
+    text-align: center;
+    color: var(--texto-sub);
+    font-size: 14px;
 }
 
-.rodape p{
-    margin:0 0 12px;
+.rodape p {
+    margin: 0 0 12px;
 }
 
-.rodape a{
-    color:var(--azul-botao);
-    font-weight:700;
-    text-decoration:none;
+.rodape a {
+    color: var(--azul-botao);
+    font-weight: 700;
+    text-decoration: none;
 }
 
-.rodape a:hover{
-    color:var(--dourado);
+.rodape a:hover {
+    color: var(--dourado);
 }
 
-/* botão "Criar Conta" (secundário, só contorno) */
-.login-box .rodape button{
-    background:transparent;
-    color:var(--azul-escuro);
-    border:1.5px solid var(--azul-escuro);
+/* Botão Criar Conta e Voltar */
+
+.login-box .rodape button {
+    background: transparent;
+    color: var(--azul-escuro);
+    border: 1.5px solid var(--azul-escuro);
 }
 
-.login-box .rodape button:hover{
-    background:var(--azul-escuro);
-    color:#fff;
-    filter:none;
+.login-box .rodape button:hover {
+    background: var(--azul-escuro);
+    color: #fff;
+    filter: none;
 }
-
 
 /* ==========================
    RESPONSIVO
 ========================== */
 
-@media(max-width:480px){
+@media (max-width: 480px) {
 
-    .login-box{
-        padding:60px 22px 28px;
+    .login-container {
+        padding: 50px 15px 24px;
     }
 
-    .logo h1{
-        font-size:25px;
+    .login-box {
+        padding: 60px 22px 28px;
     }
 
+    .logo h1 {
+        font-size: 25px;
+    }
+
+}
+
+
+/* CAMPO DE SENHA */
+
+.campo-senha {
+    position: relative;
+    width: 100%;
+}
+
+.campo-senha input {
+    width: 100%;
+    padding-right: 45px;
+    box-sizing: border-box;
+}
+
+/* ÍCONE DO OLHO */
+
+.campo-senha i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    cursor: pointer;
+    color: #666;
+    font-size: 16px;
+}
+
+.campo-senha i:hover {
+    color: #0f1f33;
 }
