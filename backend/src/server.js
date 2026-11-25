@@ -10,7 +10,7 @@ const processosRoutes = require("./routes/processos");
 const agendaRoutes = require("./routes/agenda");
 const documentosRoutes = require("./routes/documentos");
 const notificacoesRoutes = require("./routes/notificacoes");
-const advogadoPerfilRoutes = require("./routes/advogadoPerfil.cjs");
+const advogadoPerfilRoutes = require("./routes/advogadoPerfil");
 
 const { iniciarJobDeLembretes } = require("./jobs/lembretesJob");
 
