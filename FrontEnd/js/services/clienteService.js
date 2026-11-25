@@ -1,99 +1,98 @@
-import { getToken } from "./authService.js";
 
-const API = "https://sistema-apoio-juridico.onrender.com/clientes";
+import { getToken, fazerLogout } from "./authService.js";
 
-function authHeaders() {
+const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://localhost:3000"
+    : "https://sistema-apoio-juridico.onrender.com";
+
+const API = `${API_BASE}/clientes`;
+
+function headers() {
+    const token = getToken();
+
+    if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+    }
+
     return {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${getToken()}`
+        "Authorization": `Bearer ${token}`
     };
 }
 
-// CADASTRAR CLIENTE
+async function requisicao(url, opcoes = {}) {
+    const resposta = await fetch(url, {
+        ...opcoes,
+        headers: {
+            ...headers(),
+            ...(opcoes.headers || {})
+        }
+    });
+
+    const tipo = resposta.headers.get("content-type") || "";
+    const dados = tipo.includes("application/json")
+        ? await resposta.json()
+        : {};
+
+    if (resposta.status === 401) {
+        await fazerLogout();
+        window.location.href = "../../login.html";
+        throw new Error("Sessão expirada. Faça login novamente.");
+    }
+
+    if (!resposta.ok) {
+        throw new Error(
+            dados.erro || dados.message || "Erro ao acessar clientes."
+        );
+    }
+
+    return dados;
+}
+
 export async function cadastrarCliente(cliente) {
-    const resposta = await fetch(API, {
+    return await requisicao(API, {
         method: "POST",
-        headers: authHeaders(),
         body: JSON.stringify(cliente)
     });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao cadastrar cliente");
-    }
-
-    return dados;
 }
 
-// LISTAR CLIENTES
-// Mantém o mesmo formato usado em agendaService.js: recebe um callback
-// e devolve uma função de "cancelar" (aqui não há listener em tempo real,
-// então a função retornada não faz nada).
 export async function listarClientes(callback) {
-    const resposta = await fetch(API, {
-        headers: authHeaders()
-    });
+    const resposta = await requisicao(API);
 
-    const clientes = await resposta.json();
+    const clientes = Array.isArray(resposta)
+        ? resposta
+        : Array.isArray(resposta.clientes)
+            ? resposta.clientes
+            : Array.isArray(resposta.data)
+                ? resposta.data
+                : [];
 
-    if (!resposta.ok) {
-        throw new Error(clientes.erro || "Erro ao listar clientes");
+    if (typeof callback === "function") {
+        callback(clientes);
     }
 
-    callback(clientes);
-
-    return () => {};
+    return clientes;
 }
 
-// BUSCAR UM CLIENTE PELO ID
 export async function buscarCliente(id) {
-    const resposta = await fetch(`${API}/${encodeURIComponent(id)}`, {
-        headers: authHeaders()
-    });
+    if (!id) throw new Error("ID do cliente não informado.");
 
-    const dados = await resposta.json();
-
-    if (resposta.status === 404) {
-        return null;
-    }
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao buscar cliente");
-    }
-
-    return dados;
+    return await requisicao(`${API}/${encodeURIComponent(id)}`);
 }
 
-// EDITAR CLIENTE
 export async function editarCliente(id, dadosAtualizados) {
-    const resposta = await fetch(`${API}/${id}`, {
+    if (!id) throw new Error("ID do cliente não informado.");
+
+    return await requisicao(`${API}/${encodeURIComponent(id)}`, {
         method: "PUT",
-        headers: authHeaders(),
         body: JSON.stringify(dadosAtualizados)
     });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao editar cliente");
-    }
-
-    return dados;
 }
 
-// EXCLUIR CLIENTE
 export async function excluirCliente(id) {
-    const resposta = await fetch(`${API}/${id}`, {
-        method: "DELETE",
-        headers: authHeaders()
+    if (!id) throw new Error("ID do cliente não informado.");
+
+    return await requisicao(`${API}/${encodeURIComponent(id)}`, {
+        method: "DELETE"
     });
-
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-        throw new Error(dados.erro || "Erro ao excluir cliente");
-    }
-
-    return dados;
 }

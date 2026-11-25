@@ -1,3 +1,4 @@
+
 import {
     adicionarCompromisso,
     editarCompromisso,
@@ -9,29 +10,19 @@ import {
 } from "../../services/clienteService.js";
 
 const form = document.getElementById("formCompromisso");
-
 const campo = id => document.getElementById(id);
 
-// Se a URL tiver ?id=..., a tela funciona como EDIÇÃO.
-const idEdicao = new URLSearchParams(window.location.search).get("id");
+const idEdicao = new URLSearchParams(location.search).get("id");
 
 let clientes = [];
-let erroClientes = false;
+let listaClientes = null;
+let indiceAtivo = -1;
 
 // ==========================================
-// UTILIDADES
+// UTILITÁRIOS
 // ==========================================
 
-function normalizar(valor) {
-    return String(valor || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ");
-}
-
-function escaparHTML(valor) {
+function escapar(valor) {
     return String(valor ?? "").replace(/[&<>"']/g, c => ({
         "&": "&amp;",
         "<": "&lt;",
@@ -41,12 +32,21 @@ function escaparHTML(valor) {
     })[c]);
 }
 
+function normalizar(valor) {
+    return String(valor || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
 function horaValida(valor) {
     return /^([01]\d|2[0-3]):[0-5]\d$/.test(valor);
 }
 
-// Digita só números e o ":" entra sozinho.
 function aplicarMascaraHora(input) {
+    if (!input) return;
+
     input.addEventListener("input", () => {
         const numeros = input.value.replace(/\D/g, "").slice(0, 4);
 
@@ -60,334 +60,235 @@ aplicarMascaraHora(campo("hora"));
 aplicarMascaraHora(campo("horaPrazo"));
 
 // ==========================================
-// CLIENTES - LISTA DE SELEÇÃO
+// IDENTIFICAR PROCESSO DO CLIENTE
 // ==========================================
 
-let listaEl = null;
-let indiceAtivo = -1;
+function numeroProcessoDoCliente(cliente) {
+    if (!cliente) return "";
 
-function criarListaClientes() {
-
-    const input = campo("cliente");
-
-    input.removeAttribute("list");
-    input.setAttribute("autocomplete", "off");
-
-    const estilos = document.createElement("style");
-
-    estilos.textContent = `
-
-        .lista-clientes-agenda {
-            display: none;
-            position: absolute;
-            z-index: 50;
-            max-height: 240px;
-            overflow-y: auto;
-            background: #ffffff;
-            border: 1px solid #d4a95a;
-            border-radius: 10px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-        }
-
-        .lista-clientes-agenda.aberta {
-            display: block;
-        }
-
-        .lista-clientes-agenda .item-cliente {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            padding: 10px 14px;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            color: #17324f;
-            cursor: pointer;
-            border-bottom: 1px solid #eef1f6;
-        }
-
-        .lista-clientes-agenda .item-cliente:last-child {
-            border-bottom: none;
-        }
-
-        .lista-clientes-agenda .item-cliente small {
-            font-size: 11px;
-            color: #718096;
-        }
-
-        .lista-clientes-agenda .item-cliente:hover,
-        .lista-clientes-agenda .item-cliente.ativo {
-            background: #f4f6fa;
-        }
-
-        .lista-clientes-agenda .item-vazio {
-            padding: 12px 14px;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            color: #718096;
-        }
-    `;
-
-    document.head.appendChild(estilos);
-
-    listaEl = document.createElement("div");
-    listaEl.className = "lista-clientes-agenda";
-
-    const pai = input.parentElement;
-
-    if (getComputedStyle(pai).position === "static") {
-        pai.style.position = "relative";
-    }
-
-    pai.appendChild(listaEl);
-
-    input.addEventListener("focus", mostrarLista);
-    input.addEventListener("click", mostrarLista);
-    input.addEventListener("input", mostrarLista);
-    input.addEventListener("keydown", teclasLista);
-
-    document.addEventListener("click", evento => {
-        if (
-            evento.target !== input &&
-            !listaEl.contains(evento.target)
-        ) {
-            fecharLista();
-        }
-    });
-}
-
-// ==========================================
-// NÚMERO DO PROCESSO DO CLIENTE
-// ==========================================
-
-// Procura o número do processo no registro do cliente, aceitando
-// vários nomes de campo e também lista de processos.
-function numeroProcessoDoCliente(c) {
-
-    if (!c) return "";
-
-    const texto = v => (v === null || v === undefined)
-        ? ""
-        : String(v).trim();
-
-    const doItem = item => {
-
-        if (item === null || item === undefined) return "";
-
-        if (typeof item !== "object") return texto(item);
-
-        return texto(
-            item.numero ??
-            item.numero_processo ??
-            item.numeroProcesso ??
-            item.processo ??
-            item.num_processo ??
-            item.number
-        );
-    };
-
-    const diretos = [
-        c.numero_processo,
-        c.numeroProcesso,
-        c.num_processo,
-        c.numProcesso,
-        c.processo_numero,
-        c.numero_do_processo,
-        c.processo
+    const campos = [
+        cliente.numero_processo,
+        cliente.numeroProcesso,
+        cliente.num_processo,
+        cliente.processo_numero,
+        cliente.numero_do_processo
     ];
 
-    for (const valor of diretos) {
-
-        if (Array.isArray(valor)) {
-
-            for (const item of valor) {
-                const n = doItem(item);
-                if (n) return n;
-            }
-
-            continue;
+    for (const valor of campos) {
+        if (valor && typeof valor !== "object") {
+            return String(valor);
         }
 
-        const n = doItem(valor);
-        if (n) return n;
+        if (valor && typeof valor === "object") {
+            const numero = valor.numero ||
+                valor.numero_processo ||
+                valor.numeroProcesso;
+
+            if (numero) return String(numero);
+        }
     }
 
-    const listas = [c.processos, c.Processos, c.processos_cliente];
+    const processos = cliente.processos || [];
 
-    for (const lista of listas) {
+    if (Array.isArray(processos) && processos.length) {
+        const processo = processos[0];
 
-        if (!Array.isArray(lista)) continue;
-
-        for (const item of lista) {
-            const n = doItem(item);
-            if (n) return n;
+        if (typeof processo === "string") {
+            return processo;
         }
+
+        return processo.numero ||
+            processo.numero_processo ||
+            processo.numeroProcesso ||
+            "";
     }
 
     return "";
 }
 
 // ==========================================
+// LISTA DE CLIENTES
+// ==========================================
+
+function criarListaClientes() {
+    const input = campo("cliente");
+
+    if (!input) return;
+
+    input.setAttribute("autocomplete", "off");
+
+    const grupo = input.parentElement;
+
+    grupo.style.position = "relative";
+
+    listaClientes = document.createElement("div");
+
+    listaClientes.className = "lista-clientes-agenda";
+
+    Object.assign(listaClientes.style, {
+        display: "none",
+        position: "absolute",
+        top: `${input.offsetHeight + 5}px`,
+        left: "0",
+        width: "100%",
+        maxHeight: "240px",
+        overflowY: "auto",
+        background: "#fff",
+        border: "1px solid #d4a95a",
+        borderRadius: "10px",
+        boxShadow: "0 10px 25px rgba(0,0,0,.15)",
+        zIndex: "9999"
+    });
+
+    grupo.appendChild(listaClientes);
+
+    input.addEventListener("focus", mostrarClientes);
+    input.addEventListener("click", mostrarClientes);
+    input.addEventListener("input", mostrarClientes);
+    input.addEventListener("keydown", navegarLista);
+
+    document.addEventListener("click", evento => {
+        if (
+            evento.target !== input &&
+            !listaClientes.contains(evento.target)
+        ) {
+            fecharClientes();
+        }
+    });
+
+    listaClientes.addEventListener("mousedown", evento => {
+        const item = evento.target.closest("[data-cliente-id]");
+
+        if (!item) return;
+
+        evento.preventDefault();
+
+        selecionarCliente(item.dataset.clienteId);
+    });
+}
+
+// ==========================================
 // MOSTRAR CLIENTES
 // ==========================================
 
-function mostrarLista() {
+function mostrarClientes() {
+    if (!listaClientes) return;
 
-    const input = campo("cliente");
+    const termo = normalizar(campo("cliente").value);
 
-    listaEl.style.top =
-        `${input.offsetTop + input.offsetHeight + 4}px`;
-
-    listaEl.style.left = `${input.offsetLeft}px`;
-    listaEl.style.width = `${input.offsetWidth}px`;
-
-    const termo = normalizar(input.value);
-
-    const nomeExato = clientes.some(
-        c => normalizar(c.nome) === termo
+    const filtrados = clientes.filter(cliente =>
+        normalizar(cliente.nome).includes(termo)
     );
-
-    const filtrados = (!termo || nomeExato)
-        ? clientes
-        : clientes.filter(c =>
-            normalizar(c.nome).includes(termo)
-        );
 
     indiceAtivo = -1;
 
-    if (erroClientes) {
-
-        listaEl.innerHTML = `
-            <div class="item-vazio">
-                Não foi possível carregar os clientes.
-                ${escaparHTML(detalheErroClientes)}
+    if (!clientes.length) {
+        listaClientes.innerHTML = `
+            <div class="item-vazio" style="padding:12px;color:#718096">
+                Nenhum cliente cadastrado ou vinculado a este advogado.
             </div>
         `;
-
-    } else if (!clientes.length) {
-
-        listaEl.innerHTML = `
-            <div class="item-vazio">
-                Nenhum cliente cadastrado ainda.
-            </div>
-        `;
-
     } else if (!filtrados.length) {
-
-        listaEl.innerHTML = `
-            <div class="item-vazio">
-                Nenhum cliente encontrado com esse nome.
+        listaClientes.innerHTML = `
+            <div style="padding:12px;color:#718096">
+                Nenhum cliente encontrado.
             </div>
         `;
-
     } else {
+        listaClientes.innerHTML = filtrados.map(cliente => `
+            <div
+                data-cliente-id="${escapar(cliente.id)}"
+                class="item-cliente"
+                style="padding:12px;cursor:pointer;border-bottom:1px solid #eee;color:#17324f"
+            >
+                <strong>${escapar(cliente.nome)}</strong>
 
-        listaEl.innerHTML = filtrados.map(c => `
-            <div class="item-cliente" data-id="${escaparHTML(c.id)}">
-
-                ${escaparHTML(c.nome || "-")}
-
-                ${(c.cpf || c.cnpj)
-                    ? `<small>${escaparHTML(c.cpf || c.cnpj)}</small>`
+                ${cliente.cpf || cliente.cnpj
+                    ? `<small style="display:block;color:#718096">
+                        ${escapar(cliente.cpf || cliente.cnpj)}
+                       </small>`
                     : ""
                 }
 
-                ${numeroProcessoDoCliente(c)
-                    ? `<small>Processo: ${escaparHTML(numeroProcessoDoCliente(c))}</small>`
+                ${numeroProcessoDoCliente(cliente)
+                    ? `<small style="display:block;color:#718096">
+                        Processo: ${escapar(numeroProcessoDoCliente(cliente))}
+                       </small>`
                     : ""
                 }
-
             </div>
         `).join("");
     }
 
-    listaEl.classList.add("aberta");
+    listaClientes.style.display = "block";
 }
 
 // ==========================================
 // FECHAR LISTA
 // ==========================================
 
-function fecharLista() {
-
-    if (listaEl) {
-        listaEl.classList.remove("aberta");
+function fecharClientes() {
+    if (listaClientes) {
+        listaClientes.style.display = "none";
     }
 
     indiceAtivo = -1;
 }
 
 // ==========================================
-// ESCOLHER CLIENTE
+// SELECIONAR CLIENTE
 // ==========================================
 
-function escolherCliente(id) {
-
+function selecionarCliente(id) {
     const cliente = clientes.find(
         c => String(c.id) === String(id)
     );
 
     if (!cliente) return;
 
-    campo("cliente").value = cliente.nome || "";
+    campo("cliente").value = cliente.nome;
 
-    // Preenche o campo Processo automaticamente.
-    const numeroProcesso = numeroProcessoDoCliente(cliente);
+    campo("cliente").dataset.clienteId = cliente.id;
 
-    if (numeroProcesso) {
-        campo("processo").value = numeroProcesso;
+    const processo = numeroProcessoDoCliente(cliente);
+
+    if (processo) {
+        campo("processo").value = processo;
     }
 
-    fecharLista();
+    fecharClientes();
 }
-
-document.addEventListener("mousedown", evento => {
-
-    const item = evento.target.closest(
-        ".lista-clientes-agenda .item-cliente"
-    );
-
-    if (!item) return;
-
-    evento.preventDefault();
-
-    escolherCliente(item.dataset.id);
-});
 
 // ==========================================
 // NAVEGAÇÃO PELO TECLADO
 // ==========================================
 
-function teclasLista(evento) {
-
-    if (!listaEl.classList.contains("aberta")) return;
+function navegarLista(evento) {
+    if (!listaClientes || listaClientes.style.display === "none") {
+        return;
+    }
 
     const itens = [
-        ...listaEl.querySelectorAll(".item-cliente")
+        ...listaClientes.querySelectorAll("[data-cliente-id]")
     ];
 
     if (evento.key === "Escape") {
-        fecharLista();
+        fecharClientes();
         return;
     }
 
     if (!itens.length) return;
 
-    if (
-        evento.key === "ArrowDown" ||
-        evento.key === "ArrowUp"
-    ) {
-
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
         evento.preventDefault();
 
         indiceAtivo = evento.key === "ArrowDown"
             ? (indiceAtivo + 1) % itens.length
             : (indiceAtivo - 1 + itens.length) % itens.length;
 
-        itens.forEach((item, i) => {
-            item.classList.toggle(
-                "ativo",
-                i === indiceAtivo
-            );
+        itens.forEach((item, indice) => {
+            item.style.background =
+                indice === indiceAtivo ? "#edf2f7" : "#fff";
         });
 
         itens[indiceAtivo].scrollIntoView({
@@ -396,274 +297,116 @@ function teclasLista(evento) {
     }
 
     if (evento.key === "Enter" && indiceAtivo >= 0) {
-
         evento.preventDefault();
 
-        escolherCliente(
-            itens[indiceAtivo].dataset.id
+        selecionarCliente(
+            itens[indiceAtivo].dataset.clienteId
         );
     }
 }
 
 // ==========================================
-// CARREGAR CLIENTES DA API
+// CARREGAR CLIENTES DO BACKEND
 // ==========================================
 
-// Aceita: array direto, { clientes: [...] } ou { data: [...] }.
-function extrairListaClientes(resposta) {
-
+function extrairClientes(resposta) {
     if (Array.isArray(resposta)) return resposta;
     if (Array.isArray(resposta?.clientes)) return resposta.clientes;
     if (Array.isArray(resposta?.data)) return resposta.data;
+    if (Array.isArray(resposta?.dados)) return resposta.dados;
 
     return [];
 }
 
-function aplicarClientes(resposta) {
-
-    clientes = extrairListaClientes(resposta)
-        .filter(Boolean)
-        .map(c => ({
-            ...c,
-            // Garante o campo "nome" mesmo que a coluna tenha outro nome.
-            nome: c.nome ?? c.nome_completo ?? c.razao_social ?? c.name ?? ""
-        }))
-        .filter(c => c.nome);
-
-    console.log("Clientes carregados:", clientes.length, clientes);
-}
-
-// Mensagem exibida no campo Cliente quando algo dá errado.
-let detalheErroClientes = "";
-
-// Tenta primeiro o servidor publicado (o mesmo usado pela Agenda) e depois o local.
-const URLS_API_CLIENTES = [
-    "https://sistema-apoio-juridico.onrender.com/clientes",
-    "http://localhost:3000/clientes"
-];
-
-// Procura o token de login no navegador, em qualquer chave comum.
-function obterTokenSalvo() {
-
-    const limpar = valor => String(valor || "")
-        .replace(/^"|"$/g, "")
-        .replace(/^Bearer\s+/i, "")
-        .trim();
-
-    const pareceJWT = valor => /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(valor);
-
-    const chavesComuns = [
-        "token", "accessToken", "access_token",
-        "authToken", "jwt", "tokenAdvogado"
-    ];
-
-    for (const storage of [localStorage, sessionStorage]) {
-
-        try {
-
-            for (const chave of chavesComuns) {
-                const valor = limpar(storage.getItem(chave));
-                if (valor && pareceJWT(valor)) return valor;
-            }
-
-            for (let i = 0; i < storage.length; i++) {
-
-                const bruto = storage.getItem(storage.key(i));
-                const valor = limpar(bruto);
-
-                if (pareceJWT(valor)) return valor;
-
-                try {
-                    const obj = JSON.parse(bruto);
-                    const interno = limpar(
-                        obj?.token ?? obj?.access_token ??
-                        obj?.accessToken ?? obj?.session?.access_token
-                    );
-                    if (pareceJWT(interno)) return interno;
-                } catch {
-                    // Não era JSON.
-                }
-            }
-
-        } catch {
-            // Storage indisponível.
-        }
-    }
-
-    return "";
-}
-
-// Busca direta na API, sem depender do clienteService.
-async function buscarClientesDireto() {
-
-    const token = obterTokenSalvo();
-
-    if (!token) {
-        throw new Error(
-            "Você não está logado (token não encontrado). Faça login novamente."
-        );
-    }
-
-    let ultimoErro = null;
-
-    for (const url of URLS_API_CLIENTES) {
-
-        let resposta;
-
-        try {
-
-            resposta = await fetch(url, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            });
-
-        } catch (erro) {
-
-            ultimoErro = new Error(
-                `Não consegui falar com ${url}: ${erro.message}`
-            );
-
-            continue;
-        }
-
-        let corpo = null;
-
-        try {
-            corpo = await resposta.json();
-        } catch {
-            // Resposta sem JSON.
-        }
-
-        console.log(`GET ${url} ->`, resposta.status, corpo);
-
-        if (resposta.ok) return corpo;
-
-        ultimoErro = new Error(
-            `${url} respondeu ${resposta.status}: ` +
-            (corpo?.erro || corpo?.error || corpo?.message || "sem detalhes")
-        );
-    }
-
-    throw ultimoErro || new Error("Falha ao buscar clientes.");
-}
-
 async function carregarClientes() {
-
     criarListaClientes();
 
-    detalheErroClientes = "";
-    erroClientes = false;
-
-    // 1) Tenta pelo service do projeto (retorno direto ou callback).
     try {
+        const resposta = await listarClientes();
 
-        const retorno = await listarClientes(aplicarClientes);
+        clientes = extrairClientes(resposta)
+            .filter(Boolean)
+            .map(cliente => ({
+                ...cliente,
+                nome: cliente.nome ||
+                    cliente.nome_completo ||
+                    cliente.razao_social ||
+                    cliente.name ||
+                    ""
+            }))
+            .filter(cliente => cliente.id && cliente.nome);
 
-        if (retorno !== undefined) {
-            aplicarClientes(retorno);
-        }
+        clientes.sort((a, b) =>
+            a.nome.localeCompare(b.nome, "pt-BR")
+        );
 
-    } catch (erro) {
-
-        console.warn("clienteService falhou:", erro);
-
-        detalheErroClientes = erro?.message || "";
-    }
-
-    if (clientes.length) return;
-
-    // 2) Se veio vazio, consulta a API direto para descobrir o motivo real.
-    try {
-
-        const corpo = await buscarClientesDireto();
-
-        aplicarClientes(corpo);
+        console.log("Clientes carregados:", clientes);
 
         if (!clientes.length) {
-
-            detalheErroClientes = "";
-
             console.warn(
-                "A API respondeu OK, mas sem nenhum cliente. " +
-                "Verifique o vínculo do advogado logado na tabela advogado_clientes."
+                "Nenhum cliente foi retornado pela API."
             );
         }
 
     } catch (erro) {
-
         console.error("Erro ao carregar clientes:", erro);
 
         clientes = [];
-        erroClientes = true;
-        detalheErroClientes = erro.message;
+
+        alert(
+            "Não foi possível carregar os clientes. " +
+            erro.message
+        );
     }
 }
 
 // ==========================================
-// LOCALIZAR CLIENTE PELO NOME
+// LOCALIZAR CLIENTE
 // ==========================================
 
-function acharCliente(nome) {
-
+function localizarCliente(nome) {
     const alvo = normalizar(nome);
 
     if (!alvo) return null;
 
-    const exatos = clientes.filter(
-        c => normalizar(c.nome) === alvo
-    );
-
-    return exatos.length === 1
-        ? exatos[0]
-        : null;
+    return clientes.find(
+        cliente => normalizar(cliente.nome) === alvo
+    ) || null;
 }
 
 // ==========================================
-// EDIÇÃO: PREENCHER FORMULÁRIO
+// PREENCHER FORMULÁRIO PARA EDIÇÃO
 // ==========================================
 
-function preencherFormulario(c) {
+function preencherFormulario(compromisso) {
+    campo("titulo").value = compromisso.titulo || "";
+    campo("descricao").value = compromisso.descricao || "";
 
-    const valor = (v, tamanho) =>
-        String(v ?? "").substring(0, tamanho);
+    campo("data").value =
+        String(compromisso.data || "").substring(0, 10);
 
-    campo("titulo").value = c.titulo || "";
-    campo("descricao").value = c.descricao || "";
+    campo("hora").value =
+        String(compromisso.horario || compromisso.hora || "").substring(0, 5);
 
-    campo("data").value = valor(c.data, 10);
+    campo("dataPrazo").value =
+        String(compromisso.data_prazo || compromisso.dataPrazo || "").substring(0, 10);
 
-    campo("hora").value = valor(
-        c.horario ?? c.hora,
-        5
-    );
+    campo("horaPrazo").value =
+        String(compromisso.hora_prazo || compromisso.horaPrazo || "").substring(0, 5);
 
-    campo("dataPrazo").value = valor(
-        c.data_prazo ?? c.dataPrazo,
-        10
-    );
+    campo("cliente").value = compromisso.cliente || "";
+    campo("processo").value = compromisso.processo || "";
+    campo("local").value = compromisso.local || "";
 
-    campo("horaPrazo").value = valor(
-        c.hora_prazo ?? c.horaPrazo,
-        5
-    );
+    campo("tipo").value = compromisso.tipo || "";
+    campo("status").value = compromisso.status || "Agendado";
 
-    campo("cliente").value = c.cliente || "";
+    const cliente = clientes.find(c =>
+        String(c.id) === String(compromisso.cliente_id || compromisso.clienteId)
+    ) || localizarCliente(compromisso.cliente);
 
-    campo("processo").value = c.processo || "";
-    campo("local").value = c.local || "";
-
-    const tipo = campo("tipo");
-
-    if ([...tipo.options].some(o => o.value === c.tipo)) {
-        tipo.value = c.tipo;
-    }
-
-    const status = campo("status");
-
-    if ([...status.options].some(o => o.value === c.status)) {
-        status.value = c.status;
+    if (cliente) {
+        campo("cliente").dataset.clienteId = cliente.id;
     }
 }
 
@@ -672,43 +415,32 @@ function preencherFormulario(c) {
 // ==========================================
 
 async function prepararEdicao() {
-
-    const titulo = document.querySelector("h1");
-
-    if (titulo) {
-        titulo.textContent = "Editar Compromisso";
-    }
+    document.querySelector("h1").textContent = "Editar Compromisso";
 
     document.title = "Editar Compromisso";
 
     try {
+        const resposta = await listarCompromissos();
 
-        const lista = await listarCompromissos();
+        const compromissos = Array.isArray(resposta)
+            ? resposta
+            : resposta.compromissos || resposta.data || [];
 
-        const compromisso = (
-            Array.isArray(lista) ? lista : []
-        ).find(c =>
+        const compromisso = compromissos.find(c =>
             String(c.id) === String(idEdicao)
         );
 
         if (!compromisso) {
-
             alert("Compromisso não encontrado.");
-
-            window.location.href = "agenda-adv.html";
-
+            location.href = "agenda-adv.html";
             return;
         }
 
         preencherFormulario(compromisso);
 
     } catch (erro) {
-
-        console.error("Erro ao carregar compromisso:", erro);
-
-        alert(
-            erro.message || "Erro ao carregar compromisso."
-        );
+        console.error(erro);
+        alert("Erro ao carregar compromisso: " + erro.message);
     }
 }
 
@@ -716,133 +448,92 @@ async function prepararEdicao() {
 // SALVAR COMPROMISSO
 // ==========================================
 
-form.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
+form.addEventListener("submit", async evento => {
+    evento.preventDefault();
 
     const horario = campo("hora").value.trim();
-
     const horaPrazo = campo("horaPrazo").value.trim();
 
     if (!horaValida(horario)) {
-
-        alert(
-            "Informe o horário no formato HH:mm (ex.: 14:30)."
-        );
-
+        alert("Informe o horário no formato HH:mm. Exemplo: 14:30.");
         return;
     }
 
     if (horaPrazo && !horaValida(horaPrazo)) {
-
-        alert(
-            "Informe o horário limite no formato HH:mm (ex.: 18:00)."
-        );
-
+        alert("Informe o horário limite no formato HH:mm.");
         return;
     }
 
     const nomeCliente = campo("cliente").value.trim();
 
-    const clienteEncontrado = acharCliente(nomeCliente);
+    const clienteSelecionado = localizarCliente(nomeCliente);
 
-    if (nomeCliente && !clienteEncontrado) {
-
-        const continuar = confirm(
-            "Esse cliente não está na sua lista de clientes cadastrados.\n\n" +
-            "O compromisso será salvo, mas NÃO aparecerá na área de nenhum " +
-            "cliente. Para aparecer, escolha um cliente da lista.\n\n" +
-            "Deseja salvar assim mesmo?"
+    if (nomeCliente && !clienteSelecionado) {
+        alert(
+            "Selecione um cliente cadastrado na lista. " +
+            "Não digite apenas o nome."
         );
 
-        if (!continuar) return;
+        campo("cliente").focus();
+        mostrarClientes();
+        return;
     }
 
     const status = campo("status").value;
 
     const compromisso = {
-
         titulo: campo("titulo").value.trim(),
-
         descricao: campo("descricao").value.trim(),
-
         tipo: campo("tipo").value,
-
         data: campo("data").value,
-
         horario,
-
         dataPrazo: campo("dataPrazo").value || null,
-
         horaPrazo: horaPrazo || null,
 
-        cliente: clienteEncontrado
-            ? clienteEncontrado.nome
-            : nomeCliente,
+        cliente: clienteSelecionado
+            ? clienteSelecionado.nome
+            : null,
 
-        clienteId: clienteEncontrado
-            ? clienteEncontrado.id
+        clienteId: clienteSelecionado
+            ? clienteSelecionado.id
             : null,
 
         processo: campo("processo").value.trim(),
-
         local: campo("local").value.trim(),
-
         status,
-
         concluido: status === "Concluído"
     };
 
-    const botaoSalvar = form.querySelector(
-        "button[type='submit']"
-    );
+    const botao = form.querySelector("button[type='submit']");
 
-    if (botaoSalvar) {
-        botaoSalvar.disabled = true;
-    }
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
 
     try {
-
         if (idEdicao) {
-
-            await editarCompromisso(
-                idEdicao,
-                compromisso
-            );
-
+            await editarCompromisso(idEdicao, compromisso);
             alert("Compromisso atualizado com sucesso!");
-
         } else {
-
             await adicionarCompromisso(compromisso);
-
             alert("Compromisso cadastrado com sucesso!");
         }
 
-        try {
-
-            localStorage.setItem(
-                "agendaAtualizadaEm",
-                String(Date.now())
-            );
-
-        } catch {
-            // Navegador sem localStorage.
-        }
-
-        window.location.href = "agenda-adv.html";
-
-    } catch (erro) {
-
-        console.error("Erro completo:", erro);
-
-        alert(
-            erro.message || "Erro ao salvar compromisso."
+        localStorage.setItem(
+            "agendaAtualizadaEm",
+            String(Date.now())
         );
 
-        if (botaoSalvar) {
-            botaoSalvar.disabled = false;
-        }
+        location.href = "agenda-adv.html";
+
+    } catch (erro) {
+        console.error("Erro ao salvar compromisso:", erro);
+
+        alert(
+            erro.message || "Não foi possível salvar o compromisso."
+        );
+
+        botao.disabled = false;
+        botao.innerHTML = '<i class="fas fa-floppy-disk"></i> Salvar Compromisso';
     }
 });
 
@@ -851,7 +542,6 @@ form.addEventListener("submit", async (e) => {
 // ==========================================
 
 async function iniciarPagina() {
-
     await carregarClientes();
 
     if (idEdicao) {
