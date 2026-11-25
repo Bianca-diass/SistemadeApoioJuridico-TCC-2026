@@ -13,6 +13,7 @@ const pesquisa = document.getElementById("pesquisarDocumento");
 const filtroCliente = document.getElementById("filtroCliente");
 
 let documentos = [];
+let documentoVisualizadoId = null;
 
 const elemento = id => document.getElementById(id);
 
@@ -75,6 +76,61 @@ function classeStatus(status) {
     return classes[status] || "";
 }
 
+// ==========================================
+// BOTÃO EXCLUIR DENTRO DA VISUALIZAÇÃO
+// ==========================================
+
+function criarBotaoExcluirModal() {
+    const modal = elemento("modalDocumento");
+
+    if (!modal) return;
+
+    if (elemento("excluirDocumentoModal")) return;
+
+    const areaConteudo =
+        modal.querySelector(".modal-content") ||
+        modal.querySelector(".modal-conteudo") ||
+        modal.querySelector(".modal-body") ||
+        modal;
+
+    const botao = document.createElement("button");
+
+    botao.type = "button";
+    botao.id = "excluirDocumentoModal";
+    botao.innerHTML = '<i class="fas fa-trash"></i> Excluir documento';
+
+    botao.style.cssText = `
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 11px 18px;
+        margin-top: 20px;
+        cursor: pointer;
+        font-weight: 600;
+    `;
+
+    botao.addEventListener("click", async () => {
+        if (!documentoVisualizadoId) {
+            alert("Não foi possível identificar o documento.");
+            return;
+        }
+
+        const sucesso = await removerDocumento(documentoVisualizadoId);
+
+        if (sucesso) {
+            elemento("modalDocumento").hidden = true;
+            documentoVisualizadoId = null;
+        }
+    });
+
+    areaConteudo.appendChild(botao);
+}
+
+// ==========================================
+// LISTAR DOCUMENTOS
+// ==========================================
+
 function renderizarDocumentos() {
     const termo = pesquisa.value.toLowerCase().trim();
     const cliente = filtroCliente.value;
@@ -135,12 +191,6 @@ function renderizarDocumentos() {
                     title="Baixar arquivo">
                     <i class="fas fa-download"></i>
                 </button>
-
-                <button type="button"
-                    onclick="removerDocumento('${escapar(doc.id)}')"
-                    title="Excluir">
-                    <i class="fas fa-trash"></i>
-                </button>
             </td>
         </tr>
     `).join("");
@@ -180,12 +230,14 @@ async function carregarDocumentos() {
 }
 
 // ==========================================
-// VISUALIZAR
+// VISUALIZAR DOCUMENTO
 // ==========================================
 
 window.visualizarDocumento = async function(id) {
     try {
         const doc = await buscarDocumento(id);
+
+        documentoVisualizadoId = doc.id;
 
         elemento("modalTitulo").textContent = doc.titulo || "-";
         elemento("modalTipo").textContent = doc.tipo || "-";
@@ -193,8 +245,11 @@ window.visualizarDocumento = async function(id) {
         elemento("modalProcesso").textContent = doc.processo || "-";
         elemento("modalData").textContent = formatarData(doc.data_envio);
         elemento("modalStatus").textContent = doc.status || "-";
+
         elemento("modalDescricao").textContent =
             doc.descricao || "Nenhuma descrição informada.";
+
+        criarBotaoExcluirModal();
 
         elemento("modalDocumento").hidden = false;
 
@@ -209,10 +264,11 @@ window.visualizarDocumento = async function(id) {
 
 elemento("fecharModal")?.addEventListener("click", () => {
     elemento("modalDocumento").hidden = true;
+    documentoVisualizadoId = null;
 });
 
 // ==========================================
-// EDITAR
+// EDITAR DOCUMENTO
 // ==========================================
 
 window.editarDocumentoTela = async function(id) {
@@ -224,6 +280,7 @@ window.editarDocumentoTela = async function(id) {
         elemento("editarTipo").value = doc.tipo || "Outros";
         elemento("editarCliente").value = doc.cliente || "";
         elemento("editarProcesso").value = doc.processo || "";
+
         elemento("editarData").value =
             doc.data_envio ? doc.data_envio.substring(0, 10) : "";
 
@@ -278,12 +335,12 @@ elemento("cancelarEdicao")?.addEventListener("click", () => {
 });
 
 // ==========================================
-// EXCLUIR
+// EXCLUIR DOCUMENTO
 // ==========================================
 
 window.removerDocumento = async function(id) {
     if (!confirm("Deseja realmente excluir este documento?")) {
-        return;
+        return false;
     }
 
     try {
@@ -293,19 +350,23 @@ window.removerDocumento = async function(id) {
 
         alert("Documento excluído com sucesso!");
 
+        return true;
+
     } catch (erro) {
         alert(erro.message);
+        return false;
     }
 };
 
 // ==========================================
-// BAIXAR
+// BAIXAR DOCUMENTO
 // ==========================================
 
 window.baixarDocumento = async function(id) {
     try {
         const dados = await obterDownloadDocumento(id);
         iniciarDownload(dados);
+
     } catch (erro) {
         alert(erro.message);
     }
