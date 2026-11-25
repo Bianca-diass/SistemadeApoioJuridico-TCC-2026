@@ -1,6 +1,6 @@
-import { documentoController } from "../../controllers/documentosController.js";
+import { cadastrarDocumento } from "../../services/documentoService.js";
 import { listarClientes } from "../../services/clienteService.js";
-import { anexarArquivoDocumento } from "../../services/documentoService.js";
+import { observarUsuario, obterMeuPerfil } from "../../services/authService.js";
 
 // ==========================================
 // ELEMENTOS
@@ -8,42 +8,8 @@ import { anexarArquivoDocumento } from "../../services/documentoService.js";
 
 const form = document.getElementById("formDocumento");
 const selectCliente = document.getElementById("cliente");
+const inputAdvogado = document.getElementById("advogado");
 const botaoSalvar = form.querySelector(".botao-salvar");
-
-// ==========================================
-// CAMPO DE ARQUIVO (criado aqui, não precisa mexer no HTML)
-// ==========================================
-
-const TAMANHO_MAXIMO = 10 * 1024 * 1024;
-const EXTENSOES = ["pdf", "jpg", "jpeg", "png", "doc", "docx"];
-
-const MIME_POR_EXT = {
-    pdf: "application/pdf",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    doc: "application/msword",
-    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-};
-
-const campoArquivo = document.createElement("div");
-campoArquivo.className = "campo";
-campoArquivo.innerHTML = `
-    <label for="arquivo">Arquivo para download (opcional)</label>
-    <input type="file" id="arquivo" name="arquivo"
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-    <small>PDF, JPG, PNG, DOC ou DOCX, até 10 MB. O cliente poderá baixar este arquivo.</small>
-`;
-
-const campoDescricao = document.getElementById("descricao").closest(".campo");
-campoDescricao.parentNode.insertBefore(campoArquivo, campoDescricao);
-
-const inputArquivo = document.getElementById("arquivo");
-
-function mimeDoArquivo(arquivo) {
-    const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
-    return MIME_POR_EXT[ext] || "";
-}
 
 // Status permitidos
 const statusPermitidos = [
@@ -52,6 +18,37 @@ const statusPermitidos = [
     "Rejeitado",
     "Enviado"
 ];
+
+// ==========================================
+// ADVOGADO LOGADO
+// ==========================================
+
+async function preencherAdvogado() {
+
+    let nome = "";
+
+    // 1) Usuário já guardado no login
+    observarUsuario((usuario) => {
+        nome = (usuario && usuario.nome) || "";
+    });
+
+    // 2) Se não tiver nome, busca o perfil no servidor
+    if (!nome) {
+        try {
+            const perfil = await obterMeuPerfil();
+            nome = (perfil && perfil.nome) || "";
+        } catch (erro) {
+            console.error("Erro ao carregar perfil do advogado:", erro);
+        }
+    }
+
+    inputAdvogado.value = nome;
+
+    if (!nome) {
+        inputAdvogado.placeholder = "Advogado logado";
+    }
+
+}
 
 // ==========================================
 // CARREGAR CLIENTES
@@ -104,7 +101,7 @@ async function carregarClientes() {
 
         alert(
             "Não foi possível carregar os clientes. " +
-            "Verifique se o back-end está rodando (porta 3000)."
+            "Verifique se o back-end está rodando."
         );
 
     }
@@ -134,30 +131,14 @@ form.addEventListener("submit", async (evento) => {
         return;
     }
 
-    const arquivo = inputArquivo.files[0];
-
-    if (arquivo) {
-
-        const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
-
-        if (!EXTENSOES.includes(ext)) {
-            alert("Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX.");
-            return;
-        }
-
-        if (arquivo.size > TAMANHO_MAXIMO) {
-            alert("O arquivo deve ter no máximo 10 MB.");
-            return;
-        }
-    }
-
     const dados = {
         titulo: document.getElementById("titulo").value.trim(),
         tipo: document.getElementById("tipo").value,
         cliente: clienteSelecionado.dataset.nome,
         clienteId: clienteSelecionado.value,
+        advogado: inputAdvogado.value.trim(),
         processo: document.getElementById("processo").value.trim(),
-        dataEnvio: document.getElementById("dataEnvio").value,
+        prazo: document.getElementById("prazo").value || null,
         status: status,
         descricao: document.getElementById("descricao").value.trim()
     };
@@ -166,30 +147,7 @@ form.addEventListener("submit", async (evento) => {
 
     try {
 
-        const resultado = await documentoController.cadastrarDocumento(dados);
-
-        if (arquivo) {
-
-            // O navegador pode deixar o tipo vazio; usa a extensão nesse caso.
-            const arquivoComTipo = arquivo.type
-                ? arquivo
-                : new File([arquivo], arquivo.name, { type: mimeDoArquivo(arquivo) });
-
-            try {
-                await anexarArquivoDocumento(resultado.id, arquivoComTipo);
-            } catch (erroArquivo) {
-                console.error("Erro ao anexar arquivo:", erroArquivo);
-
-                alert(
-                    "O documento foi cadastrado, mas o arquivo não foi enviado: " +
-                    erroArquivo.message +
-                    "\nVocê pode anexá-lo depois, na lista de documentos."
-                );
-
-                window.location.href = "documentos-adv.html";
-                return;
-            }
-        }
+        await cadastrarDocumento(dados);
 
         alert("Documento cadastrado com sucesso!");
 
@@ -208,25 +166,8 @@ form.addEventListener("submit", async (evento) => {
 });
 
 // ==========================================
-// DATA ATUAL
-// ==========================================
-
-function colocarDataAtual() {
-
-    const hoje = new Date();
-
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-    const dia = String(hoje.getDate()).padStart(2, "0");
-
-    document.getElementById("dataEnvio").value =
-        `${ano}-${mes}-${dia}`;
-
-}
-
-// ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 
-colocarDataAtual();
+preencherAdvogado();
 carregarClientes();

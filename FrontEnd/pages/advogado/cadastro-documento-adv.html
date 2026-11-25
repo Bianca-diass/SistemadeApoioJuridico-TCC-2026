@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -129,6 +128,24 @@
                     </div>
 
 
+                    <!-- ADVOGADO RESPONSÁVEL -->
+
+                    <div class="campo">
+
+                        <label for="advogado">
+                            Advogado responsável
+                        </label>
+
+                        <input
+                            type="text"
+                            id="advogado"
+                            name="advogado"
+                            placeholder="Carregando..."
+                            readonly>
+
+                    </div>
+
+
                     <!-- CLIENTE -->
 
                     <div class="campo">
@@ -168,19 +185,18 @@
                     </div>
 
 
-                    <!-- DATA -->
+                    <!-- PRAZO -->
 
                     <div class="campo">
 
-                        <label for="dataEnvio">
-                            Data de envio
+                        <label for="prazo">
+                            Prazo (opcional)
                         </label>
 
                         <input
                             type="date"
-                            id="dataEnvio"
-                            name="dataEnvio"
-                            required>
+                            id="prazo"
+                            name="prazo">
 
                     </div>
 
@@ -212,10 +228,6 @@
 
                             <option value="Rejeitado">
                                 Rejeitado
-                            </option>
-
-                              <option value="Enviado">
-                                Enviado
                             </option>
 
                         </select>
