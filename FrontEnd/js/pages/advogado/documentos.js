@@ -17,6 +17,10 @@ let documentoVisualizadoId = null;
 
 const elemento = id => document.getElementById(id);
 
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
 function escapar(valor) {
     return String(valor ?? "").replace(/[&<>"']/g, c => ({
         "&": "&amp;",
@@ -77,58 +81,59 @@ function classeStatus(status) {
 }
 
 // ==========================================
-// BOTÃO EXCLUIR DENTRO DA VISUALIZAÇÃO
+// BOTÃO EXCLUIR DENTRO DO MODAL
 // ==========================================
 
 function criarBotaoExcluirModal() {
     const modal = elemento("modalDocumento");
 
-    if (!modal) return;
+    if (!modal) {
+        console.error("Modal de visualização não encontrado.");
+        return;
+    }
 
-    if (elemento("excluirDocumentoModal")) return;
+    // Local correto: corpo interno da janela do contrato
+    const corpo = modal.querySelector(".doc-corpo");
 
-    const areaConteudo =
-        modal.querySelector(".modal-content") ||
-        modal.querySelector(".modal-conteudo") ||
-        modal.querySelector(".modal-body") ||
-        modal;
+    if (!corpo) {
+        console.error("Elemento .doc-corpo não encontrado no modal.");
+        return;
+    }
 
-    const botao = document.createElement("button");
+    // Reutiliza o botão se ele já existir
+    let botao = elemento("excluirDocumentoModal");
 
-    botao.type = "button";
-    botao.id = "excluirDocumentoModal";
-    botao.innerHTML = '<i class="fas fa-trash"></i> Excluir documento';
+    if (!botao) {
+        botao = document.createElement("button");
+        botao.type = "button";
+        botao.id = "excluirDocumentoModal";
+        botao.innerHTML =
+            '<i class="fas fa-trash"></i> Excluir documento';
+    }
 
-    botao.style.cssText = `
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 11px 18px;
-        margin-top: 20px;
-        cursor: pointer;
-        font-weight: 600;
-    `;
+    // Posicionamento dentro do modal, abaixo da descrição
+    corpo.appendChild(botao);
 
-    botao.addEventListener("click", async () => {
+    // Evita adicionar vários eventos ao mesmo botão
+    botao.onclick = async () => {
         if (!documentoVisualizadoId) {
             alert("Não foi possível identificar o documento.");
             return;
         }
 
-        const sucesso = await removerDocumento(documentoVisualizadoId);
+        const sucesso = await removerDocumento(
+            documentoVisualizadoId
+        );
 
         if (sucesso) {
-            elemento("modalDocumento").hidden = true;
+            modal.hidden = true;
             documentoVisualizadoId = null;
         }
-    });
-
-    areaConteudo.appendChild(botao);
+    };
 }
 
 // ==========================================
-// LISTAR DOCUMENTOS
+// RENDERIZAR DOCUMENTOS
 // ==========================================
 
 function renderizarDocumentos() {
@@ -164,29 +169,38 @@ function renderizarDocumentos() {
     lista.innerHTML = filtrados.map(doc => `
         <tr>
             <td>${escapar(doc.titulo || "Sem título")}</td>
+
             <td>${escapar(doc.tipo || "-")}</td>
+
             <td>${escapar(doc.cliente || "-")}</td>
+
             <td>${escapar(doc.processo || "-")}</td>
+
             <td>${formatarData(doc.data_envio)}</td>
+
             <td>
                 <span class="status ${classeStatus(doc.status)}">
                     ${escapar(doc.status || "-")}
                 </span>
             </td>
+
             <td>
-                <button type="button"
+                <button
+                    type="button"
                     onclick="visualizarDocumento('${escapar(doc.id)}')"
                     title="Visualizar">
                     <i class="fas fa-eye"></i>
                 </button>
 
-                <button type="button"
+                <button
+                    type="button"
                     onclick="editarDocumentoTela('${escapar(doc.id)}')"
                     title="Editar">
                     <i class="fas fa-pen"></i>
                 </button>
 
-                <button type="button"
+                <button
+                    type="button"
                     onclick="baixarDocumento('${escapar(doc.id)}')"
                     title="Baixar arquivo">
                     <i class="fas fa-download"></i>
@@ -222,7 +236,8 @@ async function carregarDocumentos() {
         lista.innerHTML = `
             <tr>
                 <td colspan="7">
-                    Erro ao carregar documentos: ${escapar(erro.message)}
+                    Erro ao carregar documentos:
+                    ${escapar(erro.message)}
                 </td>
             </tr>
         `;
@@ -239,12 +254,23 @@ window.visualizarDocumento = async function(id) {
 
         documentoVisualizadoId = doc.id;
 
-        elemento("modalTitulo").textContent = doc.titulo || "-";
-        elemento("modalTipo").textContent = doc.tipo || "-";
-        elemento("modalCliente").textContent = doc.cliente || "-";
-        elemento("modalProcesso").textContent = doc.processo || "-";
-        elemento("modalData").textContent = formatarData(doc.data_envio);
-        elemento("modalStatus").textContent = doc.status || "-";
+        elemento("modalTitulo").textContent =
+            doc.titulo || "-";
+
+        elemento("modalTipo").textContent =
+            doc.tipo || "-";
+
+        elemento("modalCliente").textContent =
+            doc.cliente || "-";
+
+        elemento("modalProcesso").textContent =
+            doc.processo || "-";
+
+        elemento("modalData").textContent =
+            formatarData(doc.data_envio);
+
+        elemento("modalStatus").textContent =
+            doc.status || "-";
 
         elemento("modalDescricao").textContent =
             doc.descricao || "Nenhuma descrição informada.";
@@ -254,6 +280,7 @@ window.visualizarDocumento = async function(id) {
         elemento("modalDocumento").hidden = false;
 
     } catch (erro) {
+        console.error("Erro ao visualizar documento:", erro);
         alert(erro.message);
     }
 };
@@ -282,14 +309,20 @@ window.editarDocumentoTela = async function(id) {
         elemento("editarProcesso").value = doc.processo || "";
 
         elemento("editarData").value =
-            doc.data_envio ? doc.data_envio.substring(0, 10) : "";
+            doc.data_envio
+                ? doc.data_envio.substring(0, 10)
+                : "";
 
-        elemento("editarStatus").value = doc.status || "Pendente";
-        elemento("editarDescricao").value = doc.descricao || "";
+        elemento("editarStatus").value =
+            doc.status || "Pendente";
+
+        elemento("editarDescricao").value =
+            doc.descricao || "";
 
         elemento("modalEditar").hidden = false;
 
     } catch (erro) {
+        console.error("Erro ao buscar documento:", erro);
         alert(erro.message);
     }
 };
@@ -298,33 +331,37 @@ window.editarDocumentoTela = async function(id) {
 // SALVAR ALTERAÇÕES
 // ==========================================
 
-elemento("formEditarDocumento")?.addEventListener("submit", async event => {
-    event.preventDefault();
+elemento("formEditarDocumento")?.addEventListener(
+    "submit",
+    async event => {
+        event.preventDefault();
 
-    const id = elemento("editarId").value;
+        const id = elemento("editarId").value;
 
-    const dados = {
-        titulo: elemento("editarTitulo").value.trim(),
-        tipo: elemento("editarTipo").value,
-        processo: elemento("editarProcesso").value.trim(),
-        dataEnvio: elemento("editarData").value,
-        status: elemento("editarStatus").value,
-        descricao: elemento("editarDescricao").value.trim()
-    };
+        const dados = {
+            titulo: elemento("editarTitulo").value.trim(),
+            tipo: elemento("editarTipo").value,
+            processo: elemento("editarProcesso").value.trim(),
+            dataEnvio: elemento("editarData").value,
+            status: elemento("editarStatus").value,
+            descricao: elemento("editarDescricao").value.trim()
+        };
 
-    try {
-        await editarDocumento(id, dados);
+        try {
+            await editarDocumento(id, dados);
 
-        elemento("modalEditar").hidden = true;
+            elemento("modalEditar").hidden = true;
 
-        await carregarDocumentos();
+            await carregarDocumentos();
 
-        alert("Documento atualizado com sucesso!");
+            alert("Documento atualizado com sucesso!");
 
-    } catch (erro) {
-        alert(erro.message);
+        } catch (erro) {
+            console.error("Erro ao editar documento:", erro);
+            alert(erro.message);
+        }
     }
-});
+);
 
 // ==========================================
 // CANCELAR EDIÇÃO
@@ -339,7 +376,11 @@ elemento("cancelarEdicao")?.addEventListener("click", () => {
 // ==========================================
 
 window.removerDocumento = async function(id) {
-    if (!confirm("Deseja realmente excluir este documento?")) {
+    const confirmar = confirm(
+        "Deseja realmente excluir este documento?"
+    );
+
+    if (!confirmar) {
         return false;
     }
 
@@ -353,7 +394,9 @@ window.removerDocumento = async function(id) {
         return true;
 
     } catch (erro) {
+        console.error("Erro ao excluir documento:", erro);
         alert(erro.message);
+
         return false;
     }
 };
@@ -365,9 +408,11 @@ window.removerDocumento = async function(id) {
 window.baixarDocumento = async function(id) {
     try {
         const dados = await obterDownloadDocumento(id);
+
         iniciarDownload(dados);
 
     } catch (erro) {
+        console.error("Erro ao baixar documento:", erro);
         alert(erro.message);
     }
 };
@@ -377,6 +422,7 @@ window.baixarDocumento = async function(id) {
 // ==========================================
 
 pesquisa.addEventListener("input", renderizarDocumentos);
+
 filtroCliente.addEventListener("change", renderizarDocumentos);
 
 // ==========================================
