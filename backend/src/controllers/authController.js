@@ -1,4 +1,3 @@
-
 const {
     supabaseAdmin,
     criarClienteAnonimo
@@ -67,6 +66,129 @@ function emailJaCadastrado(error) {
 }
 
 // ======================================================
+// CADASTRO AUTOMÁTICO DO CLIENTE (SÓ COM E-MAIL CONFIRMADO)
+// ======================================================
+//
+// O cliente só é ligado ao cadastro feito pelo advogado DEPOIS de
+// confirmar o e-mail (clicar no link). Assim, ninguém consegue ver os
+// processos de outra pessoa só por saber o e-mail dela.
+
+async function garantirCadastroCliente(user) {
+    if (!user || !user.email_confirmed_at) {
+        return null;
+    }
+
+    const email = String(user.email || "").trim().toLowerCase();
+    const meta = user.user_metadata || {};
+
+    // Se o advogado já cadastrou este e-mail, liga a conta a esse cadastro
+    // (os dados do advogado são preservados).
+    const existente = await reivindicarCadastroExistente(
+        email,
+        user.id,
+        {}
+    );
+
+    if (existente) {
+        return existente;
+    }
+
+    // Se não houver cadastro prévio, cria um novo.
+    const { data, error } = await supabaseAdmin
+        .from("clientes")
+        .insert({
+            nome: String(meta.nome || email).trim(),
+            email,
+            telefone: meta.telefone || "",
+            cpf: meta.cpf || "",
+            auth_user_id: user.id
+        })
+        .select("*")
+        .single();
+
+    if (error) throw error;
+
+    return data;
+}
+
+async function registrarCliente(req, res) {
+    const { nome, email, senha, telefone, cpf } = req.body;
+
+    if (!nome || !email || !senha) {
+        return res.status(400).json({
+            erro: "Nome, email e senha são obrigatórios."
+        });
+    }
+
+    if (String(senha).length < 6) {
+        return res.status(400).json({
+            erro: "A senha deve possuir pelo menos 6 caracteres."
+        });
+    }
+
+    const emailLimpo = String(email).trim().toLowerCase();
+
+    // signUp (e não admin.createUser) faz o Supabase ENVIAR o e-mail
+    // de confirmação. A conta fica bloqueada até o clique no link.
+    const supabase = criarClienteAnonimo();
+
+    const { data, error } = await supabase.auth.signUp({
+        email: emailLimpo,
+        password: senha,
+        options: {
+            emailRedirectTo: process.env.URL_LOGIN_CLIENTE || undefined,
+            data: {
+                nome: String(nome).trim(),
+                cpf: cpf ?? "",
+                telefone: telefone ?? "",
+                tipo: "cliente"
+            }
+        }
+    });
+
+    if (error) {
+        if (emailJaCadastrado(error)) {
+            return res.status(400).json({
+                erro: "Este email já está cadastrado."
+            });
+        }
+
+        if (error.code === "over_email_send_rate_limit") {
+            return res.status(429).json({
+                erro:
+                    "Muitos e-mails enviados. Aguarde alguns minutos e " +
+                    "tente novamente."
+            });
+        }
+
+        console.error("ERRO NO CADASTRO DO CLIENTE:", error);
+
+        return res.status(400).json({
+            erro: error.message
+        });
+    }
+
+    // E-mail já existente e confirmado: o Supabase não devolve erro
+    // (para não revelar quem tem conta), só uma lista de identidades vazia.
+    if (
+        data?.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+    ) {
+        return res.status(400).json({
+            erro: "Este email já está cadastrado."
+        });
+    }
+
+    return res.status(201).json({
+        mensagem:
+            "Cadastro criado! Enviamos um link de confirmação para o " +
+            "seu e-mail. Confirme e depois faça login.",
+        confirmarEmail: true
+    });
+}
+
+// ======================================================
 // LOGIN
 // ======================================================
 
@@ -88,14 +210,37 @@ exports.login = async (req, res) => {
                 password: senha
             });
 
+        if (
+            error &&
+            (error.code === "email_not_confirmed" ||
+                /not confirmed/i.test(error.message || ""))
+        ) {
+            return res.status(403).json({
+                erro:
+                    "Confirme seu e-mail antes de entrar. Procure o " +
+                    "link que enviamos para a sua caixa de entrada (e o spam)."
+            });
+        }
+
         if (error || !data?.session) {
             return res.status(401).json({
                 erro: "Email ou senha inválidos."
             });
         }
 
-        const { tipo, perfil } =
+        let { tipo, perfil } =
             await buscarPerfilPorAuthId(data.user.id);
+
+        // Primeiro acesso do cliente após confirmar o e-mail: liga a
+        // conta ao cadastro do advogado (ou cria um novo cadastro).
+        if (!tipo && data.user.user_metadata?.tipo === "cliente") {
+            const cliente = await garantirCadastroCliente(data.user);
+
+            if (cliente) {
+                tipo = "cliente";
+                perfil = cliente;
+            }
+        }
 
         if (!tipo || !perfil) {
             return res.status(403).json({
@@ -133,6 +278,11 @@ exports.register = async (req, res) => {
     let authUserId = null;
 
     try {
+        // Cliente: cadastro com confirmação de e-mail.
+        if (req.body && req.body.tipo === "cliente") {
+            return await registrarCliente(req, res);
+        }
+
         const {
             nome,
             email,

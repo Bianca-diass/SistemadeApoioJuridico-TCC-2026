@@ -1,4 +1,3 @@
-
 import { fazerCadastro } from "../../services/authService.js";
 
 // ==========================================
@@ -191,24 +190,28 @@ async function cadastrarCliente(evento) {
     mostrarMensagem("");
 
     try {
-        // O backend cria a conta (Supabase Auth) e o cadastro na tabela
-        // "clientes". Se o advogado já cadastrou este e-mail, a conta
-        // passa a usar esse mesmo cadastro, e os processos dele já
-        // aparecem no Dashboard.
+        // O backend cria a conta e o Supabase envia um link de confirmação
+        // para o e-mail. Depois de confirmar e fazer login, o cliente já vê
+        // no Dashboard os processos que o advogado cadastrou para ele.
         await fazerCadastro(email, senha, {
             nome,
             cpf,
             tipo: "cliente"
         });
 
+        formulario.reset();
+
         mostrarMensagem(
-            "Cadastro realizado com sucesso! Redirecionando para o login...",
+            "Cadastro criado! Enviamos um link de confirmação para " +
+            email +
+            ". Confirme seu e-mail (veja também o spam) e depois faça " +
+            "login. Redirecionando...",
             "sucesso"
         );
 
-        formulario.reset();
-
-        window.location.href = "login.html";
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 8000);
 
     } catch (erro) {
         console.error("Erro ao cadastrar cliente:", erro);
