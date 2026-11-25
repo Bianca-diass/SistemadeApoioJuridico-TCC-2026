@@ -1,4 +1,3 @@
-
 const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
 
@@ -37,7 +36,8 @@ const camposPermitidos = {
     dataAbertura: "data_abertura",
     data_abertura: "data_abertura",
 
-    observacoes: "observacoes"
+    observacoes: "observacoes",
+    descricao: "observacoes"
 };
 
 function converterCampos(dados) {
@@ -74,19 +74,22 @@ const cadastrarProcesso = async (req, res) => {
             status,
 
             tipoManifestacao,
+            tipo_manifestacao,
+
             ultimaMovimentacao,
+            ultima_movimentacao,
 
             intimacao,
             prazo,
 
             dataAbertura,
-            observacoes
+            data_abertura,
+
+            observacoes,
+            descricao
         } = req.body;
 
         const advogadoId = req.advogado.id;
-
-        // O processo precisa estar vinculado a um cliente
-        // cadastrado pelo advogado autenticado.
 
         const clienteVinculado = await buscarClienteVinculado(
             advogadoId,
@@ -104,9 +107,6 @@ const cadastrarProcesso = async (req, res) => {
                     "que o processo apareça no painel dele."
             });
         }
-
-        // Permite cadastrar vários processos para o mesmo cliente.
-        // Não bloqueia o cadastro por repetição do número do processo.
 
         const numeroFinal =
             numeroProcesso || numero_processo || "";
@@ -131,18 +131,18 @@ const cadastrarProcesso = async (req, res) => {
             status: status || "",
 
             tipo_manifestacao:
-                tipoManifestacao || "Nenhuma",
+                tipoManifestacao || tipo_manifestacao || "Nenhuma",
 
             ultima_movimentacao:
-                ultimaMovimentacao || "",
+                ultimaMovimentacao || ultima_movimentacao || "",
 
             intimacao: intimacao === true,
 
             prazo: prazo || "",
 
-            data_abertura: dataAbertura || "",
+            data_abertura: dataAbertura || data_abertura || "",
 
-            observacoes: observacoes || ""
+            observacoes: observacoes ?? descricao ?? ""
         };
 
         const { data, error } = await supabaseAdmin
@@ -155,19 +155,14 @@ const cadastrarProcesso = async (req, res) => {
             throw error;
         }
 
-        // Notificação do novo processo cadastrado.
-
         try {
             await criarNotificacao({
                 tipo: "processo",
-
                 titulo: "Novo processo cadastrado",
-
                 mensagem:
                     `O processo ${data.numero_processo || "sem número"} ` +
                     `(cliente: ${data.cliente || "não informado"}) ` +
                     "foi cadastrado no sistema.",
-
                 clienteId: data.cliente_id,
                 processoId: data.id
             });
@@ -333,7 +328,6 @@ const atualizarProcesso = async (req, res) => {
                 advogadoId,
                 {
                     clienteId: atualizacao.cliente_id,
-
                     nome: pediuNome
                         ? atualizacao.cliente
                         : dadosAntes.cliente
@@ -357,7 +351,6 @@ const atualizarProcesso = async (req, res) => {
             }
 
         } else {
-            // Mantém o vínculo com o cliente original.
             delete atualizacao.cliente_id;
             delete atualizacao.cliente;
         }
