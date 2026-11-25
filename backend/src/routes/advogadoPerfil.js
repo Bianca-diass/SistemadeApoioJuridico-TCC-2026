@@ -1,19 +1,14 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { createClient } = require("@supabase/supabase-js");
+const { supabaseAdmin } = require("../config/supabase");
 
 let bcrypt;
 try { bcrypt = require("bcryptjs"); } catch { bcrypt = require("bcrypt"); }
 
 const router = express.Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.SUPABASE_KEY ||
-    process.env.SUPABASE_ANON_KEY
-);
+// Usa o mesmo cliente do restante do back-end (config/supabase.js)
+const supabase = supabaseAdmin;
 
 function auth(req, res, next) {
   const header = req.headers.authorization || "";

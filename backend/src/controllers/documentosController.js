@@ -62,6 +62,35 @@ function nomeSeguro(nome) {
   );
 }
 
+// Data de hoje (AAAA-MM-DD) no fuso de Cuiabá
+function dataHoje() {
+  try {
+    return new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Cuiaba"
+    });
+  } catch (erro) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+// Confere se o texto é uma data válida no formato AAAA-MM-DD
+function dataValida(valor) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+
+  const data = new Date(valor + "T00:00:00Z");
+
+  return (
+    !Number.isNaN(data.getTime()) &&
+    data.toISOString().slice(0, 10) === valor
+  );
+}
+
+// AAAA-MM-DD -> DD/MM/AAAA
+function formatarData(valor) {
+  const [ano, mes, dia] = valor.split("-");
+  return dia + "/" + mes + "/" + ano;
+}
+
 // ==========================================
 // BUSCAR ADVOGADO
 // ==========================================
@@ -71,7 +100,7 @@ async function buscarAdvogado(uid) {
 
   const { data, error } = await supabaseAdmin
     .from("advogados")
-    .select("id")
+    .select("id, nome")
     .eq("auth_user_id", uid)
     .maybeSingle();
 
@@ -247,14 +276,22 @@ const cadastrarDocumento = async (req, res) => {
     );
     const processo = texto(req.body.processo);
     const descricao = texto(req.body.descricao);
+    // A data de envio é opcional: se não vier, usa a data de hoje.
     const dataEnvio = texto(
       req.body.dataEnvio || req.body.data_envio
-    );
+    ) || dataHoje();
+    const prazo = texto(req.body.prazo);
     const status = texto(req.body.status);
 
-    if (!titulo || !tipo || !clienteId || !dataEnvio || !status) {
+    if (!titulo || !tipo || !clienteId || !status) {
       return res.status(400).json({
-        erro: "Preencha título, tipo, cliente, data de envio e status."
+        erro: "Preencha título, tipo, cliente e status."
+      });
+    }
+
+    if (prazo && !dataValida(prazo)) {
+      return res.status(400).json({
+        erro: "Prazo inválido."
       });
     }
 
@@ -303,6 +340,9 @@ const cadastrarDocumento = async (req, res) => {
       processo,
       descricao,
       data_envio: dataEnvio,
+      prazo: prazo || null,
+      // O nome vem do cadastro do advogado logado, nunca do formulário.
+      advogado: advogado.nome || "",
       status,
       criado_por: uid,
       origem: "advogado",
@@ -322,9 +362,11 @@ const cadastrarDocumento = async (req, res) => {
     await criarNotificacao({
       tipo: "documento",
       titulo: "Novo documento: " + titulo,
-      mensagem: processo
-        ? "Seu advogado adicionou um documento ao processo " + processo + "."
-        : "Seu advogado adicionou um novo documento.",
+      mensagem:
+        (processo
+          ? "Seu advogado adicionou um documento ao processo " + processo + "."
+          : "Seu advogado adicionou um novo documento.") +
+        (prazo ? " Prazo: " + formatarData(prazo) + "." : ""),
       clienteId: cliente.id
     });
 
@@ -495,20 +537,39 @@ const editarDocumento = async (req, res) => {
       tipo: texto(req.body.tipo),
       processo: texto(req.body.processo),
       descricao: texto(req.body.descricao),
-      data_envio: texto(
-        req.body.dataEnvio || req.body.data_envio
-      ),
       status: texto(req.body.status)
     };
+
+    // A data de envio só é alterada quando vier na requisição.
+    const dataEnvioNova = texto(
+      req.body.dataEnvio || req.body.data_envio
+    );
+
+    if (dataEnvioNova) {
+      dadosAtualizados.data_envio = dataEnvioNova;
+    }
+
+    // O prazo só é alterado quando o campo vier na requisição
+    // (texto vazio remove o prazo).
+    if (req.body.prazo !== undefined) {
+      const prazoNovo = texto(req.body.prazo);
+
+      if (prazoNovo && !dataValida(prazoNovo)) {
+        return res.status(400).json({
+          erro: "Prazo inválido."
+        });
+      }
+
+      dadosAtualizados.prazo = prazoNovo || null;
+    }
 
     if (
       !dadosAtualizados.titulo ||
       !dadosAtualizados.tipo ||
-      !dadosAtualizados.data_envio ||
       !dadosAtualizados.status
     ) {
       return res.status(400).json({
-        erro: "Preencha título, tipo, data de envio e status."
+        erro: "Preencha título, tipo e status."
       });
     }
 
