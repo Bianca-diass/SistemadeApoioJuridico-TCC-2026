@@ -1,5 +1,7 @@
+
 const express = require("express");
 const router = express.Router();
+
 const verificarToken = require("../middlewares/authMiddleware");
 
 const {
@@ -18,9 +20,10 @@ const {
 
 router.use(verificarToken);
 
+// Cadastrar documento pelo advogado
 router.post("/", cadastrarDocumento);
 
-// Envio de documento pelo cliente
+// Cliente envia documento ao advogado
 router.post(
   "/cliente",
   express.raw({
@@ -30,10 +33,10 @@ router.post(
   enviarDocumentoCliente
 );
 
-// Listagem
+// Listar documentos
 router.get("/", listarDocumentos);
 
-// Arquivo do documento: advogado anexa, advogado e cliente baixam
+// Anexar arquivo ao documento
 router.post(
   "/:id/arquivo",
   express.raw({
@@ -43,11 +46,16 @@ router.post(
   anexarArquivo
 );
 
+// Baixar arquivo
 router.get("/:id/arquivo", baixarArquivo);
 
-// Consulta, edição e exclusão
+// Consultar documento
 router.get("/:id", obterDocumento);
+
+// Editar documento
 router.put("/:id", editarDocumento);
+
+// Excluir documento
 router.delete("/:id", excluirDocumento);
 
 module.exports = router;

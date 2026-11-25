@@ -1,52 +1,98 @@
-// js/controllers/documentoController.js
-
 import {
-  cadastrarDocumento,
-  listarDocumentos,
-  editarDocumento,
-  excluirDocumento,
+    cadastrarDocumento,
+    listarDocumentos,
+    editarDocumento,
+    excluirDocumento
 } from "../services/documentoService.js";
 
 class DocumentoController {
-  constructor() {
-    this._documentos = [];
-    this._ouvintes = [];
-  }
+    constructor() {
+        this._documentos = [];
+        this._ouvintes = [];
+        this._carregando = false;
+    }
 
-  get documentos() {
-    return this._documentos;
-  }
+    get documentos() {
+        return this._documentos;
+    }
 
-  async carregar() {
-    this._documentos = await listarDocumentos();
-    this._notificar();
-  }
+    get carregando() {
+        return this._carregando;
+    }
 
-  // Devolve { mensagem, id } para quem precisar do id do documento criado
-  async cadastrarDocumento(documento) {
-    return await cadastrarDocumento(documento);
-  }
+    async carregar() {
+        this._carregando = true;
 
-  async editarDocumento(id, dadosAtualizados) {
-    await editarDocumento(id, dadosAtualizados);
-  }
+        try {
+            const documentos = await listarDocumentos();
 
-  async removerDocumento(id) {
-    await excluirDocumento(id);
-    this._documentos = this._documentos.filter((doc) => doc.id !== id);
-    this._notificar();
-  }
+            this._documentos = Array.isArray(documentos)
+                ? documentos
+                : [];
 
-  onChange(callback) {
-    this._ouvintes.push(callback);
-    return () => {
-      this._ouvintes = this._ouvintes.filter((cb) => cb !== callback);
-    };
-  }
+            this._notificar();
 
-  _notificar() {
-    this._ouvintes.forEach((cb) => cb(this._documentos));
-  }
+            return this._documentos;
+        } finally {
+            this._carregando = false;
+        }
+    }
+
+    async cadastrarDocumento(documento) {
+        const resultado = await cadastrarDocumento(documento);
+
+        await this.carregar();
+
+        return resultado;
+    }
+
+    async editarDocumento(id, dadosAtualizados) {
+        const resultado = await editarDocumento(
+            id,
+            dadosAtualizados
+        );
+
+        await this.carregar();
+
+        return resultado;
+    }
+
+    async removerDocumento(id) {
+        await excluirDocumento(id);
+
+        this._documentos = this._documentos.filter(
+            documento => String(documento.id) !== String(id)
+        );
+
+        this._notificar();
+    }
+
+    onChange(callback) {
+        if (typeof callback !== "function") {
+            return () => {};
+        }
+
+        this._ouvintes.push(callback);
+
+        return () => {
+            this._ouvintes = this._ouvintes.filter(
+                ouvinte => ouvinte !== callback
+            );
+        };
+    }
+
+    _notificar() {
+        this._ouvintes.forEach(callback => {
+            try {
+                callback(this._documentos);
+            } catch (erro) {
+                console.error(
+                    "Erro ao atualizar a tela de documentos:",
+                    erro
+                );
+            }
+        });
+    }
 }
 
 export const documentoController = new DocumentoController();

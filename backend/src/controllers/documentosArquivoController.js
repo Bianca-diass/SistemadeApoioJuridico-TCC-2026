@@ -1,5 +1,5 @@
 // Anexar e baixar o ARQUIVO de um documento.
-// Usado pelas rotas  POST /documentos/:id/arquivo  e  GET /documentos/:id/arquivo
+// Usado pelas rotas POST /documentos/:id/arquivo e GET /documentos/:id/arquivo
 
 const { supabaseAdmin } = require("../config/supabase");
 const { criarNotificacao } = require("../services/notificacaoService");
@@ -33,7 +33,7 @@ function nomeSeguro(nome) {
   return (
     texto(nome)
       .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9._-]+/g, "_")
       .slice(-80) || "arquivo"
   );
@@ -66,8 +66,8 @@ async function verificarVinculo(advogadoId, clienteId) {
   return !!data;
 }
 
-// Ids de cadastro do cliente logado: pelo UID (auth_user_id ou user_id)
-// e, se não achar, pelo e-mail do login (igual à listagem de documentos).
+// IDs de cadastro do cliente logado: pelo UID e, se não encontrar,
+// pelo e-mail do login.
 async function idsDoClienteLogado(usuario) {
   const uid = obterUid(usuario);
   const email = texto(usuario && usuario.email).toLowerCase();
@@ -82,7 +82,7 @@ async function idsDoClienteLogado(usuario) {
   if (erroUid) throw erroUid;
 
   if (porUid && porUid.length > 0) {
-    return porUid.map(c => String(c.id));
+    return porUid.map(cliente => String(cliente.id));
   }
 
   if (!email) return [];
@@ -94,14 +94,17 @@ async function idsDoClienteLogado(usuario) {
 
   if (erroEmail) throw erroEmail;
 
-  return (porEmail || []).map(c => String(c.id));
+  return (porEmail || []).map(cliente => String(cliente.id));
 }
 
 async function podeAcessar(usuario, documento) {
   const advogado = await buscarAdvogado(obterUid(usuario));
 
   if (advogado) {
-    return verificarVinculo(advogado.id, documento.cliente_id);
+    return verificarVinculo(
+      advogado.id,
+      documento.cliente_id
+    );
   }
 
   const ids = await idsDoClienteLogado(usuario);
@@ -110,8 +113,11 @@ async function podeAcessar(usuario, documento) {
 }
 
 function dataBR(valor) {
-  const p = String(valor || "").slice(0, 10).split("-");
-  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : "—";
+  const partes = String(valor || "").slice(0, 10).split("-");
+
+  return partes.length === 3
+    ? `${partes[2]}/${partes[1]}/${partes[0]}`
+    : "—";
 }
 
 function fichaDoDocumento(doc) {
@@ -160,10 +166,15 @@ const anexarArquivo = async (req, res) => {
     if (erroDoc) throw erroDoc;
 
     if (!documento) {
-      return res.status(404).json({ erro: "Documento não encontrado." });
+      return res.status(404).json({
+        erro: "Documento não encontrado."
+      });
     }
 
-    const vinculado = await verificarVinculo(advogado.id, documento.cliente_id);
+    const vinculado = await verificarVinculo(
+      advogado.id,
+      documento.cliente_id
+    );
 
     if (!vinculado) {
       return res.status(403).json({
@@ -174,7 +185,9 @@ const anexarArquivo = async (req, res) => {
     const arquivo = req.body;
 
     if (!Buffer.isBuffer(arquivo) || arquivo.length === 0) {
-      return res.status(400).json({ erro: "Nenhum arquivo recebido." });
+      return res.status(400).json({
+        erro: "Nenhum arquivo recebido."
+      });
     }
 
     if (arquivo.length > TAMANHO_MAXIMO) {
@@ -195,11 +208,18 @@ const anexarArquivo = async (req, res) => {
     }
 
     caminhoNovo =
-      documento.cliente_id + "/" + Date.now() + "-" + nomeSeguro(req.query.nome);
+      documento.cliente_id +
+      "/" +
+      Date.now() +
+      "-" +
+      nomeSeguro(req.query.nome);
 
     const { error: erroUpload } = await supabaseAdmin.storage
       .from(BUCKET)
-      .upload(caminhoNovo, arquivo, { contentType: mime, upsert: false });
+      .upload(caminhoNovo, arquivo, {
+        contentType: mime,
+        upsert: false
+      });
 
     if (erroUpload) throw erroUpload;
 
@@ -214,14 +234,17 @@ const anexarArquivo = async (req, res) => {
 
     if (erroUpdate) throw erroUpdate;
 
-    // Remove o arquivo antigo (se havia um) para não acumular lixo.
+    // Remove o arquivo antigo, caso exista.
     if (documento.arquivo_path) {
       const { error: erroRemocao } = await supabaseAdmin.storage
         .from(BUCKET)
         .remove([documento.arquivo_path]);
 
       if (erroRemocao) {
-        console.error("Erro ao remover arquivo antigo:", erroRemocao);
+        console.error(
+          "Erro ao remover arquivo antigo:",
+          erroRemocao
+        );
       }
     }
 
@@ -229,18 +252,27 @@ const anexarArquivo = async (req, res) => {
       await criarNotificacao({
         tipo: "documento",
         titulo: "Arquivo disponível: " + (documento.titulo || "documento"),
-        mensagem: "O arquivo do documento já pode ser baixado na aba Documentos.",
+        mensagem:
+          "O arquivo do documento já pode ser baixado na aba Documentos.",
         clienteId: documento.cliente_id
       });
-    } catch (e) {
-      console.error("Aviso ao notificar o cliente:", e.message);
+    } catch (erroNotificacao) {
+      console.error(
+        "Aviso ao notificar o cliente:",
+        erroNotificacao.message
+      );
     }
 
-    return res.status(200).json({ mensagem: "Arquivo anexado com sucesso." });
+    return res.status(200).json({
+      mensagem: "Arquivo anexado com sucesso."
+    });
 
   } catch (error) {
     if (caminhoNovo) {
-      await supabaseAdmin.storage.from(BUCKET).remove([caminhoNovo]).catch(() => {});
+      await supabaseAdmin.storage
+        .from(BUCKET)
+        .remove([caminhoNovo])
+        .catch(() => {});
     }
 
     console.error("Erro ao anexar arquivo:", error);
@@ -256,34 +288,48 @@ const anexarArquivo = async (req, res) => {
 // BAIXAR ARQUIVO (ADVOGADO E CLIENTE)
 // ==========================================
 // Resposta:
-//   { url, nome }    -> há arquivo no storage (link temporário de 60 s)
-//   { texto, nome }  -> documento sem arquivo: devolve a ficha em texto,
-//                       assim TODO documento pode ser baixado.
+// { url, nome }   -> existe arquivo no storage
+// { texto, nome } -> documento sem arquivo: devolve a ficha em texto
 
 const baixarArquivo = async (req, res) => {
   try {
     const { data: documento, error } = await supabaseAdmin
       .from("documentos")
-      .select("id, cliente_id, arquivo_path, titulo, tipo, cliente, processo, descricao, data_envio, status")
+      .select(
+        "id, cliente_id, arquivo_path, titulo, tipo, cliente, processo, descricao, data_envio, status, arquivo_tipo"
+      )
       .eq("id", req.params.id)
       .maybeSingle();
 
     if (error) throw error;
 
     if (!documento) {
-      return res.status(404).json({ erro: "Documento não encontrado." });
+      return res.status(404).json({
+        erro: "Documento não encontrado."
+      });
     }
 
     if (!(await podeAcessar(req.usuario, documento))) {
-      return res.status(403).json({ erro: "Acesso negado." });
+      return res.status(403).json({
+        erro: "Acesso negado."
+      });
     }
 
+    const visualizar = String(req.query.visualizar || "") === "1";
     let nomeBase = nomeSeguro(documento.titulo || "documento");
 
+    // Se não houver arquivo, disponibiliza a ficha em TXT.
     if (!documento.arquivo_path) {
+      if (visualizar) {
+        return res.status(404).json({
+          erro: "Este documento não possui arquivo anexado."
+        });
+      }
+
       return res.status(200).json({
         texto: fichaDoDocumento(documento),
-        nome: nomeBase.replace(/\.[a-zA-Z0-9]{1,5}$/, "") + ".txt"
+        nome:
+          nomeBase.replace(/\.[a-zA-Z0-9]{1,5}$/, "") + ".txt"
       });
     }
 
@@ -298,23 +344,40 @@ const baixarArquivo = async (req, res) => {
       nomeBase += "." + extensao.toLowerCase();
     }
 
+    const opcoesDownload = visualizar
+      ? undefined
+      : { download: nomeBase };
+
     const { data, error: erroUrl } = await supabaseAdmin.storage
       .from(BUCKET)
-      .createSignedUrl(documento.arquivo_path, 60, { download: nomeBase });
+      .createSignedUrl(
+        documento.arquivo_path,
+        60,
+        opcoesDownload
+      );
 
     if (erroUrl) throw erroUrl;
 
-    return res.status(200).json({ url: data.signedUrl, nome: nomeBase });
+    return res.status(200).json({
+      url: data.signedUrl,
+      nome: nomeBase,
+      tipo: documento.arquivo_tipo || null
+    });
 
   } catch (error) {
     console.error("Erro ao gerar link do arquivo:", error);
 
-    return res.status(500).json({ erro: "Erro ao baixar arquivo." });
+    return res.status(500).json({
+      erro: "Erro ao baixar arquivo."
+    });
   }
 };
 
+// ==========================================
+// EXPORTAÇÕES
+// ==========================================
 
 module.exports = {
-    anexarArquivo,
-    baixarArquivo
+  anexarArquivo,
+  baixarArquivo
 };

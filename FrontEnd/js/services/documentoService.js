@@ -1,6 +1,19 @@
+
 import { getToken, fazerLogout } from "./authService.js";
 
-const API = "https://sistema-apoio-juridico.onrender.com/documentos";
+// ==========================================
+// CONFIGURAÇÃO DA API
+// ==========================================
+
+const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://localhost:3000"
+    : "https://sistema-apoio-juridico.onrender.com";
+
+const API = `${API_BASE}/documentos`;
+
+// ==========================================
+// AUTENTICAÇÃO
+// ==========================================
 
 function authHeaders() {
     return {
@@ -9,8 +22,10 @@ function authHeaders() {
     };
 }
 
+// ==========================================
+// SESSÃO
+// ==========================================
 
-// Token vencido: limpa o login e volta para a tela de entrada
 async function sessaoExpirada() {
     await fazerLogout();
 
@@ -20,21 +35,28 @@ async function sessaoExpirada() {
             : "login-adv.html";
 }
 
+// ==========================================
+// REQUISIÇÃO PADRÃO
+// ==========================================
 
-// Faz a requisição e trata os erros mais comuns em um só lugar
-async function requisicao(url, opcoes, mensagemErro) {
-
+async function requisicao(
+    url,
+    opcoes = {},
+    mensagemErro = "Erro na requisição"
+) {
     let resposta;
 
     try {
         resposta = await fetch(url, {
             ...opcoes,
-            headers: authHeaders()
+            headers: {
+                ...authHeaders(),
+                ...(opcoes.headers || {})
+            }
         });
     } catch (erro) {
         throw new Error(
-            "Não foi possível conectar ao servidor. " +
-            "Verifique se o back-end está rodando na porta 3000."
+            "Não foi possível conectar ao servidor. Verifique se o back-end está funcionando."
         );
     }
 
@@ -52,79 +74,124 @@ async function requisicao(url, opcoes, mensagemErro) {
     }
 
     if (!resposta.ok) {
-        throw new Error((dados && dados.erro) || mensagemErro);
+        throw new Error(
+            (dados && dados.erro) ||
+            (dados && dados.message) ||
+            mensagemErro
+        );
     }
 
     return dados;
 }
 
-
+// ==========================================
 // CADASTRAR DOCUMENTO
+// ==========================================
+
 export function cadastrarDocumento(documento) {
     return requisicao(
         API,
-        { method: "POST", body: JSON.stringify(documento) },
-        "Erro ao cadastrar documento"
+        {
+            method: "POST",
+            body: JSON.stringify(documento)
+        },
+        "Erro ao cadastrar documento."
     );
 }
 
-
+// ==========================================
 // LISTAR DOCUMENTOS
+// ==========================================
+
 export function listarDocumentos() {
-    return requisicao(API, {}, "Erro ao listar documentos");
+    return requisicao(
+        API,
+        {},
+        "Erro ao listar documentos."
+    );
 }
 
-
+// ==========================================
 // BUSCAR DOCUMENTO POR ID
+// ==========================================
+
 export function buscarDocumento(id) {
-    return requisicao(`${API}/${id}`, {}, "Erro ao buscar documento");
+    return requisicao(
+        `${API}/${encodeURIComponent(id)}`,
+        {},
+        "Erro ao buscar documento."
+    );
 }
 
-
+// ==========================================
 // EDITAR DOCUMENTO
+// ==========================================
+
 export function editarDocumento(id, dadosAtualizados) {
     return requisicao(
-        `${API}/${id}`,
-        { method: "PUT", body: JSON.stringify(dadosAtualizados) },
-        "Erro ao editar documento"
+        `${API}/${encodeURIComponent(id)}`,
+        {
+            method: "PUT",
+            body: JSON.stringify(dadosAtualizados)
+        },
+        "Erro ao editar documento."
     );
 }
 
-
+// ==========================================
 // EXCLUIR DOCUMENTO
+// ==========================================
+
 export function excluirDocumento(id) {
     return requisicao(
-        `${API}/${id}`,
-        { method: "DELETE" },
-        "Erro ao excluir documento"
+        `${API}/${encodeURIComponent(id)}`,
+        {
+            method: "DELETE"
+        },
+        "Erro ao excluir documento."
     );
 }
 
-// BAIXAR ARQUIVO
-// Devolve { url, nome } (arquivo no storage) ou { texto, nome } (ficha em texto).
+// ==========================================
+// OBTER DOWNLOAD DO DOCUMENTO
+// ==========================================
+
 export function obterDownloadDocumento(id) {
     return requisicao(
         `${API}/${encodeURIComponent(id)}/arquivo`,
         {},
-        "Erro ao baixar documento"
+        "Erro ao baixar documento."
     );
 }
 
+// ==========================================
+// INICIAR DOWNLOAD
+// ==========================================
 
-// Dispara o download no navegador a partir do que o servidor devolveu
 export function iniciarDownload(dados) {
+    if (!dados) {
+        throw new Error("Não foi possível obter o documento.");
+    }
+
     const link = document.createElement("a");
     let urlTemporaria = null;
 
     if (dados.url) {
         link.href = dados.url;
-    } else {
+    } else if (dados.texto !== undefined) {
         const blob = new Blob(
-            ["﻿" + (dados.texto || "")],
-            { type: "text/plain;charset=utf-8" }
+            ["\uFEFF" + dados.texto],
+            {
+                type: "text/plain;charset=utf-8"
+            }
         );
+
         urlTemporaria = URL.createObjectURL(blob);
         link.href = urlTemporaria;
+    } else {
+        throw new Error(
+            "O arquivo não possui um endereço de download."
+        );
     }
 
     link.download = dados.nome || "documento";
@@ -135,15 +202,44 @@ export function iniciarDownload(dados) {
     link.remove();
 
     if (urlTemporaria) {
-        setTimeout(() => URL.revokeObjectURL(urlTemporaria), 1000);
+        setTimeout(() => {
+            URL.revokeObjectURL(urlTemporaria);
+        }, 1000);
     }
 }
 
+// ==========================================
+// ANEXAR ARQUIVO AO DOCUMENTO (ADVOGADO)
+// ==========================================
 
-// ANEXAR ARQUIVO A UM DOCUMENTO (advogado)
 export async function anexarArquivoDocumento(id, arquivo) {
+    if (!id) {
+        throw new Error("Documento não informado.");
+    }
 
-    const tipo = arquivo.type || "";
+    if (!arquivo) {
+        throw new Error("Selecione um arquivo.");
+    }
+
+    const tiposPermitidos = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ];
+
+    if (!tiposPermitidos.includes(arquivo.type)) {
+        throw new Error(
+            "Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX."
+        );
+    }
+
+    if (arquivo.size > 10 * 1024 * 1024) {
+        throw new Error(
+            "O arquivo deve ter no máximo 10 MB."
+        );
+    }
 
     let resposta;
 
@@ -153,7 +249,7 @@ export async function anexarArquivoDocumento(id, arquivo) {
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": tipo,
+                    "Content-Type": arquivo.type,
                     "Authorization": `Bearer ${getToken()}`
                 },
                 body: arquivo
@@ -161,8 +257,7 @@ export async function anexarArquivoDocumento(id, arquivo) {
         );
     } catch (erro) {
         throw new Error(
-            "Não foi possível conectar ao servidor. " +
-            "Verifique se o back-end está rodando na porta 3000."
+            "Não foi possível conectar ao servidor. Verifique se o back-end está funcionando."
         );
     }
 
@@ -176,11 +271,17 @@ export async function anexarArquivoDocumento(id, arquivo) {
 
     if (resposta.status === 401) {
         await sessaoExpirada();
-        throw new Error("Sua sessão expirou. Faça login novamente.");
+        throw new Error(
+            "Sua sessão expirou. Faça login novamente."
+        );
     }
 
     if (!resposta.ok) {
-        throw new Error((dados && dados.erro) || "Erro ao anexar arquivo");
+        throw new Error(
+            (dados && dados.erro) ||
+            (dados && dados.message) ||
+            "Erro ao anexar arquivo."
+        );
     }
 
     return dados;

@@ -1,230 +1,129 @@
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
 
-const CONFIG = {
-    apiBase: "",
-    tokenKey: "token",
-    listar: "/documentos",
-    login: "login.html"
-};
-
-// ==========================================
-// ELEMENTOS HTML
-// ==========================================
-
-const el = {
-    docs: document.getElementById("listaDocumentos"),
-    busca: document.getElementById("pesquisarDocumento"),
-    filtro: document.getElementById("filtroCliente"),
-
-    total: document.getElementById("totalDocumentos"),
-    pendentes: document.getElementById("totalPendentes"),
-    aprovados: document.getElementById("totalAprovados"),
-
-    modal: document.getElementById("modalDocumento"),
-    fecharModal: document.getElementById("fecharModal"),
-
-    modalTitulo: document.getElementById("modalTitulo"),
-    modalTipo: document.getElementById("modalTipo"),
-    modalCliente: document.getElementById("modalCliente"),
-    modalProcesso: document.getElementById("modalProcesso"),
-    modalData: document.getElementById("modalData"),
-    modalStatus: document.getElementById("modalStatus"),
-    modalDescricao: document.getElementById("modalDescricao"),
-
-    modalEditar: document.getElementById("modalEditar"),
-    formEditar: document.getElementById("formEditarDocumento"),
-
-    editarId: document.getElementById("editarId"),
-    editarTitulo: document.getElementById("editarTitulo"),
-    editarTipo: document.getElementById("editarTipo"),
-    editarCliente: document.getElementById("editarCliente"),
-    editarProcesso: document.getElementById("editarProcesso"),
-    editarData: document.getElementById("editarData"),
-    editarStatus: document.getElementById("editarStatus"),
-    editarDescricao: document.getElementById("editarDescricao"),
-
-    cancelarEdicao: document.getElementById("cancelarEdicao")
-};
+import {
+    listarDocumentos,
+    buscarDocumento,
+    editarDocumento,
+    excluirDocumento,
+    obterDownloadDocumento,
+    iniciarDownload
+} from "../../services/documentoService.js";
 
 // ==========================================
-// VARIÁVEIS
+// ELEMENTOS
 // ==========================================
+
+const lista = document.getElementById("listaDocumentos");
+const pesquisa = document.getElementById("pesquisarDocumento");
+const filtroCliente = document.getElementById("filtroCliente");
+
+const totalDocumentos = document.getElementById("totalDocumentos");
+const totalPendentes = document.getElementById("totalPendentes");
+const totalAprovados = document.getElementById("totalAprovados");
+
+const modalDocumento = document.getElementById("modalDocumento");
+const modalEditar = document.getElementById("modalEditar");
+
+const formEditar = document.getElementById("formEditarDocumento");
 
 let documentos = [];
-
-// ==========================================
-// VERIFICAR ELEMENTOS
-// ==========================================
-
-if (!el.docs || !el.busca || !el.filtro) {
-    console.error("Elementos da tela de documentos não encontrados.");
-}
 
 // ==========================================
 // FUNÇÕES AUXILIARES
 // ==========================================
 
-function escaparHTML(valor) {
-    return String(valor ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function escapar(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[caractere]);
 }
 
-function formatarData(valor) {
-    if (!valor) return "-";
-
-    const data = String(valor).substring(0, 10);
-    const partes = data.split("-");
-
-    if (partes.length !== 3) return "-";
-
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-function obterDocumento(id) {
-    return documentos.find(doc => String(doc.id) === String(id));
-}
-
-function mostrarErro(mensagem) {
-    alert(mensagem);
-}
-
-// ==========================================
-// CONEXÃO COM BACKEND
-// ==========================================
-
-async function fetchAuth(url, opcoes = {}) {
-
-    const token = localStorage.getItem(CONFIG.tokenKey);
-
-    if (!token) {
-        window.location.href = CONFIG.login;
-        throw new Error("Token não encontrado.");
-    }
-
-    const resposta = await fetch(CONFIG.apiBase + url, {
-        ...opcoes,
-
-        headers: {
-            ...(opcoes.headers || {}),
-            Authorization: `Bearer ${token}`
+function obterCampo(objeto, ...campos) {
+    for (const campo of campos) {
+        if (objeto?.[campo] !== undefined && objeto[campo] !== null) {
+            return objeto[campo];
         }
-    });
-
-    if (resposta.status === 401) {
-        localStorage.removeItem(CONFIG.tokenKey);
-        window.location.href = CONFIG.login;
-        throw new Error("Sessão expirada.");
     }
-
-    return resposta;
+    return "";
 }
 
-async function lerResposta(resposta) {
-    const texto = await resposta.text();
+function dataFormatada(data) {
+    if (!data) return "-";
 
-    if (!texto) return {};
+    const valor = String(data).slice(0, 10);
+    const partes = valor.split("-");
 
-    try {
-        return JSON.parse(texto);
-    } catch {
-        return { erro: texto };
-    }
+    return partes.length === 3
+        ? `${partes[2]}/${partes[1]}/${partes[0]}`
+        : valor;
 }
 
-// ==========================================
-// PADRONIZAR DOCUMENTOS
-// ==========================================
-
-function padronizarDocumento(doc) {
-
-    return {
-        id: doc.id,
-        titulo: doc.titulo || "Documento",
-        tipo: doc.tipo || "-",
-        cliente: doc.cliente || "Cliente não informado",
-        cliente_id: doc.cliente_id,
-        processo: doc.processo || "-",
-        data_envio: doc.data_envio || "",
-        status: doc.status || "Pendente",
-        descricao: doc.descricao || "",
-        arquivo_path: doc.arquivo_path || ""
-    };
+function nomeCliente(doc) {
+    return obterCampo(doc, "cliente", "nome_cliente") || "Não informado";
 }
 
-// ==========================================
-// LISTAR DOCUMENTOS
-// ==========================================
+function statusNormalizado(status) {
+    return String(status || "").trim().toLowerCase();
+}
 
-async function carregarDocumentos() {
-
-    el.docs.innerHTML = `
+function mostrarMensagem(mensagem, classe = "vazio") {
+    lista.innerHTML = `
         <tr>
-            <td colspan="7" class="vazio">
-                Carregando documentos...
+            <td colspan="7" class="${classe}">
+                ${escapar(mensagem)}
             </td>
         </tr>
     `;
+}
+
+// ==========================================
+// CARREGAR DOCUMENTOS
+// ==========================================
+
+async function carregarDocumentos() {
+    mostrarMensagem("Carregando documentos...");
 
     try {
+        const resposta = await listarDocumentos();
 
-        const resposta = await fetchAuth(CONFIG.listar);
-
-        const resultado = await lerResposta(resposta);
-
-        if (!resposta.ok) {
-            throw new Error(
-                resultado.erro || "Erro ao buscar documentos."
-            );
-        }
-
-        const dados = Array.isArray(resultado)
-            ? resultado
-            : resultado.documentos || resultado.data || [];
-
-        documentos = dados.map(padronizarDocumento);
+        documentos = Array.isArray(resposta)
+            ? resposta
+            : Array.isArray(resposta?.documentos)
+                ? resposta.documentos
+                : [];
 
         atualizarResumo();
-        montarFiltroClientes();
+        preencherFiltroClientes();
         renderizarDocumentos();
 
     } catch (erro) {
-
         console.error("Erro ao carregar documentos:", erro);
 
-        el.docs.innerHTML = `
-            <tr>
-                <td colspan="7" class="vazio">
-                    Não foi possível carregar os documentos.
-                    <br>
-                    <button onclick="carregarDocumentos()">
-                        Tentar novamente
-                    </button>
-                </td>
-            </tr>
-        `;
+        documentos = [];
+        atualizarResumo();
+
+        mostrarMensagem(
+            erro.message || "Não foi possível carregar os documentos."
+        );
     }
 }
 
 // ==========================================
-// ATUALIZAR RESUMO
+// RESUMO
 // ==========================================
 
 function atualizarResumo() {
+    totalDocumentos.textContent = documentos.length;
 
-    el.total.textContent = documentos.length;
-
-    el.pendentes.textContent = documentos.filter(
-        doc => doc.status.toLowerCase() === "pendente"
+    totalPendentes.textContent = documentos.filter(doc =>
+        statusNormalizado(doc.status) === "pendente"
     ).length;
 
-    el.aprovados.textContent = documentos.filter(
-        doc => doc.status.toLowerCase() === "aprovado"
+    totalAprovados.textContent = documentos.filter(doc =>
+        statusNormalizado(doc.status) === "aprovado"
     ).length;
 }
 
@@ -232,27 +131,26 @@ function atualizarResumo() {
 // FILTRO DE CLIENTES
 // ==========================================
 
-function montarFiltroClientes() {
+function preencherFiltroClientes() {
+    const selecionado = filtroCliente.value;
 
-    const selecionado = el.filtro.value;
-
-    const clientes = [
-        ...new Set(
-            documentos.map(doc => doc.cliente).filter(Boolean)
+    const clientes = [...new Set(
+        documentos.map(nomeCliente).filter(nome =>
+            nome && nome !== "Não informado"
         )
-    ].sort();
+    )].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-    el.filtro.innerHTML = `
+    filtroCliente.innerHTML = `
         <option value="">Todos os clientes</option>
         ${clientes.map(cliente => `
-            <option value="${escaparHTML(cliente)}">
-                ${escaparHTML(cliente)}
+            <option value="${escapar(cliente)}">
+                ${escapar(cliente)}
             </option>
         `).join("")}
     `;
 
     if (clientes.includes(selecionado)) {
-        el.filtro.value = selecionado;
+        filtroCliente.value = selecionado;
     }
 }
 
@@ -261,115 +159,83 @@ function montarFiltroClientes() {
 // ==========================================
 
 function renderizarDocumentos() {
-
-    const termo = el.busca.value.trim().toLowerCase();
-    const clienteSelecionado = el.filtro.value;
+    const termo = pesquisa.value.trim().toLowerCase();
+    const clienteSelecionado = filtroCliente.value;
 
     const filtrados = documentos.filter(doc => {
+        const titulo = obterCampo(doc, "titulo", "nome");
+        const tipo = obterCampo(doc, "tipo");
+        const cliente = nomeCliente(doc);
+        const processo = obterCampo(doc, "processo");
 
-        const correspondeBusca =
-            doc.titulo.toLowerCase().includes(termo) ||
-            doc.tipo.toLowerCase().includes(termo) ||
-            doc.cliente.toLowerCase().includes(termo) ||
-            doc.processo.toLowerCase().includes(termo);
+        const correspondePesquisa = [
+            titulo,
+            tipo,
+            cliente,
+            processo
+        ].some(valor =>
+            String(valor).toLowerCase().includes(termo)
+        );
 
         const correspondeCliente =
-            !clienteSelecionado ||
-            doc.cliente === clienteSelecionado;
+            !clienteSelecionado || cliente === clienteSelecionado;
 
-        return correspondeBusca && correspondeCliente;
+        return correspondePesquisa && correspondeCliente;
     });
 
-    if (filtrados.length === 0) {
-
-        el.docs.innerHTML = `
-            <tr>
-                <td colspan="7" class="vazio">
-                    Nenhum documento encontrado.
-                </td>
-            </tr>
-        `;
-
+    if (!filtrados.length) {
+        mostrarMensagem(
+            documentos.length
+                ? "Nenhum documento encontrado com esses filtros."
+                : "Nenhum documento cadastrado."
+        );
         return;
     }
 
-    el.docs.innerHTML = filtrados.map(doc => {
-
-        const statusClasse = doc.status
-            .toLowerCase()
-            .replace(/\s+/g, "-");
+    lista.innerHTML = filtrados.map(doc => {
+        const id = obterCampo(doc, "id");
+        const titulo = obterCampo(doc, "titulo", "nome");
+        const tipo = obterCampo(doc, "tipo");
+        const cliente = nomeCliente(doc);
+        const processo = obterCampo(doc, "processo") || "-";
+        const data = obterCampo(doc, "data_envio", "dataEnvio");
+        const status = obterCampo(doc, "status") || "Pendente";
 
         return `
             <tr>
-
+                <td>${escapar(titulo || "Sem título")}</td>
+                <td>${escapar(tipo || "-")}</td>
+                <td>${escapar(cliente)}</td>
+                <td>${escapar(processo)}</td>
+                <td>${escapar(dataFormatada(data))}</td>
                 <td>
-                    <strong>${escaparHTML(doc.titulo)}</strong>
-                </td>
-
-                <td>
-                    ${escaparHTML(doc.tipo)}
-                </td>
-
-                <td>
-                    ${escaparHTML(doc.cliente)}
-                </td>
-
-                <td>
-                    ${escaparHTML(doc.processo)}
-                </td>
-
-                <td>
-                    ${formatarData(doc.data_envio)}
-                </td>
-
-                <td>
-                    <span class="status ${escaparHTML(statusClasse)}">
-                        ${escaparHTML(doc.status)}
+                    <span class="status ${escapar(statusNormalizado(status))}">
+                        ${escapar(status)}
                     </span>
                 </td>
-
-                <td class="acoes">
-
-                    <button
-                        type="button"
-                        title="Baixar"
-                        onclick="baixarDocumento('${escaparHTML(doc.id)}')">
-                        <i class="fas fa-download"></i>
-                    </button>
-
-                    <button
-                        type="button"
-                        title="${doc.arquivo_path ? "Substituir arquivo" : "Anexar arquivo"}"
-                        onclick="anexarArquivo('${escaparHTML(doc.id)}')">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-
-                    <button
-                        type="button"
-                        title="Visualizar"
-                        onclick="visualizarDocumento('${escaparHTML(doc.id)}')">
+                <td>
+                    <button type="button" title="Visualizar"
+                        data-acao="visualizar" data-id="${escapar(id)}">
                         <i class="fas fa-eye"></i>
                     </button>
 
-                    <button
-                        type="button"
-                        title="Editar"
-                        onclick="abrirEdicao('${escaparHTML(doc.id)}')">
+                    <button type="button" title="Editar"
+                        data-acao="editar" data-id="${escapar(id)}">
                         <i class="fas fa-pen"></i>
                     </button>
 
-                    <button
-                        type="button"
-                        title="Excluir"
-                        onclick="excluirDocumento('${escaparHTML(doc.id)}')">
-                        <i class="fas fa-trash"></i>
+                    <button type="button" title="Baixar"
+                        data-acao="baixar" data-id="${escapar(id)}">
+                        <i class="fas fa-download"></i>
                     </button>
 
+                    <button type="button" title="Excluir"
+                        data-acao="excluir" data-id="${escapar(id)}">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
-
             </tr>
         `;
-
     }).join("");
 }
 
@@ -377,269 +243,90 @@ function renderizarDocumentos() {
 // VISUALIZAR DOCUMENTO
 // ==========================================
 
-function visualizarDocumento(id) {
-
-    const doc = obterDocumento(id);
-
-    if (!doc) return;
-
-    el.modalTitulo.textContent = doc.titulo;
-    el.modalTipo.textContent = doc.tipo;
-    el.modalCliente.textContent = doc.cliente;
-    el.modalProcesso.textContent = doc.processo;
-    el.modalData.textContent = formatarData(doc.data_envio);
-    el.modalDescricao.textContent = doc.descricao || "Sem descrição.";
-
-    el.modalStatus.textContent = doc.status;
-    el.modalStatus.className = "status " + doc.status
-        .toLowerCase()
-        .replace(/\s+/g, "-");
-
-    el.modal.hidden = false;
-}
-
-function fecharModal() {
-    el.modal.hidden = true;
-}
-
-// ==========================================
-// BAIXAR DOCUMENTO
-// ==========================================
-
-async function baixarDocumento(id) {
-
-    const doc = obterDocumento(id);
-
-    if (!doc) return;
-
+async function visualizarDocumento(id) {
     try {
+        const doc = await buscarDocumento(id);
 
-        const resposta = await fetchAuth(
-            `/documentos/${encodeURIComponent(id)}/arquivo`
-        );
+        document.getElementById("modalTipo").textContent =
+            obterCampo(doc, "tipo") || "-";
 
-        const resultado = await lerResposta(resposta);
+        document.getElementById("modalTitulo").textContent =
+            obterCampo(doc, "titulo") || "-";
 
-        if (!resposta.ok) {
-            throw new Error(
-                resultado.erro || "Não foi possível baixar o documento."
-            );
-        }
+        document.getElementById("modalStatus").textContent =
+            obterCampo(doc, "status") || "-";
 
-        const link = document.createElement("a");
-        let urlTemporaria = null;
+        document.getElementById("modalCliente").textContent =
+            nomeCliente(doc);
 
-        if (resultado.url) {
-            link.href = resultado.url;
-        } else {
-            // Documento sem arquivo anexado: baixa a ficha em texto.
-            const blob = new Blob(
-                ["\uFEFF" + (resultado.texto || "")],
-                { type: "text/plain;charset=utf-8" }
-            );
-            urlTemporaria = URL.createObjectURL(blob);
-            link.href = urlTemporaria;
-        }
+        document.getElementById("modalProcesso").textContent =
+            obterCampo(doc, "processo") || "-";
 
-        link.download = resultado.nome || "documento";
-        link.style.display = "none";
+        document.getElementById("modalData").textContent =
+            dataFormatada(obterCampo(doc, "data_envio", "dataEnvio"));
 
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        document.getElementById("modalDescricao").textContent =
+            obterCampo(doc, "descricao") || "Nenhuma descrição informada.";
 
-        if (urlTemporaria) {
-            setTimeout(() => URL.revokeObjectURL(urlTemporaria), 1000);
-        }
+        modalDocumento.hidden = false;
 
     } catch (erro) {
-
-        console.error("Erro ao baixar:", erro);
-
-        mostrarErro(erro.message);
+        alert(erro.message);
     }
 }
 
 // ==========================================
-// ANEXAR / SUBSTITUIR ARQUIVO
-// ==========================================
-
-const MIME_POR_EXT = {
-    pdf: "application/pdf",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    doc: "application/msword",
-    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-};
-
-const TAMANHO_MAXIMO = 10 * 1024 * 1024;
-
-const seletorArquivo = document.createElement("input");
-seletorArquivo.type = "file";
-seletorArquivo.accept = ".pdf,.jpg,.jpeg,.png,.doc,.docx";
-seletorArquivo.hidden = true;
-document.body.appendChild(seletorArquivo);
-
-let documentoParaAnexar = null;
-
-function anexarArquivo(id) {
-
-    const doc = obterDocumento(id);
-
-    if (!doc) return;
-
-    if (doc.arquivo_path && !confirm(
-        "Este documento já possui um arquivo. Deseja substituí-lo?"
-    )) {
-        return;
-    }
-
-    documentoParaAnexar = doc;
-    seletorArquivo.value = "";
-    seletorArquivo.click();
-}
-
-seletorArquivo.addEventListener("change", async () => {
-
-    const arquivo = seletorArquivo.files[0];
-    const doc = documentoParaAnexar;
-
-    documentoParaAnexar = null;
-
-    if (!arquivo || !doc) return;
-
-    const ext = (arquivo.name.split(".").pop() || "").toLowerCase();
-    const mime = MIME_POR_EXT[ext];
-
-    if (!mime) {
-        mostrarErro("Formato não permitido. Envie PDF, JPG, PNG, DOC ou DOCX.");
-        return;
-    }
-
-    if (arquivo.size > TAMANHO_MAXIMO) {
-        mostrarErro("O arquivo deve ter no máximo 10 MB.");
-        return;
-    }
-
-    try {
-
-        const resposta = await fetchAuth(
-            `/documentos/${encodeURIComponent(doc.id)}/arquivo` +
-            `?nome=${encodeURIComponent(arquivo.name)}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": mime },
-                body: arquivo
-            }
-        );
-
-        const resultado = await lerResposta(resposta);
-
-        if (!resposta.ok) {
-            throw new Error(
-                resultado.erro || "Não foi possível anexar o arquivo."
-            );
-        }
-
-        alert("Arquivo anexado com sucesso!");
-
-        await carregarDocumentos();
-
-    } catch (erro) {
-
-        console.error("Erro ao anexar:", erro);
-
-        mostrarErro(erro.message);
-    }
-});
-
-// ==========================================
-// ABRIR EDIÇÃO
+// EDITAR DOCUMENTO
 // ==========================================
 
 function abrirEdicao(id) {
+    const doc = documentos.find(item => String(item.id) === String(id));
 
-    const doc = obterDocumento(id);
+    if (!doc) {
+        alert("Documento não encontrado.");
+        return;
+    }
 
-    if (!doc) return;
+    document.getElementById("editarId").value = doc.id;
+    document.getElementById("editarTitulo").value = doc.titulo || "";
+    document.getElementById("editarTipo").value = doc.tipo || "Outros";
+    document.getElementById("editarCliente").value = nomeCliente(doc);
+    document.getElementById("editarProcesso").value = doc.processo || "";
 
-    el.editarId.value = doc.id;
-    el.editarTitulo.value = doc.titulo;
-    el.editarTipo.value = doc.tipo;
-    el.editarCliente.value = doc.cliente;
-    el.editarProcesso.value = doc.processo === "-" ? "" : doc.processo;
-    el.editarData.value = doc.data_envio.substring(0, 10);
-    el.editarStatus.value = doc.status;
-    el.editarDescricao.value = doc.descricao;
+    document.getElementById("editarData").value =
+        String(obterCampo(doc, "data_envio", "dataEnvio") || "").slice(0, 10);
 
-    el.modalEditar.hidden = false;
+    document.getElementById("editarStatus").value = doc.status || "Pendente";
+    document.getElementById("editarDescricao").value = doc.descricao || "";
+
+    modalEditar.hidden = false;
 }
 
-function fecharEdicao() {
-    el.modalEditar.hidden = true;
-}
-
-// ==========================================
-// SALVAR EDIÇÃO
-// ==========================================
-
-el.formEditar.addEventListener("submit", async (event) => {
-
+formEditar.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const id = el.editarId.value;
+    const id = document.getElementById("editarId").value;
 
     const dados = {
-
-        titulo: el.editarTitulo.value.trim(),
-
-        tipo: el.editarTipo.value,
-
-        processo: el.editarProcesso.value.trim(),
-
-        data_envio: el.editarData.value,
-
-        status: el.editarStatus.value,
-
-        descricao: el.editarDescricao.value.trim()
-
+        titulo: document.getElementById("editarTitulo").value.trim(),
+        tipo: document.getElementById("editarTipo").value,
+        processo: document.getElementById("editarProcesso").value.trim(),
+        dataEnvio: document.getElementById("editarData").value,
+        status: document.getElementById("editarStatus").value,
+        descricao: document.getElementById("editarDescricao").value.trim()
     };
 
     try {
+        await editarDocumento(id, dados);
 
-        const resposta = await fetchAuth(
-            `/documentos/${encodeURIComponent(id)}`,
-            {
-                method: "PUT",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify(dados)
-            }
-        );
-
-        const resultado = await lerResposta(resposta);
-
-        if (!resposta.ok) {
-            throw new Error(
-                resultado.erro || "Não foi possível atualizar."
-            );
-        }
+        modalEditar.hidden = true;
 
         alert("Documento atualizado com sucesso!");
-
-        fecharEdicao();
 
         await carregarDocumentos();
 
     } catch (erro) {
-
-        console.error("Erro ao editar:", erro);
-
-        mostrarErro(erro.message);
+        alert(erro.message);
     }
 });
 
@@ -647,106 +334,101 @@ el.formEditar.addEventListener("submit", async (event) => {
 // EXCLUIR DOCUMENTO
 // ==========================================
 
-async function excluirDocumento(id) {
-
-    const doc = obterDocumento(id);
-
-    if (!doc) return;
-
-    const confirmar = confirm(
-        `Deseja realmente excluir o documento "${doc.titulo}"?`
-    );
-
-    if (!confirmar) return;
+async function removerDocumento(id) {
+    if (!confirm("Deseja realmente excluir este documento?")) {
+        return;
+    }
 
     try {
-
-        const resposta = await fetchAuth(
-            `/documentos/${encodeURIComponent(id)}`,
-            {
-                method: "DELETE"
-            }
-        );
-
-        const resultado = await lerResposta(resposta);
-
-        if (!resposta.ok) {
-            throw new Error(
-                resultado.erro || "Não foi possível excluir."
-            );
-        }
+        await excluirDocumento(id);
 
         alert("Documento excluído com sucesso!");
 
         await carregarDocumentos();
 
     } catch (erro) {
-
-        console.error("Erro ao excluir:", erro);
-
-        mostrarErro(erro.message);
+        alert(erro.message);
     }
 }
 
 // ==========================================
-// EVENTOS
+// BAIXAR DOCUMENTO
 // ==========================================
 
-el.busca.addEventListener(
-    "input",
-    renderizarDocumentos
-);
+async function baixarDocumento(id) {
+    try {
+        const dados = await obterDownloadDocumento(id);
+        iniciarDownload(dados);
 
-el.filtro.addEventListener(
-    "change",
-    renderizarDocumentos
-);
+    } catch (erro) {
+        alert(erro.message);
+    }
+}
 
-el.fecharModal.addEventListener(
-    "click",
-    fecharModal
-);
+// ==========================================
+// AÇÕES DA TABELA
+// ==========================================
 
-el.cancelarEdicao.addEventListener(
-    "click",
-    fecharEdicao
-);
+lista.addEventListener("click", async event => {
+    const botao = event.target.closest("button[data-acao]");
 
-el.modal.addEventListener("click", (event) => {
+    if (!botao) return;
 
-    if (event.target === el.modal) {
-        fecharModal();
+    const id = botao.dataset.id;
+    const acao = botao.dataset.acao;
+
+    if (!id) return;
+
+    if (acao === "visualizar") {
+        await visualizarDocumento(id);
     }
 
-});
-
-el.modalEditar.addEventListener("click", (event) => {
-
-    if (event.target === el.modalEditar) {
-        fecharEdicao();
+    if (acao === "editar") {
+        abrirEdicao(id);
     }
 
+    if (acao === "baixar") {
+        await baixarDocumento(id);
+    }
+
+    if (acao === "excluir") {
+        await removerDocumento(id);
+    }
 });
 
-document.addEventListener("keydown", (event) => {
+// ==========================================
+// MODAIS
+// ==========================================
 
+document.getElementById("fecharModal").addEventListener("click", () => {
+    modalDocumento.hidden = true;
+});
+
+document.getElementById("cancelarEdicao").addEventListener("click", () => {
+    modalEditar.hidden = true;
+});
+
+[modalDocumento, modalEditar].forEach(modal => {
+    modal.addEventListener("click", event => {
+        if (event.target === modal) {
+            modal.hidden = true;
+        }
+    });
+});
+
+document.addEventListener("keydown", event => {
     if (event.key === "Escape") {
-        fecharModal();
-        fecharEdicao();
+        modalDocumento.hidden = true;
+        modalEditar.hidden = true;
     }
-
 });
 
 // ==========================================
-// DISPONIBILIZAR FUNÇÕES
+// PESQUISA E FILTROS
 // ==========================================
 
-window.carregarDocumentos = carregarDocumentos;
-window.visualizarDocumento = visualizarDocumento;
-window.baixarDocumento = baixarDocumento;
-window.anexarArquivo = anexarArquivo;
-window.abrirEdicao = abrirEdicao;
-window.excluirDocumento = excluirDocumento;
+pesquisa.addEventListener("input", renderizarDocumentos);
+filtroCliente.addEventListener("change", renderizarDocumentos);
 
 // ==========================================
 // INICIALIZAÇÃO
