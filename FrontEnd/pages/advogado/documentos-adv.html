@@ -1,126 +1,85 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Documentos | Área do Advogado</title>
 
-    <!-- FONTES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentos | Área do Advogado</title>
 
-    <!-- CSS DA PÁGINA -->
-    <link rel="stylesheet" href="../../css/style-advogado/documentos-adv.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- FONT AWESOME -->
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style-advogado/documentos-adv.css?v=3">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
 
 <main class="conteudo">
 
-    <!-- BOTÃO VOLTAR -->
-
     <a href="dashboard-adv.html" class="btnVoltar" title="Voltar ao dashboard">
         <i class="fas fa-arrow-left"></i>
     </a>
 
-
-    <!-- TOPO -->
-
     <header class="topo">
-
         <div>
-
             <h1>Documentos</h1>
-
-            <p>
-                Organize e gerencie os documentos dos seus clientes e processos.
-            </p>
-
+            <p>Organize e gerencie os documentos dos seus clientes e processos.</p>
         </div>
 
         <a href="cadastro-documento-adv.html" class="acao">
             <i class="fas fa-plus"></i>
             Novo documento
         </a>
-
     </header>
 
-
-    <!-- RESUMO -->
-
     <section class="resumo">
-
         <div class="card">
-
             <i class="fas fa-file-lines"></i>
-
             <div>
-
                 <span>Total de documentos</span>
-
                 <strong id="totalDocumentos">0</strong>
-
             </div>
-
         </div>
 
-
         <div class="card">
-
             <i class="fas fa-clock"></i>
-
             <div>
-
                 <span>Pendentes</span>
-
                 <strong id="totalPendentes">0</strong>
-
             </div>
-
         </div>
-
 
         <div class="card">
-
             <i class="fas fa-circle-check"></i>
-
             <div>
-
                 <span>Aprovados</span>
-
                 <strong id="totalAprovados">0</strong>
-
             </div>
-
         </div>
-
     </section>
 
-
-    <!-- PAINEL DE DOCUMENTOS -->
-
     <section class="painel">
-
         <h2>
             <i class="fas fa-folder"></i>
             Meus documentos
         </h2>
 
-
-        <!-- FILTROS -->
-
         <div class="filtros">
-
             <input
                 type="search"
                 id="pesquisarDocumento"
@@ -128,24 +87,13 @@
             >
 
             <select id="filtroCliente">
-
-                <option value="">
-                    Todos os clientes
-                </option>
-
+                <option value="">Todos os clientes</option>
             </select>
-
         </div>
 
-
-        <!-- TABELA -->
-
         <div class="tabela">
-
             <table>
-
                 <thead>
-
                     <tr>
                         <th>Documento</th>
                         <th>Tipo</th>
@@ -155,40 +103,26 @@
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
-
                 </thead>
 
                 <tbody id="listaDocumentos">
-
                     <tr>
                         <td colspan="7" class="vazio">
                             Carregando documentos...
                         </td>
                     </tr>
-
                 </tbody>
-
             </table>
-
         </div>
-
     </section>
 
 </main>
 
-
-<!-- ==========================================
-     MODAL: VISUALIZAR DOCUMENTO
-========================================== -->
-
+<!-- MODAL VISUALIZAR DOCUMENTO -->
 <div class="modal" id="modalDocumento" hidden>
-
     <div class="modal-caixa modal-visualizar">
 
-        <!-- CABEÇALHO -->
-
         <div class="doc-cabecalho">
-
             <div class="doc-icone">
                 <i class="fas fa-file-lines"></i>
             </div>
@@ -198,29 +132,18 @@
                 <h3 id="modalTitulo">-</h3>
             </div>
 
-            <button
-                type="button"
-                id="fecharModal"
-                class="doc-fechar"
-                title="Fechar"
-            >
+            <button type="button" id="fecharModal" class="doc-fechar" title="Fechar">
                 <i class="fas fa-xmark"></i>
             </button>
-
         </div>
 
-
-        <!-- CORPO -->
-
         <div class="doc-corpo">
-
             <div class="doc-status-linha">
                 <span>Status do documento</span>
                 <span id="modalStatus" class="status">-</span>
             </div>
 
             <div class="doc-grade">
-
                 <div class="doc-item">
                     <i class="fas fa-user"></i>
                     <div>
@@ -244,60 +167,36 @@
                         <strong id="modalData">-</strong>
                     </div>
                 </div>
-
             </div>
 
             <div class="doc-descricao">
                 <small>Descrição</small>
                 <p id="modalDescricao">-</p>
             </div>
-
         </div>
 
     </div>
-
 </div>
 
-
-<!-- ==========================================
-     MODAL: EDITAR DOCUMENTO
-========================================== -->
-
+<!-- MODAL EDITAR DOCUMENTO -->
 <div class="modal" id="modalEditar" hidden>
-
     <div class="modal-caixa">
 
         <div class="modal-topo">
-
             <h3>Editar documento</h3>
-
         </div>
 
-
         <form id="formEditarDocumento">
-
             <input type="hidden" id="editarId">
 
-
             <div class="campo">
-
                 <label for="editarTitulo">Título</label>
-
-                <input
-                    type="text"
-                    id="editarTitulo"
-                    required
-                >
-
+                <input type="text" id="editarTitulo" required>
             </div>
 
-
             <div class="campo">
-
                 <label for="editarTipo">Tipo</label>
-
                 <select id="editarTipo" required>
-
                     <option value="Contrato">Contrato</option>
                     <option value="Procuração">Procuração</option>
                     <option value="RG">RG</option>
@@ -305,113 +204,55 @@
                     <option value="Comprovante">Comprovante</option>
                     <option value="Petição">Petição</option>
                     <option value="Outros">Outros</option>
-
                 </select>
-
             </div>
 
-
             <div class="campo">
-
                 <label for="editarCliente">Cliente</label>
-
-                <input
-                    type="text"
-                    id="editarCliente"
-                    readonly
-                >
-
-                <small>
-                    O cliente não pode ser alterado depois do cadastro.
-                </small>
-
+                <input type="text" id="editarCliente" readonly>
+                <small>O cliente não pode ser alterado depois do cadastro.</small>
             </div>
 
-
             <div class="campo">
-
                 <label for="editarProcesso">Processo</label>
-
-                <input
-                    type="text"
-                    id="editarProcesso"
-                    placeholder="Número do processo (opcional)"
-                >
-
+                <input type="text" id="editarProcesso" placeholder="Número do processo (opcional)">
             </div>
 
-
             <div class="campo">
-
                 <label for="editarData">Data de envio</label>
-
-                <input
-                    type="date"
-                    id="editarData"
-                    required
-                >
-
+                <input type="date" id="editarData" required>
             </div>
 
-
             <div class="campo">
-
                 <label for="editarStatus">Status</label>
-
                 <select id="editarStatus" required>
-
                     <option value="Pendente">Pendente</option>
                     <option value="Aprovado">Aprovado</option>
                     <option value="Rejeitado">Rejeitado</option>
-
                 </select>
-
             </div>
-
 
             <div class="campo">
-
                 <label for="editarDescricao">Descrição</label>
-
-                <textarea
-                    id="editarDescricao"
-                    rows="3"
-                ></textarea>
-
+                <textarea id="editarDescricao" rows="3"></textarea>
             </div>
 
-
-            <!-- BOTÕES -->
-
             <div class="modal-acoes">
-
-                <button
-                    type="button"
-                    id="cancelarEdicao"
-                    class="secundario"
-                >
+                <button type="button" id="cancelarEdicao" class="secundario">
                     Cancelar
                 </button>
 
                 <button type="submit">
                     Salvar alterações
                 </button>
-
             </div>
-
         </form>
 
     </div>
-
 </div>
 
-
 <!-- JAVASCRIPT -->
-
-<script
-    type="module"
-    src="../../js/pages/advogado/documentos.js">
-</script>
+<script type="module" src="../../js/pages/advogado/documentos.js"></script>
 
 </body>
 </html>
